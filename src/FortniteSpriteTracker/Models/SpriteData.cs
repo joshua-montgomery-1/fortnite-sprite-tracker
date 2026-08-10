@@ -57,12 +57,15 @@ public static class SpriteData
 
     public static int TotalEntries => Sprites.Sum(s => s.Variants.Count);
     public static string Key(string sprite, SpriteVariant variant) => $"{sprite}::{variant}";
-    public static string ImageUrl(string slug) => $"https://fortnitespritetracker.org/images/sprites/{slug}_basic.webp";
+    public static string ImageUrl(string slug) => $"images/sprites/{slug}_basic.webp";
+    public static string ExternalImageUrl(string slug) => $"https://fortnitespritetracker.org/images/sprites/{slug}_basic.webp";
     public static string VariantImageUrl(string slug, SpriteVariant variant)
     {
         var suffix = variant == SpriteVariant.Holofoil && slug is "air" or "ghost" ? "holo" : Variants[variant].ImageSuffix;
-        return $"https://fortnitespritetracker.org/images/sprites/{slug}_{suffix}.webp";
+        return $"images/sprites/{slug}_{suffix}.webp";
     }
+    public static string ExternalVariantImageUrl(string slug, SpriteVariant variant) =>
+        $"https://fortnitespritetracker.org/{VariantImageUrl(slug, variant)}";
     private static SpriteDefinition CreateSprite(string name, string slug, string rarity, string ability, string[] variants, string colors)
     {
         var palette = colors.Split(',', 2);

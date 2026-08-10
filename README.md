@@ -9,7 +9,7 @@ A static-first Fortnite Sprite collection tracker built with .NET 10 and standal
 - Compact checklist and collectible Field Guide views.
 - Local browser persistence; no server or account required.
 - Populated and blank landscape PDF checklist exports.
-- Responsive layout and external community artwork.
+- Responsive layout and locally hosted community artwork.
 
 ## Run locally
 
@@ -26,11 +26,20 @@ dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj -c Release
 
 The static site is emitted to `src/FortniteSpriteTracker/bin/Release/net10.0/publish/wwwroot` and can be hosted by any static file provider. Configure the host to serve `index.html` for unknown routes if additional client routes are added.
 
+## Refresh Sprite artwork
+
+The checked-in Sprite artwork is served from `wwwroot/images/sprites`, so the application does not depend on an external image host at runtime. To refresh every valid family/variant image and regenerate the source manifest:
+
+```powershell
+dotnet run --project tools/FortniteSpriteTracker.AssetDownloader -c Release
+```
+
 ## Repository layout
 
 - `FortniteSpriteTracker.sln` - root solution
 - `src/FortniteSpriteTracker` - standalone Blazor WebAssembly project
+- `tools/FortniteSpriteTracker.AssetDownloader` - reproducible local artwork downloader
 
 ## Notes
 
-This is an unofficial fan-made companion. Artwork is loaded from an external community source and is not stored in this repository.
+This is an unofficial fan-made companion. The artwork source URLs are retained in `wwwroot/images/sprites/manifest.json` for attribution and refreshes.

@@ -1,0 +1,709 @@
+{
+  "generatedAtUtc": "2026-08-10T23:42:12.8399513+00:00",
+  "source": "https://fortnitespritetracker.org/images/sprites/",
+  "count": 117,
+  "assets": [
+    {
+      "Sprite": "Air",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/air_basic.webp",
+      "FileName": "air_basic.webp"
+    },
+    {
+      "Sprite": "Air",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/air_candy.webp",
+      "FileName": "air_candy.webp"
+    },
+    {
+      "Sprite": "Air",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/air_galaxy.webp",
+      "FileName": "air_galaxy.webp"
+    },
+    {
+      "Sprite": "Air",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/air_gold.webp",
+      "FileName": "air_gold.webp"
+    },
+    {
+      "Sprite": "Air",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/air_holo.webp",
+      "FileName": "air_holo.webp"
+    },
+    {
+      "Sprite": "Batman",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/batman_basic.webp",
+      "FileName": "batman_basic.webp"
+    },
+    {
+      "Sprite": "Batman",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/batman_candy.webp",
+      "FileName": "batman_candy.webp"
+    },
+    {
+      "Sprite": "Batman",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/batman_cube.webp",
+      "FileName": "batman_cube.webp"
+    },
+    {
+      "Sprite": "Batman",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/batman_galaxy.webp",
+      "FileName": "batman_galaxy.webp"
+    },
+    {
+      "Sprite": "Batman",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/batman_gold.webp",
+      "FileName": "batman_gold.webp"
+    },
+    {
+      "Sprite": "Batman",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/batman_holofoil.webp",
+      "FileName": "batman_holofoil.webp"
+    },
+    {
+      "Sprite": "Boss",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/boss_basic.webp",
+      "FileName": "boss_basic.webp"
+    },
+    {
+      "Sprite": "Boss",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/boss_candy.webp",
+      "FileName": "boss_candy.webp"
+    },
+    {
+      "Sprite": "Boss",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/boss_cube.webp",
+      "FileName": "boss_cube.webp"
+    },
+    {
+      "Sprite": "Boss",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/boss_galaxy.webp",
+      "FileName": "boss_galaxy.webp"
+    },
+    {
+      "Sprite": "Boss",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/boss_gold.webp",
+      "FileName": "boss_gold.webp"
+    },
+    {
+      "Sprite": "Demon",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/demon_basic.webp",
+      "FileName": "demon_basic.webp"
+    },
+    {
+      "Sprite": "Demon",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/demon_candy.webp",
+      "FileName": "demon_candy.webp"
+    },
+    {
+      "Sprite": "Demon",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/demon_galaxy.webp",
+      "FileName": "demon_galaxy.webp"
+    },
+    {
+      "Sprite": "Demon",
+      "Variant": "Gem",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/demon_gem.webp",
+      "FileName": "demon_gem.webp"
+    },
+    {
+      "Sprite": "Demon",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/demon_gold.webp",
+      "FileName": "demon_gold.webp"
+    },
+    {
+      "Sprite": "Dream",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/dream_basic.webp",
+      "FileName": "dream_basic.webp"
+    },
+    {
+      "Sprite": "Dream",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/dream_candy.webp",
+      "FileName": "dream_candy.webp"
+    },
+    {
+      "Sprite": "Dream",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/dream_cube.webp",
+      "FileName": "dream_cube.webp"
+    },
+    {
+      "Sprite": "Dream",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/dream_galaxy.webp",
+      "FileName": "dream_galaxy.webp"
+    },
+    {
+      "Sprite": "Dream",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/dream_gold.webp",
+      "FileName": "dream_gold.webp"
+    },
+    {
+      "Sprite": "Aura",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/drifter_basic.webp",
+      "FileName": "drifter_basic.webp"
+    },
+    {
+      "Sprite": "Aura",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/drifter_candy.webp",
+      "FileName": "drifter_candy.webp"
+    },
+    {
+      "Sprite": "Aura",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/drifter_galaxy.webp",
+      "FileName": "drifter_galaxy.webp"
+    },
+    {
+      "Sprite": "Aura",
+      "Variant": "Gem",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/drifter_gem.webp",
+      "FileName": "drifter_gem.webp"
+    },
+    {
+      "Sprite": "Aura",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/drifter_gold.webp",
+      "FileName": "drifter_gold.webp"
+    },
+    {
+      "Sprite": "Duck",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/duck_basic.webp",
+      "FileName": "duck_basic.webp"
+    },
+    {
+      "Sprite": "Duck",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/duck_candy.webp",
+      "FileName": "duck_candy.webp"
+    },
+    {
+      "Sprite": "Duck",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/duck_galaxy.webp",
+      "FileName": "duck_galaxy.webp"
+    },
+    {
+      "Sprite": "Duck",
+      "Variant": "Gem",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/duck_gem.webp",
+      "FileName": "duck_gem.webp"
+    },
+    {
+      "Sprite": "Duck",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/duck_gold.webp",
+      "FileName": "duck_gold.webp"
+    },
+    {
+      "Sprite": "Earth",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/earth_basic.webp",
+      "FileName": "earth_basic.webp"
+    },
+    {
+      "Sprite": "Earth",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/earth_candy.webp",
+      "FileName": "earth_candy.webp"
+    },
+    {
+      "Sprite": "Earth",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/earth_cube.webp",
+      "FileName": "earth_cube.webp"
+    },
+    {
+      "Sprite": "Earth",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/earth_galaxy.webp",
+      "FileName": "earth_galaxy.webp"
+    },
+    {
+      "Sprite": "Earth",
+      "Variant": "Gem",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/earth_gem.webp",
+      "FileName": "earth_gem.webp"
+    },
+    {
+      "Sprite": "Earth",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/earth_gold.webp",
+      "FileName": "earth_gold.webp"
+    },
+    {
+      "Sprite": "Earth",
+      "Variant": "Quack",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/earth_quack.webp",
+      "FileName": "earth_quack.webp"
+    },
+    {
+      "Sprite": "Fire",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fire_basic.webp",
+      "FileName": "fire_basic.webp"
+    },
+    {
+      "Sprite": "Fire",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fire_candy.webp",
+      "FileName": "fire_candy.webp"
+    },
+    {
+      "Sprite": "Fire",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fire_cube.webp",
+      "FileName": "fire_cube.webp"
+    },
+    {
+      "Sprite": "Fire",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fire_galaxy.webp",
+      "FileName": "fire_galaxy.webp"
+    },
+    {
+      "Sprite": "Fire",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fire_gold.webp",
+      "FileName": "fire_gold.webp"
+    },
+    {
+      "Sprite": "Fire",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fire_holofoil.webp",
+      "FileName": "fire_holofoil.webp"
+    },
+    {
+      "Sprite": "Fire",
+      "Variant": "Quack",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fire_quack.webp",
+      "FileName": "fire_quack.webp"
+    },
+    {
+      "Sprite": "Fishy",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fishy_basic.webp",
+      "FileName": "fishy_basic.webp"
+    },
+    {
+      "Sprite": "Fishy",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fishy_candy.webp",
+      "FileName": "fishy_candy.webp"
+    },
+    {
+      "Sprite": "Fishy",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fishy_cube.webp",
+      "FileName": "fishy_cube.webp"
+    },
+    {
+      "Sprite": "Fishy",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fishy_galaxy.webp",
+      "FileName": "fishy_galaxy.webp"
+    },
+    {
+      "Sprite": "Fishy",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/fishy_gold.webp",
+      "FileName": "fishy_gold.webp"
+    },
+    {
+      "Sprite": "Ghost",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/ghost_basic.webp",
+      "FileName": "ghost_basic.webp"
+    },
+    {
+      "Sprite": "Ghost",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/ghost_candy.webp",
+      "FileName": "ghost_candy.webp"
+    },
+    {
+      "Sprite": "Ghost",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/ghost_galaxy.webp",
+      "FileName": "ghost_galaxy.webp"
+    },
+    {
+      "Sprite": "Ghost",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/ghost_gold.webp",
+      "FileName": "ghost_gold.webp"
+    },
+    {
+      "Sprite": "Ghost",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/ghost_holo.webp",
+      "FileName": "ghost_holo.webp"
+    },
+    {
+      "Sprite": "Grim Reaper",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/grimreaper_basic.webp",
+      "FileName": "grimreaper_basic.webp"
+    },
+    {
+      "Sprite": "Grim Reaper",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/grimreaper_candy.webp",
+      "FileName": "grimreaper_candy.webp"
+    },
+    {
+      "Sprite": "Grim Reaper",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/grimreaper_cube.webp",
+      "FileName": "grimreaper_cube.webp"
+    },
+    {
+      "Sprite": "Grim Reaper",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/grimreaper_galaxy.webp",
+      "FileName": "grimreaper_galaxy.webp"
+    },
+    {
+      "Sprite": "Grim Reaper",
+      "Variant": "Gem",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/grimreaper_gem.webp",
+      "FileName": "grimreaper_gem.webp"
+    },
+    {
+      "Sprite": "Grim Reaper",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/grimreaper_gold.webp",
+      "FileName": "grimreaper_gold.webp"
+    },
+    {
+      "Sprite": "Grim Reaper",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/grimreaper_holofoil.webp",
+      "FileName": "grimreaper_holofoil.webp"
+    },
+    {
+      "Sprite": "Ironmouse",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/ironmouse_basic.webp",
+      "FileName": "ironmouse_basic.webp"
+    },
+    {
+      "Sprite": "John Wick",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/johnwick_basic.webp",
+      "FileName": "johnwick_basic.webp"
+    },
+    {
+      "Sprite": "King",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/king_basic.webp",
+      "FileName": "king_basic.webp"
+    },
+    {
+      "Sprite": "King",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/king_candy.webp",
+      "FileName": "king_candy.webp"
+    },
+    {
+      "Sprite": "King",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/king_galaxy.webp",
+      "FileName": "king_galaxy.webp"
+    },
+    {
+      "Sprite": "King",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/king_gold.webp",
+      "FileName": "king_gold.webp"
+    },
+    {
+      "Sprite": "King",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/king_holofoil.webp",
+      "FileName": "king_holofoil.webp"
+    },
+    {
+      "Sprite": "Llama",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/llama_basic.webp",
+      "FileName": "llama_basic.webp"
+    },
+    {
+      "Sprite": "Llama",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/llama_candy.webp",
+      "FileName": "llama_candy.webp"
+    },
+    {
+      "Sprite": "Llama",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/llama_galaxy.webp",
+      "FileName": "llama_galaxy.webp"
+    },
+    {
+      "Sprite": "Llama",
+      "Variant": "Gem",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/llama_gem.webp",
+      "FileName": "llama_gem.webp"
+    },
+    {
+      "Sprite": "Llama",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/llama_gold.webp",
+      "FileName": "llama_gold.webp"
+    },
+    {
+      "Sprite": "Peely",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/peely_basic.webp",
+      "FileName": "peely_basic.webp"
+    },
+    {
+      "Sprite": "Peely",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/peely_candy.webp",
+      "FileName": "peely_candy.webp"
+    },
+    {
+      "Sprite": "Peely",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/peely_galaxy.webp",
+      "FileName": "peely_galaxy.webp"
+    },
+    {
+      "Sprite": "Peely",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/peely_gold.webp",
+      "FileName": "peely_gold.webp"
+    },
+    {
+      "Sprite": "Peely",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/peely_holofoil.webp",
+      "FileName": "peely_holofoil.webp"
+    },
+    {
+      "Sprite": "Pollo",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/pollo_basic.webp",
+      "FileName": "pollo_basic.webp"
+    },
+    {
+      "Sprite": "Punk",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/punk_basic.webp",
+      "FileName": "punk_basic.webp"
+    },
+    {
+      "Sprite": "Punk",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/punk_candy.webp",
+      "FileName": "punk_candy.webp"
+    },
+    {
+      "Sprite": "Punk",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/punk_cube.webp",
+      "FileName": "punk_cube.webp"
+    },
+    {
+      "Sprite": "Punk",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/punk_galaxy.webp",
+      "FileName": "punk_galaxy.webp"
+    },
+    {
+      "Sprite": "Punk",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/punk_gold.webp",
+      "FileName": "punk_gold.webp"
+    },
+    {
+      "Sprite": "Seven",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/seven_basic.webp",
+      "FileName": "seven_basic.webp"
+    },
+    {
+      "Sprite": "Seven",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/seven_candy.webp",
+      "FileName": "seven_candy.webp"
+    },
+    {
+      "Sprite": "Seven",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/seven_galaxy.webp",
+      "FileName": "seven_galaxy.webp"
+    },
+    {
+      "Sprite": "Seven",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/seven_gold.webp",
+      "FileName": "seven_gold.webp"
+    },
+    {
+      "Sprite": "Seven",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/seven_holofoil.webp",
+      "FileName": "seven_holofoil.webp"
+    },
+    {
+      "Sprite": "Striker",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/soccer_basic.webp",
+      "FileName": "soccer_basic.webp"
+    },
+    {
+      "Sprite": "Striker",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/soccer_candy.webp",
+      "FileName": "soccer_candy.webp"
+    },
+    {
+      "Sprite": "Striker",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/soccer_galaxy.webp",
+      "FileName": "soccer_galaxy.webp"
+    },
+    {
+      "Sprite": "Striker",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/soccer_gold.webp",
+      "FileName": "soccer_gold.webp"
+    },
+    {
+      "Sprite": "Striker",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/soccer_holofoil.webp",
+      "FileName": "soccer_holofoil.webp"
+    },
+    {
+      "Sprite": "Burnt Peanut",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/theburntpeanut_basic.webp",
+      "FileName": "theburntpeanut_basic.webp"
+    },
+    {
+      "Sprite": "Vini Jr.",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/vinijr_basic.webp",
+      "FileName": "vinijr_basic.webp"
+    },
+    {
+      "Sprite": "Water",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/water_basic.webp",
+      "FileName": "water_basic.webp"
+    },
+    {
+      "Sprite": "Water",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/water_candy.webp",
+      "FileName": "water_candy.webp"
+    },
+    {
+      "Sprite": "Water",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/water_galaxy.webp",
+      "FileName": "water_galaxy.webp"
+    },
+    {
+      "Sprite": "Water",
+      "Variant": "Gem",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/water_gem.webp",
+      "FileName": "water_gem.webp"
+    },
+    {
+      "Sprite": "Water",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/water_gold.webp",
+      "FileName": "water_gold.webp"
+    },
+    {
+      "Sprite": "Water",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/water_holofoil.webp",
+      "FileName": "water_holofoil.webp"
+    },
+    {
+      "Sprite": "Water",
+      "Variant": "Quack",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/water_quack.webp",
+      "FileName": "water_quack.webp"
+    },
+    {
+      "Sprite": "Zero Point",
+      "Variant": "Normal",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/zeropoint_basic.webp",
+      "FileName": "zeropoint_basic.webp"
+    },
+    {
+      "Sprite": "Zero Point",
+      "Variant": "Gummy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/zeropoint_candy.webp",
+      "FileName": "zeropoint_candy.webp"
+    },
+    {
+      "Sprite": "Zero Point",
+      "Variant": "Cube",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/zeropoint_cube.webp",
+      "FileName": "zeropoint_cube.webp"
+    },
+    {
+      "Sprite": "Zero Point",
+      "Variant": "Galaxy",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/zeropoint_galaxy.webp",
+      "FileName": "zeropoint_galaxy.webp"
+    },
+    {
+      "Sprite": "Zero Point",
+      "Variant": "Gem",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/zeropoint_gem.webp",
+      "FileName": "zeropoint_gem.webp"
+    },
+    {
+      "Sprite": "Zero Point",
+      "Variant": "Gold",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/zeropoint_gold.webp",
+      "FileName": "zeropoint_gold.webp"
+    },
+    {
+      "Sprite": "Zero Point",
+      "Variant": "Holofoil",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/zeropoint_holofoil.webp",
+      "FileName": "zeropoint_holofoil.webp"
+    },
+    {
+      "Sprite": "Zero Point",
+      "Variant": "Quack",
+      "SourceUrl": "https://fortnitespritetracker.org/images/sprites/zeropoint_quack.webp",
+      "FileName": "zeropoint_quack.webp"
+    }
+  ]
+}
