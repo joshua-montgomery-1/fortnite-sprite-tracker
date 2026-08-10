@@ -14,16 +14,22 @@ A static-first Fortnite Sprite collection tracker built with .NET 10 and standal
 ## Run locally
 
 ```powershell
-dotnet run
+dotnet run --project src/FortniteSpriteTracker
 ```
 
 ## Build and publish
 
 ```powershell
-dotnet publish -c Release
+dotnet build FortniteSpriteTracker.sln -c Release
+dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj -c Release
 ```
 
-The static site is emitted to `bin/Release/net10.0/publish/wwwroot` and can be hosted by any static file provider. Configure the host to serve `index.html` for unknown routes if additional client routes are added.
+The static site is emitted to `src/FortniteSpriteTracker/bin/Release/net10.0/publish/wwwroot` and can be hosted by any static file provider. Configure the host to serve `index.html` for unknown routes if additional client routes are added.
+
+## Repository layout
+
+- `FortniteSpriteTracker.sln` - root solution
+- `src/FortniteSpriteTracker` - standalone Blazor WebAssembly project
 
 ## Notes
 
