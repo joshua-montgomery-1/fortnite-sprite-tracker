@@ -12,7 +12,7 @@ var assets = SpriteData.Sprites
     .SelectMany(sprite => sprite.Variants.Select(variant => new Asset(
         sprite.Name,
         variant.ToString(),
-        SpriteData.ExternalVariantImageUrl(sprite.Slug, variant),
+        SourceImageUrl(sprite.Slug, variant),
         Path.GetFileName(SpriteData.VariantImageUrl(sprite.Slug, variant)))))
     .DistinctBy(asset => asset.FileName)
     .OrderBy(asset => asset.FileName)
@@ -68,6 +68,15 @@ static string FindRepositoryRoot(string start)
     while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "FortniteSpriteTracker.sln")))
         directory = directory.Parent;
     return directory?.FullName ?? throw new DirectoryNotFoundException("Could not locate FortniteSpriteTracker.sln.");
+}
+
+static string SourceImageUrl(string slug, SpriteVariant variant)
+{
+    // The upstream source predates the Holofoil naming convention for these two assets.
+    var sourceSuffix = variant == SpriteVariant.Holofoil && slug is "air" or "ghost"
+        ? "holo"
+        : SpriteData.Variants[variant].ImageSuffix;
+    return $"https://fortnitespritetracker.org/images/sprites/{slug}_{sourceSuffix}.webp";
 }
 
 internal sealed record Asset(string Sprite, string Variant, string SourceUrl, string FileName);
