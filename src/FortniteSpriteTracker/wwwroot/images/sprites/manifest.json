@@ -1,5 +1,5 @@
 {
-  "generatedAtUtc": "2026-08-10T23:42:12.8399513+00:00",
+  "generatedAtUtc": "2026-08-10T23:44:43.7174742+00:00",
   "source": "https://fortnitespritetracker.org/images/sprites/",
   "count": 117,
   "assets": [
@@ -31,7 +31,7 @@
       "Sprite": "Air",
       "Variant": "Holofoil",
       "SourceUrl": "https://fortnitespritetracker.org/images/sprites/air_holo.webp",
-      "FileName": "air_holo.webp"
+      "FileName": "air_holofoil.webp"
     },
     {
       "Sprite": "Batman",
@@ -361,7 +361,7 @@
       "Sprite": "Ghost",
       "Variant": "Holofoil",
       "SourceUrl": "https://fortnitespritetracker.org/images/sprites/ghost_holo.webp",
-      "FileName": "ghost_holo.webp"
+      "FileName": "ghost_holofoil.webp"
     },
     {
       "Sprite": "Grim Reaper",

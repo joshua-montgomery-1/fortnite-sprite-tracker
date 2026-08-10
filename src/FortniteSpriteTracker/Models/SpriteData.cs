@@ -59,13 +59,16 @@ public static class SpriteData
     public static string Key(string sprite, SpriteVariant variant) => $"{sprite}::{variant}";
     public static string ImageUrl(string slug) => $"images/sprites/{slug}_basic.webp";
     public static string ExternalImageUrl(string slug) => $"https://fortnitespritetracker.org/images/sprites/{slug}_basic.webp";
-    public static string VariantImageUrl(string slug, SpriteVariant variant)
+    public static string VariantImageUrl(string slug, SpriteVariant variant) =>
+        $"images/sprites/{slug}_{Variants[variant].ImageSuffix}.webp";
+    public static string ExternalVariantImageUrl(string slug, SpriteVariant variant)
     {
-        var suffix = variant == SpriteVariant.Holofoil && slug is "air" or "ghost" ? "holo" : Variants[variant].ImageSuffix;
-        return $"images/sprites/{slug}_{suffix}.webp";
+        // The upstream source predates the Holofoil naming convention for these two assets.
+        var sourceSuffix = variant == SpriteVariant.Holofoil && slug is "air" or "ghost"
+            ? "holo"
+            : Variants[variant].ImageSuffix;
+        return $"https://fortnitespritetracker.org/images/sprites/{slug}_{sourceSuffix}.webp";
     }
-    public static string ExternalVariantImageUrl(string slug, SpriteVariant variant) =>
-        $"https://fortnitespritetracker.org/{VariantImageUrl(slug, variant)}";
     private static SpriteDefinition CreateSprite(string name, string slug, string rarity, string ability, string[] variants, string colors)
     {
         var palette = colors.Split(',', 2);
