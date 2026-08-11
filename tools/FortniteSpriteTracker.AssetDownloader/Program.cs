@@ -17,6 +17,11 @@ var assets = SpriteData.Sprites
     .DistinctBy(asset => asset.FileName)
     .OrderBy(asset => asset.FileName)
     .ToArray();
+var legacyAliases = new (string CanonicalName, string LegacyName)[]
+{
+    ("air_holofoil.webp", "air_holo.webp"),
+    ("ghost_holofoil.webp", "ghost_holo.webp")
+};
 
 using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
 client.DefaultRequestHeaders.UserAgent.ParseAdd("SpriteScoutAssetDownloader/1.0");
@@ -41,6 +46,16 @@ await Parallel.ForEachAsync(assets, new ParallelOptions { MaxDegreeOfParallelism
         failures.Add($"{asset.SourceUrl}: {exception.Message}");
     }
 });
+
+if (failures.IsEmpty)
+{
+    // Preserve compatibility with clients cached before Holofoil filenames were normalized.
+    foreach (var (canonicalName, legacyName) in legacyAliases)
+        File.Copy(
+            Path.Combine(outputDirectory, canonicalName),
+            Path.Combine(outputDirectory, legacyName),
+            overwrite: true);
+}
 
 var manifest = new
 {
