@@ -24,11 +24,11 @@ public static class CollectionEndpoints
             var progress = await database.SpriteProgress
                 .AsNoTracking()
                 .Where(item => item.UserId == user.Id)
-                .OrderBy(item => item.SpriteSlug)
-                .ThenBy(item => item.Variant)
+                .OrderBy(item => item.SpriteVariant.Sprite.Slug)
+                .ThenBy(item => item.SpriteVariant.Name)
                 .Select(item => new SpriteProgressDto(
-                    item.SpriteSlug,
-                    item.Variant,
+                    item.SpriteVariant.Sprite.Slug,
+                    item.SpriteVariant.Name,
                     item.IsOwned,
                     item.IsMastered,
                     item.UpdatedAtUtc))
@@ -50,9 +50,22 @@ public static class CollectionEndpoints
             var spriteSlug = request.SpriteSlug.Trim().ToLowerInvariant();
             var variant = request.Variant.Trim();
 
+            var spriteVariant = await database.SpriteVariants
+                .Include(item => item.Sprite)
+                .SingleOrDefaultAsync(
+                    item => item.Sprite.Slug == spriteSlug && item.Name == variant,
+                    cancellationToken);
+
+            if (spriteVariant is null)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    [nameof(request.SpriteSlug)] = ["The Sprite or variant is not available in the catalog."]
+                });
+            }
+
             var progress = await database.SpriteProgress.FindAsync(
-                [user.Id, spriteSlug, variant],
-                cancellationToken);
+                [user.Id, spriteVariant.Id], cancellationToken);
 
             var isMastered = request.IsMastered;
             var isOwned = request.IsOwned || isMastered;
@@ -79,8 +92,7 @@ public static class CollectionEndpoints
                 progress = new SpriteProgress
                 {
                     UserId = user.Id,
-                    SpriteSlug = spriteSlug,
-                    Variant = variant
+                    SpriteVariantId = spriteVariant.Id
                 };
                 database.SpriteProgress.Add(progress);
             }
@@ -91,8 +103,8 @@ public static class CollectionEndpoints
             await database.SaveChangesAsync(cancellationToken);
 
             return Results.Ok(new SpriteProgressDto(
-                progress.SpriteSlug,
-                progress.Variant,
+                spriteVariant.Sprite.Slug,
+                spriteVariant.Name,
                 progress.IsOwned,
                 progress.IsMastered,
                 progress.UpdatedAtUtc));
