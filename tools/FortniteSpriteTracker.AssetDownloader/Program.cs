@@ -87,10 +87,13 @@ static string FindRepositoryRoot(string start)
 
 static string SourceImageUrl(string slug, SpriteVariant variant)
 {
-    // The upstream source predates the Holofoil naming convention for these two assets.
-    var sourceSuffix = variant == SpriteVariant.Holofoil && slug is "air" or "ghost"
-        ? "holo"
-        : SpriteData.Variants[variant].ImageSuffix;
+    // Translate legacy upstream filenames into the app's canonical variant names.
+    var sourceSuffix = variant switch
+    {
+        SpriteVariant.Gummy => "candy",
+        SpriteVariant.Holofoil when slug is "air" or "ghost" => "holo",
+        _ => SpriteData.Variants[variant].ImageSuffix
+    };
     return $"https://fortnitespritetracker.org/images/sprites/{slug}_{sourceSuffix}.webp";
 }
 

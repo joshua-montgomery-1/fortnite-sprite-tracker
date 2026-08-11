@@ -18,7 +18,7 @@ public static class SpriteData
 {
     public static readonly SpriteVariantMetadata[] VariantCatalog = [
         new(SpriteVariant.Normal,"#a7a9ae","Core power","basic"), new(SpriteVariant.Gold,"#f1bd38","Bonus Sprite XP","gold"),
-        new(SpriteVariant.Gummy,"#ff6da9","+20% Sprite Dust","candy"), new(SpriteVariant.Galaxy,"#7858ed","+30% ammunition","galaxy"),
+        new(SpriteVariant.Gummy,"#ff6da9","+20% Sprite Dust","gummy"), new(SpriteVariant.Galaxy,"#7858ed","+30% ammunition","galaxy"),
         new(SpriteVariant.Holofoil,"#67dff1","+5% rare finds","holofoil"), new(SpriteVariant.Gem,"#60dca5","-30% fall damage","gem"),
         new(SpriteVariant.Cube,"#a955de","Storm Overdrive","cube"), new(SpriteVariant.Quack,"#ffd93f","Shared progress","quack") ];
     public static readonly SpriteVariant[] AllVariants = VariantCatalog.Select(v => v.Variant).ToArray();
@@ -58,11 +58,8 @@ public static class SpriteData
     public static int TotalEntries => Sprites.Sum(s => s.Variants.Count);
     public static string Key(string sprite, SpriteVariant variant) => $"{sprite}::{variant}";
     public static string ImageUrl(string slug) => $"images/sprites/{slug}_basic.webp";
-    public static string VariantImageUrl(string slug, SpriteVariant variant)
-    {
-        var suffix = variant == SpriteVariant.Holofoil && slug is "air" or "ghost" ? "holo" : Variants[variant].ImageSuffix;
-        return $"images/sprites/{slug}_{suffix}.webp";
-    }
+    public static string VariantImageUrl(string slug, SpriteVariant variant) =>
+        $"images/sprites/{slug}_{Variants[variant].ImageSuffix}.webp";
     private static SpriteDefinition CreateSprite(string name, string slug, string rarity, string ability, string[] variants, string colors)
     {
         var palette = colors.Split(',', 2);
