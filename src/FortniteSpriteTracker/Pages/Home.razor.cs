@@ -11,6 +11,7 @@ public partial class Home
     private static readonly string[] CollectionFilters = ["All", "Owned", "Missing", "Mastered"];
     private readonly HashSet<string> owned = [];
     private readonly HashSet<string> mastered = [];
+    private readonly Dictionary<string, LocalProgress> localProgress = new(StringComparer.Ordinal);
 
     [Inject] private BrowserStorage Storage { get; set; } = null!;
     [Inject] private BrowserPrintService Printer { get; set; } = null!;
@@ -57,10 +58,26 @@ public partial class Home
 
         var savedOwned = await Storage.GetAsync("sprite-scout-owned", Array.Empty<string>());
         var savedMastered = await Storage.GetAsync("sprite-scout-mastered", Array.Empty<string>());
+        var savedProgress = await Storage.GetAsync(
+            "sprite-scout-progress-v2",
+            new Dictionary<string, LocalProgress>());
 
-        owned.UnionWith(savedOwned);
-        mastered.UnionWith(savedMastered);
-        owned.UnionWith(mastered);
+        foreach (var item in savedProgress)
+        {
+            localProgress[item.Key] = item.Value;
+        }
+
+        foreach (var key in savedOwned.Union(savedMastered))
+        {
+            localProgress.TryAdd(key, new LocalProgress(
+                savedOwned.Contains(key) || savedMastered.Contains(key),
+                savedMastered.Contains(key),
+                DateTimeOffset.MinValue,
+                null,
+                false));
+        }
+
+        ApplyLocalProgress();
 
         if (profile is not null)
         {
@@ -91,6 +108,7 @@ public partial class Home
     {
         await Storage.SetAsync("sprite-scout-owned", owned);
         await Storage.SetAsync("sprite-scout-mastered", mastered);
+        await Storage.SetAsync("sprite-scout-progress-v2", localProgress);
     }
 
     private async Task LoadAuthenticatedCollectionAsync()
@@ -98,31 +116,50 @@ public partial class Home
         try
         {
             var serverProgress = await Collection.GetAsync();
-            var migrationKey = $"sprite-scout-migrated-{profile!.Id}";
-            var pendingKey = $"sprite-scout-sync-pending-{profile.Id}";
-            var hasMigrated = await Storage.GetAsync(migrationKey, false);
-            var hasPendingChanges = await Storage.GetAsync(pendingKey, false);
+            var serverByKey = serverProgress
+                .Select(item => ToLocalProgress(item, profile!.Id))
+                .Where(item => item is not null)
+                .ToDictionary(item => item!.Value.Key, item => item!.Value.Progress);
 
-            if (hasMigrated && !hasPendingChanges)
+            foreach (var item in localProgress.ToArray())
             {
-                owned.Clear();
-                mastered.Clear();
-                ApplyServerProgress(serverProgress);
-            }
-            else
-            {
-                ApplyServerProgress(serverProgress);
-                var synchronized = true;
-
-                foreach (var key in owned.Union(mastered).ToArray())
+                if (serverByKey.TryGetValue(item.Key, out var serverItem))
                 {
-                    synchronized &= await SaveToAccountAsync(key);
+                    if (item.Value.AccountId == profile!.Id
+                        && item.Value.UpdatedAtUtc > serverItem.UpdatedAtUtc)
+                    {
+                        await SaveToAccountAsync(item.Key, item.Value);
+                    }
+                    else
+                    {
+                        localProgress[item.Key] = serverItem;
+                    }
                 }
-
-                await Storage.SetAsync(migrationKey, synchronized);
-                await Storage.SetAsync(pendingKey, !synchronized);
+                else if (item.Value.AccountId is null
+                    && (item.Value.IsOwned || item.Value.IsMastered))
+                {
+                    await SaveToAccountAsync(item.Key, item.Value);
+                }
+                else if (item.Value.AccountId == profile!.Id && item.Value.IsPending)
+                {
+                    await SaveToAccountAsync(item.Key, item.Value);
+                }
+                else if (item.Value.AccountId != profile!.Id)
+                {
+                    localProgress.Remove(item.Key);
+                }
+                else
+                {
+                    localProgress.Remove(item.Key);
+                }
             }
 
+            foreach (var item in serverByKey)
+            {
+                localProgress.TryAdd(item.Key, item.Value);
+            }
+
+            ApplyLocalProgress();
             await SaveAsync();
         }
         catch (HttpRequestException)
@@ -131,31 +168,41 @@ public partial class Home
         }
     }
 
-    private void ApplyServerProgress(IEnumerable<SpriteProgressDto> progress)
+    private static (string Key, LocalProgress Progress)? ToLocalProgress(
+        SpriteProgressDto item,
+        Guid accountId)
     {
-        foreach (var item in progress)
+        var sprite = SpriteData.Sprites.FirstOrDefault(candidate => candidate.Slug == item.SpriteSlug);
+        if (sprite is null || !Enum.TryParse<SpriteVariant>(item.Variant, out var spriteVariant))
         {
-            var sprite = SpriteData.Sprites.FirstOrDefault(candidate => candidate.Slug == item.SpriteSlug);
-            if (sprite is null || !Enum.TryParse<SpriteVariant>(item.Variant, out var spriteVariant))
+            return null;
+        }
+
+        return (
+            SpriteData.Key(sprite.Name, spriteVariant),
+            new LocalProgress(item.IsOwned, item.IsMastered, item.UpdatedAtUtc, accountId, false));
+    }
+
+    private void ApplyLocalProgress()
+    {
+        owned.Clear();
+        mastered.Clear();
+
+        foreach (var item in localProgress)
+        {
+            if (item.Value.IsOwned || item.Value.IsMastered)
             {
-                continue;
+                owned.Add(item.Key);
             }
 
-            var key = SpriteData.Key(sprite.Name, spriteVariant);
-            if (item.IsOwned)
+            if (item.Value.IsMastered)
             {
-                owned.Add(key);
-            }
-
-            if (item.IsMastered)
-            {
-                mastered.Add(key);
-                owned.Add(key);
+                mastered.Add(item.Key);
             }
         }
     }
 
-    private async Task<bool> SaveToAccountAsync(string key)
+    private async Task<bool> SaveToAccountAsync(string key, LocalProgress progress)
     {
         if (profile is null || !TryGetSpriteVariant(key, out var sprite, out var spriteVariant))
         {
@@ -164,11 +211,17 @@ public partial class Home
 
         try
         {
-            await Collection.UpdateAsync(new UpdateSpriteProgressRequest(
+            var saved = await Collection.UpdateAsync(new UpdateSpriteProgressRequest(
                 sprite.Slug,
                 spriteVariant.ToString(),
-                owned.Contains(key),
-                mastered.Contains(key)));
+                progress.IsOwned,
+                progress.IsMastered));
+            localProgress[key] = new LocalProgress(
+                saved.IsOwned,
+                saved.IsMastered,
+                saved.UpdatedAtUtc,
+                profile.Id,
+                false);
             return true;
         }
         catch (HttpRequestException)
@@ -208,10 +261,17 @@ public partial class Home
             mastered.Remove(key);
         }
 
+        localProgress[key] = new LocalProgress(
+            owned.Contains(key),
+            mastered.Contains(key),
+            DateTimeOffset.UtcNow,
+            profile?.Id,
+            profile is not null);
         await SaveAsync();
-        if (!await SaveToAccountAsync(key) && profile is not null)
+        if (profile is not null)
         {
-            await Storage.SetAsync($"sprite-scout-sync-pending-{profile.Id}", true);
+            await SaveToAccountAsync(key, localProgress[key]);
+            await SaveAsync();
         }
     }
 
@@ -223,10 +283,17 @@ public partial class Home
             owned.Add(key);
         }
 
+        localProgress[key] = new LocalProgress(
+            owned.Contains(key),
+            mastered.Contains(key),
+            DateTimeOffset.UtcNow,
+            profile?.Id,
+            profile is not null);
         await SaveAsync();
-        if (!await SaveToAccountAsync(key) && profile is not null)
+        if (profile is not null)
         {
-            await Storage.SetAsync($"sprite-scout-sync-pending-{profile.Id}", true);
+            await SaveToAccountAsync(key, localProgress[key]);
+            await SaveAsync();
         }
     }
 
@@ -257,4 +324,11 @@ public partial class Home
         printBlank = false;
         (viewMode, filter, rarity, variant, query) = previousState;
     }
+
+    private sealed record LocalProgress(
+        bool IsOwned,
+        bool IsMastered,
+        DateTimeOffset UpdatedAtUtc,
+        Guid? AccountId,
+        bool IsPending);
 }

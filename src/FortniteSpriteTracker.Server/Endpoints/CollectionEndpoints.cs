@@ -53,6 +53,26 @@ public static class CollectionEndpoints
                 [user.Id, spriteSlug, variant],
                 cancellationToken);
 
+            var isMastered = request.IsMastered;
+            var isOwned = request.IsOwned || isMastered;
+            var updatedAtUtc = DateTimeOffset.UtcNow;
+
+            if (!isOwned && !isMastered)
+            {
+                if (progress is not null)
+                {
+                    database.SpriteProgress.Remove(progress);
+                    await database.SaveChangesAsync(cancellationToken);
+                }
+
+                return Results.Ok(new SpriteProgressDto(
+                    spriteSlug,
+                    variant,
+                    false,
+                    false,
+                    updatedAtUtc));
+            }
+
             if (progress is null)
             {
                 progress = new SpriteProgress
@@ -64,9 +84,9 @@ public static class CollectionEndpoints
                 database.SpriteProgress.Add(progress);
             }
 
-            progress.IsMastered = request.IsMastered;
-            progress.IsOwned = request.IsOwned || request.IsMastered;
-            progress.UpdatedAtUtc = DateTimeOffset.UtcNow;
+            progress.IsMastered = isMastered;
+            progress.IsOwned = isOwned;
+            progress.UpdatedAtUtc = updatedAtUtc;
             await database.SaveChangesAsync(cancellationToken);
 
             return Results.Ok(new SpriteProgressDto(
