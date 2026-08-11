@@ -15,6 +15,43 @@
             <ProfileSetup Profile="@profile" ProfileSaved="SaveProfileAsync" />
         }
 
+        @if (profile is null && showAnonymousWarning)
+        {
+            <aside class="syncNotice anonymousNotice" role="status">
+                <div>
+                    <strong>Saved on this device only</strong>
+                    <span>Sign in to keep your Sprite collection available across devices.</span>
+                </div>
+                <a href="auth/login?returnUrl=%2F%23collection">Sign in with Google</a>
+            </aside>
+        }
+
+        @if (profile is not null && showImportPrompt)
+        {
+            <aside class="syncNotice importNotice" role="status">
+                <div>
+                    <strong>Browser selections found</strong>
+                    <span>Your database collection is shown below. Add selections made before sign-in without replacing existing saved progress?</span>
+                </div>
+                <div class="syncNoticeActions">
+                    <button class="primary" disabled="@importingAnonymousProgress" @onclick="ImportAnonymousProgressAsync">
+                        @(importingAnonymousProgress ? "Importing..." : "Import selections")
+                    </button>
+                    <button disabled="@importingAnonymousProgress" @onclick="DismissImportPrompt">Not now</button>
+                </div>
+            </aside>
+        }
+
+        @if (syncError is not null)
+        {
+            <aside class="syncNotice syncError" role="alert">
+                <div>
+                    <strong>Collection sync interrupted</strong>
+                    <span>@syncError</span>
+                </div>
+            </aside>
+        }
+
         <div class="collectionHead">
             <div>
                 <div class="sectionKicker">YOUR FIELD GUIDE</div>

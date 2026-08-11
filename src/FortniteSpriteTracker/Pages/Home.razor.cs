@@ -12,6 +12,7 @@ public partial class Home
     private readonly HashSet<string> owned = [];
     private readonly HashSet<string> mastered = [];
     private readonly Dictionary<string, LocalProgress> localProgress = new(StringComparer.Ordinal);
+    private readonly HashSet<string> serverKeys = [];
 
     [Inject] private BrowserStorage Storage { get; set; } = null!;
     [Inject] private BrowserPrintService Printer { get; set; } = null!;
@@ -24,6 +25,10 @@ public partial class Home
     private string query = "";
     private string viewMode = "Checklist";
     private bool printBlank;
+    private bool showAnonymousWarning;
+    private bool showImportPrompt;
+    private bool importingAnonymousProgress;
+    private string? syncError;
     private UserProfileDto? profile;
 
     private string CubeHeroUrl => SpriteData.VariantImageUrl("zeropoint", SpriteVariant.Cube);
@@ -64,7 +69,10 @@ public partial class Home
 
         foreach (var item in savedProgress)
         {
-            localProgress[item.Key] = item.Value;
+            if (item.Value.AccountId is null)
+            {
+                localProgress[item.Key] = item.Value;
+            }
         }
 
         foreach (var key in savedOwned.Union(savedMastered))
@@ -77,11 +85,14 @@ public partial class Home
                 false));
         }
 
-        ApplyLocalProgress();
-
         if (profile is not null)
         {
+            showImportPrompt = localProgress.Values.Any(item => item.IsOwned || item.IsMastered);
             await LoadAuthenticatedCollectionAsync();
+        }
+        else
+        {
+            ApplyLocalProgress();
         }
 
         StateHasChanged();
@@ -106,8 +117,17 @@ public partial class Home
 
     private async Task SaveAsync()
     {
-        await Storage.SetAsync("sprite-scout-owned", owned);
-        await Storage.SetAsync("sprite-scout-mastered", mastered);
+        var anonymousOwned = localProgress
+            .Where(item => item.Value.IsOwned || item.Value.IsMastered)
+            .Select(item => item.Key)
+            .ToArray();
+        var anonymousMastered = localProgress
+            .Where(item => item.Value.IsMastered)
+            .Select(item => item.Key)
+            .ToArray();
+
+        await Storage.SetAsync("sprite-scout-owned", anonymousOwned);
+        await Storage.SetAsync("sprite-scout-mastered", anonymousMastered);
         await Storage.SetAsync("sprite-scout-progress-v2", localProgress);
     }
 
@@ -121,50 +141,18 @@ public partial class Home
                 .Where(item => item is not null)
                 .ToDictionary(item => item!.Value.Key, item => item!.Value.Progress);
 
-            foreach (var item in localProgress.ToArray())
-            {
-                if (serverByKey.TryGetValue(item.Key, out var serverItem))
-                {
-                    if (item.Value.AccountId == profile!.Id
-                        && item.Value.UpdatedAtUtc > serverItem.UpdatedAtUtc)
-                    {
-                        await SaveToAccountAsync(item.Key, item.Value);
-                    }
-                    else
-                    {
-                        localProgress[item.Key] = serverItem;
-                    }
-                }
-                else if (item.Value.AccountId is null
-                    && (item.Value.IsOwned || item.Value.IsMastered))
-                {
-                    await SaveToAccountAsync(item.Key, item.Value);
-                }
-                else if (item.Value.AccountId == profile!.Id && item.Value.IsPending)
-                {
-                    await SaveToAccountAsync(item.Key, item.Value);
-                }
-                else if (item.Value.AccountId != profile!.Id)
-                {
-                    localProgress.Remove(item.Key);
-                }
-                else
-                {
-                    localProgress.Remove(item.Key);
-                }
-            }
-
-            foreach (var item in serverByKey)
-            {
-                localProgress.TryAdd(item.Key, item.Value);
-            }
-
-            ApplyLocalProgress();
-            await SaveAsync();
+            serverKeys.Clear();
+            serverKeys.UnionWith(serverByKey.Keys);
+            owned.Clear();
+            mastered.Clear();
+            ApplyProgress(serverByKey);
+            syncError = null;
         }
         catch (HttpRequestException)
         {
-            // Browser storage remains available if account synchronization is interrupted.
+            owned.Clear();
+            mastered.Clear();
+            syncError = "We couldn't load your saved collection. Your database progress was not changed.";
         }
     }
 
@@ -188,7 +176,12 @@ public partial class Home
         owned.Clear();
         mastered.Clear();
 
-        foreach (var item in localProgress)
+        ApplyProgress(localProgress);
+    }
+
+    private void ApplyProgress(IEnumerable<KeyValuePair<string, LocalProgress>> progress)
+    {
+        foreach (var item in progress)
         {
             if (item.Value.IsOwned || item.Value.IsMastered)
             {
@@ -202,6 +195,45 @@ public partial class Home
         }
     }
 
+    private async Task ImportAnonymousProgressAsync()
+    {
+        if (profile is null || importingAnonymousProgress)
+        {
+            return;
+        }
+
+        importingAnonymousProgress = true;
+        syncError = null;
+
+        try
+        {
+            foreach (var item in localProgress.Where(item =>
+                         !serverKeys.Contains(item.Key)
+                         && (item.Value.IsOwned || item.Value.IsMastered)).ToArray())
+            {
+                if (!await SaveToAccountAsync(item.Key, item.Value))
+                {
+                    throw new HttpRequestException("Anonymous progress import failed.");
+                }
+            }
+
+            localProgress.Clear();
+            await SaveAsync();
+            showImportPrompt = false;
+            await LoadAuthenticatedCollectionAsync();
+        }
+        catch (HttpRequestException)
+        {
+            syncError = "We couldn't import the browser selections. They are still saved on this device.";
+        }
+        finally
+        {
+            importingAnonymousProgress = false;
+        }
+    }
+
+    private void DismissImportPrompt() => showImportPrompt = false;
+
     private async Task<bool> SaveToAccountAsync(string key, LocalProgress progress)
     {
         if (profile is null || !TryGetSpriteVariant(key, out var sprite, out var spriteVariant))
@@ -211,17 +243,11 @@ public partial class Home
 
         try
         {
-            var saved = await Collection.UpdateAsync(new UpdateSpriteProgressRequest(
+            await Collection.UpdateAsync(new UpdateSpriteProgressRequest(
                 sprite.Slug,
                 spriteVariant.ToString(),
                 progress.IsOwned,
                 progress.IsMastered));
-            localProgress[key] = new LocalProgress(
-                saved.IsOwned,
-                saved.IsMastered,
-                saved.UpdatedAtUtc,
-                profile.Id,
-                false);
             return true;
         }
         catch (HttpRequestException)
@@ -252,6 +278,9 @@ public partial class Home
 
     private async Task ToggleOwned(string key)
     {
+        var wasOwned = owned.Contains(key);
+        var wasMastered = mastered.Contains(key);
+
         if (!owned.Remove(key))
         {
             owned.Add(key);
@@ -261,39 +290,66 @@ public partial class Home
             mastered.Remove(key);
         }
 
-        localProgress[key] = new LocalProgress(
-            owned.Contains(key),
-            mastered.Contains(key),
-            DateTimeOffset.UtcNow,
-            profile?.Id,
-            profile is not null);
-        await SaveAsync();
-        if (profile is not null)
+        if (profile is null)
         {
-            await SaveToAccountAsync(key, localProgress[key]);
+            localProgress[key] = new LocalProgress(
+                owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, null, false);
             await SaveAsync();
+            showAnonymousWarning = true;
+            return;
+        }
+
+        var progress = new LocalProgress(
+            owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, profile.Id, true);
+        if (!await SaveToAccountAsync(key, progress))
+        {
+            SetProgress(key, wasOwned, wasMastered);
+            syncError = "That change couldn't be saved, so your database collection was restored.";
         }
     }
 
     private async Task ToggleMastered(string key)
     {
+        var wasOwned = owned.Contains(key);
+        var wasMastered = mastered.Contains(key);
+
         if (!mastered.Remove(key))
         {
             mastered.Add(key);
             owned.Add(key);
         }
 
-        localProgress[key] = new LocalProgress(
-            owned.Contains(key),
-            mastered.Contains(key),
-            DateTimeOffset.UtcNow,
-            profile?.Id,
-            profile is not null);
-        await SaveAsync();
-        if (profile is not null)
+        if (profile is null)
         {
-            await SaveToAccountAsync(key, localProgress[key]);
+            localProgress[key] = new LocalProgress(
+                owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, null, false);
             await SaveAsync();
+            showAnonymousWarning = true;
+            return;
+        }
+
+        var progress = new LocalProgress(
+            owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, profile.Id, true);
+        if (!await SaveToAccountAsync(key, progress))
+        {
+            SetProgress(key, wasOwned, wasMastered);
+            syncError = "That change couldn't be saved, so your database collection was restored.";
+        }
+    }
+
+    private void SetProgress(string key, bool isOwned, bool isMastered)
+    {
+        owned.Remove(key);
+        mastered.Remove(key);
+
+        if (isOwned || isMastered)
+        {
+            owned.Add(key);
+        }
+
+        if (isMastered)
+        {
+            mastered.Add(key);
         }
     }
 
