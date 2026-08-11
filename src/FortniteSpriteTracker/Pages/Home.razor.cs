@@ -1,5 +1,6 @@
 using FortniteSpriteTracker.Models;
 using FortniteSpriteTracker.Services;
+using FortniteSpriteTracker.Shared.Profiles;
 using Microsoft.AspNetCore.Components;
 
 namespace FortniteSpriteTracker.Pages;
@@ -12,6 +13,7 @@ public partial class Home
 
     [Inject] private BrowserStorage Storage { get; set; } = null!;
     [Inject] private BrowserPrintService Printer { get; set; } = null!;
+    [Inject] private AccountClient Account { get; set; } = null!;
 
     private string filter = "All";
     private string rarity = "All";
@@ -19,6 +21,7 @@ public partial class Home
     private string query = "";
     private string viewMode = "Checklist";
     private bool printBlank;
+    private UserProfileDto? profile;
 
     private string CubeHeroUrl => SpriteData.VariantImageUrl("zeropoint", SpriteVariant.Cube);
     private int OwnedPercent => (int)Math.Round(owned.Count * 100d / SpriteData.TotalEntries);
@@ -30,6 +33,18 @@ public partial class Home
             : [Enum.Parse<SpriteVariant>(variant)];
 
     private IEnumerable<SpriteDefinition> VisibleSprites => SpriteData.Sprites.Where(SpriteIsVisible);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            profile = await Account.GetProfileAsync();
+        }
+        catch (HttpRequestException)
+        {
+            // The client remains usable when running without the account backend.
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -68,6 +83,11 @@ public partial class Home
     {
         await Storage.SetAsync("sprite-scout-owned", owned);
         await Storage.SetAsync("sprite-scout-mastered", mastered);
+    }
+
+    private async Task SaveProfileAsync(UpdateUserProfileRequest request)
+    {
+        profile = await Account.UpdateProfileAsync(request);
     }
 
     private async Task ToggleOwned(string key)

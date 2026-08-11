@@ -3,13 +3,18 @@
 <PageTitle>Sprite Scout - Fortnite Sprite Tracker</PageTitle>
 
 <main class="@(printBlank ? "printBlank" : "")">
-    <SiteHeader />
+    <SiteHeader Profile="@profile" />
     <HeroSection CubeHeroUrl="@CubeHeroUrl"
                  TotalEntries="@SpriteData.TotalEntries"
                  FamilyCount="@SpriteData.Sprites.Length"
                  OnShowMissing="ShowMissing" />
 
     <section class="collection" id="collection">
+        @if (profile is { IsProfileComplete: false })
+        {
+            <ProfileSetup Profile="@profile" ProfileSaved="SaveProfileAsync" />
+        }
+
         <div class="collectionHead">
             <div>
                 <div class="sectionKicker">YOUR FIELD GUIDE</div>

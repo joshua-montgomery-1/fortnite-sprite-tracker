@@ -1,0 +1,46 @@
+<section class="profileSetup" aria-labelledby="profile-setup-title">
+    <div>
+        <div class="sectionKicker">ACCOUNT SETUP</div>
+        <h2 id="profile-setup-title">FINISH YOUR FIELD GUIDE PROFILE.</h2>
+        <p>Add the name other collectors will see and your Epic Games Display Name for future lookup and comparison.</p>
+    </div>
+    <label>
+        DISPLAY NAME
+        <input maxlength="80" @bind="displayName" />
+    </label>
+    <label>
+        EPIC GAMES DISPLAY NAME
+        <input minlength="3" maxlength="16" @bind="epicDisplayName" />
+    </label>
+    <button class="primary" disabled="@isSaving" @onclick="SaveAsync">@(isSaving ? "Saving…" : "Save profile")</button>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public UserProfileDto Profile { get; set; } = null!;
+    [Parameter] public EventCallback<UpdateUserProfileRequest> ProfileSaved { get; set; }
+
+    private string displayName = "";
+    private string epicDisplayName = "";
+    private bool isSaving;
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = Profile.DisplayName;
+            epicDisplayName = Profile.EpicDisplayName ?? "";
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(displayName) || epicDisplayName.Trim().Length is < 3 or > 16)
+        {
+            return;
+        }
+
+        isSaving = true;
+        await ProfileSaved.InvokeAsync(new(displayName.Trim(), epicDisplayName.Trim()));
+        isSaving = false;
+    }
+}

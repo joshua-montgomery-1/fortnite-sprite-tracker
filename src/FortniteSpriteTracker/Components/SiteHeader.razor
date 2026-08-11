@@ -7,5 +7,16 @@
         <a class="active" href="#collection">Collection</a>
         <a href="#field-notes">Field notes</a>
     </div>
-    <button class="signin"><span>↗</span> Sign in <small>SOON</small></button>
+    @if (Profile is null)
+    {
+        <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in with Google</a>
+    }
+    else
+    {
+        <span class="signin"><span>●</span> @Profile.DisplayName</span>
+    }
 </nav>
+
+@code {
+    [Parameter] public UserProfileDto? Profile { get; set; }
+}
