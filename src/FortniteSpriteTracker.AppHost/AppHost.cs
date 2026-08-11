@@ -1,13 +1,24 @@
+using Microsoft.Extensions.Configuration;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-var database = builder
-    .AddPostgres("postgres")
-    .WithDataVolume()
-    .AddDatabase("sprite-tracker");
+var server = builder.AddProject<Projects.FortniteSpriteTracker_Server>("server");
 
-builder
-    .AddProject<Projects.FortniteSpriteTracker_Server>("server")
-    .WithReference(database)
-    .WaitFor(database);
+if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("sprite-tracker")))
+{
+    var database = builder
+        .AddPostgres("postgres")
+        .WithDataVolume()
+        .AddDatabase("sprite-tracker");
+
+    server
+        .WithReference(database)
+        .WaitFor(database);
+}
+else
+{
+    var database = builder.AddConnectionString("sprite-tracker");
+    server.WithReference(database);
+}
 
 builder.Build().Run();

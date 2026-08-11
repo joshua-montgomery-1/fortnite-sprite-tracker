@@ -26,6 +26,27 @@ Aspire starts PostgreSQL, waits for it to become healthy, injects its connection
 
 The application stores Google's immutable subject identifier, the user's chosen display name, and an optional Epic Games Display Name. Email addresses and Google avatar URLs are not persisted.
 
+## Use Supabase PostgreSQL
+
+The application talks to Supabase through the server using EF Core and Npgsql. Database credentials are never sent to the Blazor WebAssembly client.
+
+1. Create a Supabase project and open **Connect** in its dashboard.
+2. Copy the .NET/Npgsql connection details. Prefer the direct connection when the host supports IPv6; otherwise use the Supavisor **session pooler** connection for an IPv4 host. Do not use transaction mode for EF Core migrations.
+3. Store the connection string in the Aspire AppHost's user secrets:
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:sprite-tracker" "Host=YOUR_HOST;Port=5432;Database=postgres;Username=YOUR_USER;Password=YOUR_PASSWORD;SSL Mode=Require" --project src/FortniteSpriteTracker.AppHost
+dotnet run --project src/FortniteSpriteTracker.AppHost
+```
+
+When that secret is present, Aspire uses Supabase instead of starting the local PostgreSQL container. Remove it to return to the local database:
+
+```powershell
+dotnet user-secrets remove "ConnectionStrings:sprite-tracker" --project src/FortniteSpriteTracker.AppHost
+```
+
+On Azure or another production host, set the same secret as the environment variable `ConnectionStrings__sprite-tracker`. Also provide `Authentication__Google__ClientId` and `Authentication__Google__ClientSecret`. The server applies committed EF Core migrations during startup, so the Supabase database user must be allowed to create and alter tables.
+
 ## Build and publish
 
 ```powershell

@@ -8,8 +8,15 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+var databaseConnectionString = builder.Configuration.GetConnectionString("sprite-tracker")
+    ?? throw new InvalidOperationException(
+        "The 'ConnectionStrings:sprite-tracker' configuration value is required.");
+
 builder.Services.AddDbContext<SpriteTrackerDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("sprite-tracker")));
+    options.UseNpgsql(
+        databaseConnectionString,
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
 builder.Services.AddHostedService<DatabaseInitializer>();
 builder.Services.AddScoped<CurrentUserService>();
 
