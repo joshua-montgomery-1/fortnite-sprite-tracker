@@ -160,8 +160,9 @@ public partial class Home
         SpriteProgressDto item,
         Guid accountId)
     {
-        var sprite = SpriteData.Sprites.FirstOrDefault(candidate => candidate.Slug == item.SpriteSlug);
-        if (sprite is null || !Enum.TryParse<SpriteVariant>(item.Variant, out var spriteVariant))
+        var sprite = SpriteData.Sprites.FirstOrDefault(candidate =>
+            string.Equals(candidate.Slug, item.SpriteSlug, StringComparison.OrdinalIgnoreCase));
+        if (sprite is null || !Enum.TryParse<SpriteVariant>(item.Variant, true, out var spriteVariant))
         {
             return null;
         }

@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FortniteSpriteTracker.Shared.Collections;
 
@@ -8,9 +9,17 @@ public sealed class CollectionClient(HttpClient httpClient)
     public async Task<IReadOnlyList<SpriteProgressDto>> GetAsync(
         CancellationToken cancellationToken = default)
     {
-        return await httpClient.GetFromJsonAsync<SpriteProgressDto[]>(
-            "api/me/collection/",
-            cancellationToken) ?? [];
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/me/collection/");
+        request.Headers.CacheControl = new CacheControlHeaderValue
+        {
+            NoCache = true,
+            NoStore = true
+        };
+
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<SpriteProgressDto[]>(cancellationToken) ?? [];
     }
 
     public async Task<SpriteProgressDto> UpdateAsync(

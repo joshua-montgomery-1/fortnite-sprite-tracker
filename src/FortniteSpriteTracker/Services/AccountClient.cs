@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FortniteSpriteTracker.Shared.Profiles;
 
@@ -8,7 +9,14 @@ public sealed class AccountClient(HttpClient httpClient)
 {
     public async Task<UserProfileDto?> GetProfileAsync(CancellationToken cancellationToken = default)
     {
-        using var response = await httpClient.GetAsync("api/me", cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/me/");
+        request.Headers.CacheControl = new CacheControlHeaderValue
+        {
+            NoCache = true,
+            NoStore = true
+        };
+
+        using var response = await httpClient.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
             return null;

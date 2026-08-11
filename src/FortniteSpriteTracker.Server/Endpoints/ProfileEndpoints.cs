@@ -13,6 +13,7 @@ public static class ProfileEndpoints
 
         group.MapGet("/", async (HttpContext context, CurrentUserService currentUser, CancellationToken cancellationToken) =>
         {
+            SetPrivateNoStoreHeaders(context.Response);
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
             return Results.Ok(ToDto(user));
         });
@@ -56,6 +57,13 @@ public static class ProfileEndpoints
         });
 
         return endpoints;
+    }
+
+    private static void SetPrivateNoStoreHeaders(HttpResponse response)
+    {
+        response.Headers.CacheControl = "no-store, no-cache, private";
+        response.Headers.Pragma = "no-cache";
+        response.Headers.Vary = "Cookie";
     }
 
     private static UserProfileDto ToDto(Data.Entities.UserAccount user) =>

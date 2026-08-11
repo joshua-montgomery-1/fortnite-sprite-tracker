@@ -19,6 +19,7 @@ public static class CollectionEndpoints
             SpriteTrackerDbContext database,
             CancellationToken cancellationToken) =>
         {
+            SetPrivateNoStoreHeaders(context.Response);
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
             var progress = await database.SpriteProgress
                 .AsNoTracking()
@@ -98,5 +99,12 @@ public static class CollectionEndpoints
         });
 
         return endpoints;
+    }
+
+    private static void SetPrivateNoStoreHeaders(HttpResponse response)
+    {
+        response.Headers.CacheControl = "no-store, no-cache, private";
+        response.Headers.Pragma = "no-cache";
+        response.Headers.Vary = "Cookie";
     }
 }
