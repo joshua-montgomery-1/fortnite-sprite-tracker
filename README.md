@@ -13,16 +13,18 @@ A Fortnite Sprite collection tracker built with .NET 10, Blazor WebAssembly, and
 
 ## Run locally
 
+The complete development stack is orchestrated by .NET Aspire and requires a Docker-compatible container runtime for PostgreSQL.
+
 ```powershell
 dotnet tool restore
-dotnet user-secrets set "ConnectionStrings:SpriteTracker" "Host=localhost;Port=5432;Database=sprite_tracker;Username=postgres;Password=your-password" --project src/FortniteSpriteTracker.Server
 dotnet user-secrets set "Authentication:Google:ClientId" "your-client-id" --project src/FortniteSpriteTracker.Server
 dotnet user-secrets set "Authentication:Google:ClientSecret" "your-client-secret" --project src/FortniteSpriteTracker.Server
-dotnet tool run dotnet-ef database update --project src/FortniteSpriteTracker.Server --startup-project src/FortniteSpriteTracker.Server
-dotnet run --project src/FortniteSpriteTracker.Server
+dotnet run --project src/FortniteSpriteTracker.AppHost
 ```
 
-Configure Google OAuth with the server's `/signin-google` callback URL. The application stores Google's immutable subject identifier, the user's chosen display name, and an optional Epic Games Display Name. Email addresses and Google avatar URLs are not persisted.
+Aspire starts PostgreSQL, waits for it to become healthy, injects its connection string into the server, applies EF Core migrations, and starts the hosted Blazor application. Configure Google OAuth with the server's `/signin-google` callback URL. Google credentials are optional for startup but required to sign in.
+
+The application stores Google's immutable subject identifier, the user's chosen display name, and an optional Epic Games Display Name. Email addresses and Google avatar URLs are not persisted.
 
 ## Build and publish
 
@@ -39,6 +41,8 @@ The server hosts the Blazor WebAssembly output and authenticated API from the sa
 - `src/FortniteSpriteTracker` - Blazor WebAssembly client
 - `src/FortniteSpriteTracker.Server` - ASP.NET Core host, authentication, and persistence API
 - `src/FortniteSpriteTracker.Shared` - client/server API contracts
+- `src/FortniteSpriteTracker.AppHost` - Aspire orchestration for the server and PostgreSQL
+- `src/FortniteSpriteTracker.ServiceDefaults` - shared health checks, telemetry, and service discovery
 
 ## Notes
 

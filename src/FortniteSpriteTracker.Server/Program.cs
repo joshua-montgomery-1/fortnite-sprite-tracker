@@ -7,8 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
 builder.Services.AddDbContext<SpriteTrackerDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("SpriteTracker")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("sprite-tracker")));
+builder.Services.AddHostedService<DatabaseInitializer>();
 builder.Services.AddScoped<CurrentUserService>();
 
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
@@ -74,6 +76,7 @@ app.UseAuthorization();
 app.MapAuthenticationEndpoints(googleAuthenticationConfigured);
 app.MapProfileEndpoints();
 app.MapCollectionEndpoints();
+app.MapDefaultEndpoints();
 app.MapFallbackToFile("index.html");
 
 app.Run();

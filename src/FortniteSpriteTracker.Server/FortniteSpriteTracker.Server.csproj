@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FortniteSpriteTracker.Shared\FortniteSpriteTracker.Shared.csproj" />
     <ProjectReference Include="..\FortniteSpriteTracker\FortniteSpriteTracker.csproj" />
+    <ProjectReference Include="..\FortniteSpriteTracker.ServiceDefaults\FortniteSpriteTracker.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
