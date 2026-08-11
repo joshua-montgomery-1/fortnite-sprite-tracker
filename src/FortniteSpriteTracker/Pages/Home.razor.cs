@@ -1,5 +1,6 @@
 using FortniteSpriteTracker.Models;
 using FortniteSpriteTracker.Services;
+using FortniteSpriteTracker.Shared.Collections;
 using FortniteSpriteTracker.Shared.Profiles;
 using Microsoft.AspNetCore.Components;
 
@@ -14,6 +15,7 @@ public partial class Home
     [Inject] private BrowserStorage Storage { get; set; } = null!;
     [Inject] private BrowserPrintService Printer { get; set; } = null!;
     [Inject] private AccountClient Account { get; set; } = null!;
+    [Inject] private CollectionClient Collection { get; set; } = null!;
 
     private string filter = "All";
     private string rarity = "All";
@@ -59,6 +61,12 @@ public partial class Home
         owned.UnionWith(savedOwned);
         mastered.UnionWith(savedMastered);
         owned.UnionWith(mastered);
+
+        if (profile is not null)
+        {
+            await LoadAuthenticatedCollectionAsync();
+        }
+
         StateHasChanged();
     }
 
@@ -85,6 +93,105 @@ public partial class Home
         await Storage.SetAsync("sprite-scout-mastered", mastered);
     }
 
+    private async Task LoadAuthenticatedCollectionAsync()
+    {
+        try
+        {
+            var serverProgress = await Collection.GetAsync();
+            var migrationKey = $"sprite-scout-migrated-{profile!.Id}";
+            var pendingKey = $"sprite-scout-sync-pending-{profile.Id}";
+            var hasMigrated = await Storage.GetAsync(migrationKey, false);
+            var hasPendingChanges = await Storage.GetAsync(pendingKey, false);
+
+            if (hasMigrated && !hasPendingChanges)
+            {
+                owned.Clear();
+                mastered.Clear();
+                ApplyServerProgress(serverProgress);
+            }
+            else
+            {
+                ApplyServerProgress(serverProgress);
+                var synchronized = true;
+
+                foreach (var key in owned.Union(mastered).ToArray())
+                {
+                    synchronized &= await SaveToAccountAsync(key);
+                }
+
+                await Storage.SetAsync(migrationKey, synchronized);
+                await Storage.SetAsync(pendingKey, !synchronized);
+            }
+
+            await SaveAsync();
+        }
+        catch (HttpRequestException)
+        {
+            // Browser storage remains available if account synchronization is interrupted.
+        }
+    }
+
+    private void ApplyServerProgress(IEnumerable<SpriteProgressDto> progress)
+    {
+        foreach (var item in progress)
+        {
+            var sprite = SpriteData.Sprites.FirstOrDefault(candidate => candidate.Slug == item.SpriteSlug);
+            if (sprite is null || !Enum.TryParse<SpriteVariant>(item.Variant, out var spriteVariant))
+            {
+                continue;
+            }
+
+            var key = SpriteData.Key(sprite.Name, spriteVariant);
+            if (item.IsOwned)
+            {
+                owned.Add(key);
+            }
+
+            if (item.IsMastered)
+            {
+                mastered.Add(key);
+                owned.Add(key);
+            }
+        }
+    }
+
+    private async Task<bool> SaveToAccountAsync(string key)
+    {
+        if (profile is null || !TryGetSpriteVariant(key, out var sprite, out var spriteVariant))
+        {
+            return profile is null;
+        }
+
+        try
+        {
+            await Collection.UpdateAsync(new UpdateSpriteProgressRequest(
+                sprite.Slug,
+                spriteVariant.ToString(),
+                owned.Contains(key),
+                mastered.Contains(key)));
+            return true;
+        }
+        catch (HttpRequestException)
+        {
+            // The local selection remains saved and can be synchronized on a later visit.
+            return false;
+        }
+    }
+
+    private static bool TryGetSpriteVariant(
+        string key,
+        out SpriteDefinition sprite,
+        out SpriteVariant spriteVariant)
+    {
+        var separatorIndex = key.LastIndexOf("::", StringComparison.Ordinal);
+        var spriteName = separatorIndex > 0 ? key[..separatorIndex] : string.Empty;
+        var variantName = separatorIndex > 0 ? key[(separatorIndex + 2)..] : string.Empty;
+
+        spriteVariant = default;
+        sprite = SpriteData.Sprites.FirstOrDefault(candidate => candidate.Name == spriteName)!;
+        return sprite is not null && Enum.TryParse(variantName, out spriteVariant);
+    }
+
     private async Task SaveProfileAsync(UpdateUserProfileRequest request)
     {
         profile = await Account.UpdateProfileAsync(request);
@@ -102,6 +209,10 @@ public partial class Home
         }
 
         await SaveAsync();
+        if (!await SaveToAccountAsync(key) && profile is not null)
+        {
+            await Storage.SetAsync($"sprite-scout-sync-pending-{profile.Id}", true);
+        }
     }
 
     private async Task ToggleMastered(string key)
@@ -113,6 +224,10 @@ public partial class Home
         }
 
         await SaveAsync();
+        if (!await SaveToAccountAsync(key) && profile is not null)
+        {
+            await Storage.SetAsync($"sprite-scout-sync-pending-{profile.Id}", true);
+        }
     }
 
     private void ShowMissing() => filter = "Missing";
