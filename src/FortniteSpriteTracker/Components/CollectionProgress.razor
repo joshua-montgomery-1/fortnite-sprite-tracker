@@ -1,0 +1,30 @@
+<div class="progressPanel">
+    <div class="progressNumbers">
+        <div class="progressNumber ownedTotal">
+            <strong>@OwnedCount</strong>
+            <span>/ @TotalEntries<small>OWNED</small></span>
+        </div>
+        <div class="progressNumber">
+            <strong>@MasteredCount</strong>
+            <span>/ @TotalEntries<small>MASTERED</small></span>
+        </div>
+    </div>
+    <div class="dualTracks">
+        <div class="trackRow">
+            <span>OWNED · @OwnedPercent%</span>
+            <div class="progressTrack ownedTrack"><div style="width:@OwnedPercent%"></div></div>
+        </div>
+        <div class="trackRow">
+            <span>MASTERED · @MasteredPercent%</span>
+            <div class="progressTrack"><div style="width:@MasteredPercent%"></div></div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int OwnedCount { get; set; }
+    [Parameter] public int MasteredCount { get; set; }
+    [Parameter] public int TotalEntries { get; set; }
+    [Parameter] public int OwnedPercent { get; set; }
+    [Parameter] public int MasteredPercent { get; set; }
+}

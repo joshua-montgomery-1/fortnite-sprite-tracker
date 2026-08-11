@@ -1,0 +1,56 @@
+<div class="grid">
+    @foreach (var sprite in Sprites)
+    {
+        var keys = sprite.Variants.Select(variant => SpriteData.Key(sprite.Name, variant)).ToArray();
+
+        <article class="card @(keys.All(Mastered.Contains) ? "done" : "")">
+            <div class="cardTop">
+                <span class="rarity"><i style="background:@SpriteData.RarityColors[sprite.Rarity]"></i>@sprite.Rarity</span>
+                <span class="variantProgress">@keys.Count(Owned.Contains) OWNED · @keys.Count(Mastered.Contains) MASTERED</span>
+            </div>
+            <div class="spriteVisual" style="--c1:@sprite.PrimaryColor">
+                <img src="@SpriteData.ImageUrl(sprite.Slug)" alt="@sprite.Name Sprite" loading="eager" />
+                <span class="imageCredit">COMMUNITY ARTWORK</span>
+            </div>
+            <div class="cardBody">
+                <h3>@sprite.Name <small>SPRITE</small></h3>
+                <div class="ability">
+                    <span>ABILITY</span>
+                    <p>@sprite.Ability</p>
+                </div>
+                <div class="carouselLabel">
+                    <span>VARIANTS · SWIPE TO EXPLORE</span>
+                    <i>→</i>
+                </div>
+                <div class="variantCarousel" tabindex="0">
+                    @foreach (var variant in sprite.Variants)
+                    {
+                        var key = SpriteData.Key(sprite.Name, variant);
+                        var isOwned = Owned.Contains(key);
+                        var isMastered = Mastered.Contains(key);
+
+                        <div class="variantTile @(isOwned ? "owned" : "") @(isMastered ? "mastered" : "")">
+                            <span class="variantArt">
+                                <img src="@SpriteData.VariantImageUrl(sprite.Slug, variant)" alt="@variant @sprite.Name Sprite" loading="eager" />
+                            </span>
+                            <span class="variantName"><i style="background:@SpriteData.Variants[variant].Color"></i>@variant</span>
+                            <small>@SpriteData.Variants[variant].Bonus</small>
+                            <div class="variantActions">
+                                <button class="ownButton" @onclick="() => OwnedToggled.InvokeAsync(key)">@(isOwned ? "✓ Owned" : "+ Own")</button>
+                                <button class="masterButton" @onclick="() => MasteredToggled.InvokeAsync(key)">@(isMastered ? "★ Mastered" : "☆ Master")</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </article>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<SpriteDefinition> Sprites { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlySet<string> Owned { get; set; } = new HashSet<string>();
+    [Parameter, EditorRequired] public IReadOnlySet<string> Mastered { get; set; } = new HashSet<string>();
+    [Parameter] public EventCallback<string> OwnedToggled { get; set; }
+    [Parameter] public EventCallback<string> MasteredToggled { get; set; }
+}

@@ -1,0 +1,64 @@
+<div class="matrixWrap">
+    <table class="collectionMatrix">
+        <thead>
+            <tr>
+                <th class="spriteColumn"><span>SPRITE FAMILY</span></th>
+                @foreach (var variant in Variants)
+                {
+                    <th>
+                        <i style="background:@SpriteData.Variants[variant].Color"></i>
+                        <span>@variant</span>
+                        <small>@SpriteData.Variants[variant].Bonus</small>
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sprite in Sprites)
+            {
+                <tr>
+                    <th class="spriteColumn" title="@sprite.Ability">
+                        <img src="@SpriteData.ImageUrl(sprite.Slug)" alt="" />
+                        <span>
+                            <strong>@sprite.Name</strong>
+                            <small><i style="background:@SpriteData.RarityColors[sprite.Rarity]"></i>@sprite.Rarity</small>
+                        </span>
+                    </th>
+                    @foreach (var variant in Variants)
+                    {
+                        if (!sprite.Variants.Contains(variant))
+                        {
+                            <td class="unavailable"><span>—</span></td>
+                        }
+                        else
+                        {
+                            var key = SpriteData.Key(sprite.Name, variant);
+                            var isOwned = Owned.Contains(key);
+                            var isMastered = Mastered.Contains(key);
+
+                            <td class="@CellClass(isOwned, isMastered)">
+                                <img src="@SpriteData.VariantImageUrl(sprite.Slug, variant)" alt="@variant @sprite.Name" loading="eager" />
+                                <div>
+                                    <button @onclick="() => OwnedToggled.InvokeAsync(key)">@(isOwned ? "✓" : "○")<small>OWN</small></button>
+                                    <button @onclick="() => MasteredToggled.InvokeAsync(key)">@(isMastered ? "★" : "☆")<small>MASTER</small></button>
+                                </div>
+                            </td>
+                        }
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<SpriteDefinition> Sprites { get; set; } = [];
+    [Parameter, EditorRequired] public IEnumerable<SpriteVariant> Variants { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlySet<string> Owned { get; set; } = new HashSet<string>();
+    [Parameter, EditorRequired] public IReadOnlySet<string> Mastered { get; set; } = new HashSet<string>();
+    [Parameter] public EventCallback<string> OwnedToggled { get; set; }
+    [Parameter] public EventCallback<string> MasteredToggled { get; set; }
+
+    private static string CellClass(bool isOwned, bool isMastered) =>
+        $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered" : "")}";
+}
