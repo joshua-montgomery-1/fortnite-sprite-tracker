@@ -42,18 +42,6 @@ public partial class Home
 
     private IEnumerable<SpriteDefinition> VisibleSprites => SpriteData.Sprites.Where(SpriteIsVisible);
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            profile = await Account.GetProfileAsync();
-        }
-        catch (HttpRequestException)
-        {
-            // The client remains usable when running without the account backend.
-        }
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
@@ -85,6 +73,14 @@ public partial class Home
                 false));
         }
 
+        var accountLoaded = await LoadAccountAsync();
+        if (!accountLoaded)
+        {
+            ApplyLocalProgress();
+            StateHasChanged();
+            return;
+        }
+
         if (profile is not null)
         {
             showImportPrompt = localProgress.Values.Any(item => item.IsOwned || item.IsMastered);
@@ -96,6 +92,32 @@ public partial class Home
         }
 
         StateHasChanged();
+    }
+
+    private async Task<bool> LoadAccountAsync()
+    {
+        const int maximumAttempts = 3;
+
+        for (var attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            try
+            {
+                profile = await Account.GetProfileAsync();
+                syncError = null;
+                return true;
+            }
+            catch (HttpRequestException) when (attempt < maximumAttempts)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(250 * attempt));
+            }
+            catch (HttpRequestException)
+            {
+                syncError = "We couldn't verify your account. Refresh to load your database collection; browser selections are shown temporarily.";
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private bool SpriteIsVisible(SpriteDefinition sprite)

@@ -9,17 +9,32 @@ public sealed class CollectionClient(HttpClient httpClient)
     public async Task<IReadOnlyList<SpriteProgressDto>> GetAsync(
         CancellationToken cancellationToken = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "api/me/collection/");
-        request.Headers.CacheControl = new CacheControlHeaderValue
+        const int maximumAttempts = 3;
+
+        for (var attempt = 1; attempt <= maximumAttempts; attempt++)
         {
-            NoCache = true,
-            NoStore = true
-        };
+            using var request = new HttpRequestMessage(HttpMethod.Get, "api/me/collection/");
+            request.Headers.CacheControl = new CacheControlHeaderValue
+            {
+                NoCache = true,
+                NoStore = true
+            };
 
-        using var response = await httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
+            using var response = await httpClient.SendAsync(request, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<SpriteProgressDto[]>(cancellationToken) ?? [];
+            }
 
-        return await response.Content.ReadFromJsonAsync<SpriteProgressDto[]>(cancellationToken) ?? [];
+            if ((int)response.StatusCode < 500 || attempt == maximumAttempts)
+            {
+                response.EnsureSuccessStatusCode();
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(250 * attempt), cancellationToken);
+        }
+
+        throw new InvalidOperationException("The collection request completed without a response.");
     }
 
     public async Task<SpriteProgressDto> UpdateAsync(
