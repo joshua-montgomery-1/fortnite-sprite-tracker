@@ -3,6 +3,7 @@ using FortniteSpriteTracker.Server.Endpoints;
 using FortniteSpriteTracker.Server.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,10 @@ builder.Services.AddDbContext<SpriteTrackerDbContext>(options =>
     options.UseNpgsql(
         databaseConnectionString,
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
+builder.Services
+    .AddDataProtection()
+    .SetApplicationName("FortniteSpriteTracker")
+    .PersistKeysToDbContext<SpriteTrackerDbContext>();
 builder.Services.AddHostedService<DatabaseInitializer>();
 builder.Services.AddScoped<CurrentUserService>();
 

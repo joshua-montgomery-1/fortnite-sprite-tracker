@@ -1,5 +1,6 @@
 using FortniteSpriteTracker.Server.Data.Entities;
 using FortniteSpriteTracker.Models;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using CatalogSpriteVariant = FortniteSpriteTracker.Models.SpriteVariant;
 using SpriteEntity = FortniteSpriteTracker.Server.Data.Entities.Sprite;
@@ -7,8 +8,11 @@ using SpriteVariantEntity = FortniteSpriteTracker.Server.Data.Entities.SpriteVar
 
 namespace FortniteSpriteTracker.Server.Data;
 
-public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbContext> options) : DbContext(options)
+public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbContext> options) :
+    DbContext(options),
+    IDataProtectionKeyContext
 {
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<UserAccount> Users => Set<UserAccount>();
     public DbSet<Season> Seasons => Set<Season>();
     public DbSet<SpriteEntity> Sprites => Set<SpriteEntity>();
