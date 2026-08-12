@@ -121,6 +121,7 @@ app.MapGet("/auth/error", () => Results.Problem(
 app.MapAuthenticationEndpoints(googleAuthenticationConfigured);
 app.MapProfileEndpoints();
 app.MapCollectionEndpoints();
+app.MapPlayerEndpoints();
 app.MapDefaultEndpoints();
 app.MapFallbackToFile("index.html");
 

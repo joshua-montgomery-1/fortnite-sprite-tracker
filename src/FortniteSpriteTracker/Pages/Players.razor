@@ -1,0 +1,205 @@
+@page "/players"
+@page "/players/{PublicId:guid}"
+@using FortniteSpriteTracker.Models
+@using FortniteSpriteTracker.Services
+@using FortniteSpriteTracker.Shared.Players
+@inject PlayerClient PlayerApi
+@inject NavigationManager Navigation
+@inject IJSRuntime JavaScript
+
+<PageTitle>@(data is null ? "Find a player" : $"{data.Player.EpicDisplayName}'s Sprites") - Sprite Scout</PageTitle>
+
+<main>
+    <SiteHeader Profile="@viewerProfile" />
+    <section class="playerPage">
+        <div class="playerSearchPanel">
+            <div>
+                <span class="sectionKicker">PLAYER LOOKUP</span>
+                <h1>FIND A SPRITE SCOUT</h1>
+                <p>Search by exact Epic display name. Player links use a permanent public ID, so they keep working if a username changes.</p>
+            </div>
+            <form @onsubmit="SearchAsync" @onsubmit:preventDefault>
+                <label for="epic-search">EPIC DISPLAY NAME</label>
+                <div>
+                    <input id="epic-search" @bind="epicUsername" placeholder="Enter an Epic username" maxlength="16" />
+                    <button class="primary" disabled="@searching">@(searching ? "Searching..." : "Find player")</button>
+                </div>
+                @if (searchMessage is not null)
+                {
+                    <span class="searchMessage" role="status">@searchMessage</span>
+                }
+            </form>
+        </div>
+
+        @if (loading)
+        {
+            <div class="playerState">Loading this field guide...</div>
+        }
+        else if (PublicId is not null && data is null)
+        {
+            <div class="playerState"><strong>Player not found</strong><span>This link may be invalid, or the player has not completed their Epic profile.</span></div>
+        }
+        else if (data is not null)
+        {
+            <header class="playerHero">
+                <div>
+                    <span class="sectionKicker">PUBLIC FIELD GUIDE</span>
+                    <h2>@data.Player.EpicDisplayName</h2>
+                    <p>@data.Player.DisplayName · @data.Player.OwnedCount owned · @data.Player.MasteredCount mastered</p>
+                </div>
+                <div class="shareBox">
+                    <label>PERMANENT PLAYER LINK</label>
+                    <div><input readonly value="@CanonicalUrl" /><button @onclick="CopyLinkAsync">@(copied ? "Copied" : "Copy")</button></div>
+                </div>
+            </header>
+
+            @if (IsOwnProfile)
+            {
+                <aside class="compareNotice">This is your public collection. Share the permanent link so another signed-in player can compare it with theirs.</aside>
+            }
+            else if (data.Viewer is null)
+            {
+                <aside class="compareNotice">Sign in to see exactly what @data.Player.EpicDisplayName has that you don't. <a href="@LoginUrl">Sign in with Google</a></aside>
+            }
+            else
+            {
+                <div class="comparisonSummary">
+                    <div><strong>@TargetOnlyCount</strong><span>THEY HAVE, YOU DON'T</span></div>
+                    <div><strong>@ViewerOnlyCount</strong><span>YOU HAVE, THEY DON'T</span></div>
+                    <div><strong>@SharedCount</strong><span>OWNED BY BOTH</span></div>
+                </div>
+            }
+
+            <div class="playerToolbar">
+                <div class="segmented">
+                    <button class="@(mode == "collection" ? "selected" : "")" @onclick='() => mode = "collection"'>Their collection</button>
+                    @if (data.Viewer is not null && !IsOwnProfile)
+                    {
+                        <button class="@(mode == "target" ? "selected" : "")" @onclick='() => mode = "target"'>They have, you don't</button>
+                        <button class="@(mode == "viewer" ? "selected" : "")" @onclick='() => mode = "viewer"'>You have, they don't</button>
+                        <button class="@(mode == "shared" ? "selected" : "")" @onclick='() => mode = "shared"'>Both</button>
+                    }
+                </div>
+                <label class="search"><span>⌕</span><input @bind="collectionQuery" @bind:event="oninput" placeholder="Search this view" /></label>
+            </div>
+
+            <div class="publicCollectionGrid">
+                @foreach (var entry in VisibleEntries)
+                {
+                    <article class="publicSpriteCard">
+                        <div class="publicSpriteArt" style="--sprite-color:@entry.Sprite.PrimaryColor">
+                            <img src="@SpriteData.VariantImageUrl(entry.Sprite.Slug, entry.Variant)" alt="@entry.Variant @entry.Sprite.Name Sprite" />
+                        </div>
+                        <div><span><i style="background:@SpriteData.Variants[entry.Variant].Color"></i>@entry.Variant</span><h3>@entry.Sprite.Name</h3><small>@entry.Sprite.Rarity @(entry.IsMastered ? " · MASTERED" : "")</small></div>
+                    </article>
+                }
+            </div>
+            @if (!VisibleEntries.Any())
+            {
+                <div class="playerState"><strong>No sprites in this view</strong><span>Try another comparison tab or search.</span></div>
+            }
+        }
+    </section>
+    <SiteFooter />
+</main>
+
+@code {
+    [Parameter] public Guid? PublicId { get; set; }
+
+    private PlayerCollectionDto? data;
+    private FortniteSpriteTracker.Shared.Profiles.UserProfileDto? viewerProfile;
+    private string epicUsername = "";
+    private string collectionQuery = "";
+    private string mode = "collection";
+    private string? searchMessage;
+    private bool searching;
+    private bool loading;
+    private bool copied;
+
+    private bool IsOwnProfile => data?.Viewer?.PublicId == data?.Player.PublicId;
+    private string CanonicalUrl => new Uri(new Uri(Navigation.BaseUri), $"players/{data!.Player.PublicId:D}").AbsoluteUri;
+    private string LoginUrl => $"auth/login?returnUrl={Uri.EscapeDataString(new Uri(Navigation.Uri).PathAndQuery)}";
+    private HashSet<string> TargetKeys => Keys(data?.Collection ?? []);
+    private HashSet<string> ViewerKeys => Keys(data?.ViewerCollection ?? []);
+    private int TargetOnlyCount => TargetKeys.Except(ViewerKeys).Count();
+    private int ViewerOnlyCount => ViewerKeys.Except(TargetKeys).Count();
+    private int SharedCount => TargetKeys.Intersect(ViewerKeys).Count();
+
+    private IEnumerable<ViewEntry> VisibleEntries
+    {
+        get
+        {
+            if (data is null) return [];
+            var target = TargetKeys;
+            var viewer = ViewerKeys;
+            var keys = mode switch
+            {
+                "target" => target.Except(viewer),
+                "viewer" => viewer.Except(target),
+                "shared" => target.Intersect(viewer),
+                _ => target
+            };
+
+            return keys.Select(ToEntry)
+                .Where(entry => entry is not null && entry.Sprite.Name.Contains(collectionQuery, StringComparison.OrdinalIgnoreCase))
+                .Select(entry => entry!)
+                .OrderBy(entry => entry.Sprite.Name)
+                .ThenBy(entry => entry.Variant);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        data = null;
+        mode = "collection";
+        if (PublicId is null) return;
+        loading = true;
+        try
+        {
+            data = await PlayerApi.GetAsync(PublicId.Value);
+            if (data?.Viewer is not null)
+            {
+                viewerProfile = new(Guid.Empty, data.Viewer.PublicId, data.Viewer.DisplayName, data.Viewer.EpicDisplayName, true);
+                if (!IsOwnProfile) mode = "target";
+            }
+        }
+        finally { loading = false; }
+    }
+
+    private async Task SearchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(epicUsername)) return;
+        searching = true;
+        searchMessage = null;
+        try
+        {
+            var result = await PlayerApi.FindByEpicUsernameAsync(epicUsername);
+            if (result is null) searchMessage = "No Sprite Scout account matched that exact Epic display name.";
+            else Navigation.NavigateTo($"players/{result.PublicId:D}");
+        }
+        catch (HttpRequestException) { searchMessage = "Player search is temporarily unavailable."; }
+        finally { searching = false; }
+    }
+
+    private async Task CopyLinkAsync()
+    {
+        await JavaScript.InvokeVoidAsync("navigator.clipboard.writeText", CanonicalUrl);
+        copied = true;
+    }
+
+    private static HashSet<string> Keys(IEnumerable<FortniteSpriteTracker.Shared.Collections.SpriteProgressDto> progress) =>
+        progress.Where(item => item.IsOwned).Select(item => $"{item.SpriteSlug}::{item.Variant}").ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    private ViewEntry? ToEntry(string key)
+    {
+        var parts = key.Split("::", 2);
+        var sprite = SpriteData.Sprites.FirstOrDefault(item => item.Slug.Equals(parts[0], StringComparison.OrdinalIgnoreCase));
+        var mastered = (mode == "viewer" ? data?.ViewerCollection : data?.Collection)
+            ?.Any(item => item.IsMastered && $"{item.SpriteSlug}::{item.Variant}".Equals(key, StringComparison.OrdinalIgnoreCase)) == true;
+        return sprite is not null && parts.Length == 2 && Enum.TryParse<SpriteVariant>(parts[1], true, out var variant)
+            ? new ViewEntry(sprite, variant, mastered)
+            : null;
+    }
+
+    private sealed record ViewEntry(SpriteDefinition Sprite, SpriteVariant Variant, bool IsMastered);
+}
