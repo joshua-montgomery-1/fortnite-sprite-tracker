@@ -1,0 +1,13 @@
+**/bin
+**/obj
+.git
+.github
+.vs
+.idea
+artifacts
+container-publish
+README.md
+
+# Dockerfile.local packages host-published output without container network access.
+!container-publish/
+!container-publish/**

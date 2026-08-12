@@ -12,5 +12,6 @@ builder.Services.AddScoped<BrowserStorage>();
 builder.Services.AddScoped<BrowserPrintService>();
 builder.Services.AddScoped<AccountClient>();
 builder.Services.AddScoped<CollectionClient>();
+builder.Services.AddScoped<PlayerClient>();
 
 await builder.Build().RunAsync();

@@ -3,6 +3,7 @@ using System;
 using FortniteSpriteTracker.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FortniteSpriteTracker.Server.Data.Migrations
 {
     [DbContext(typeof(SpriteTrackerDbContext))]
-    partial class SpriteTrackerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260812020838_PersistDataProtectionKeys")]
+    partial class PersistDataProtectionKeys
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1228,9 +1231,6 @@ namespace FortniteSpriteTracker.Server.Data.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
-                    b.Property<Guid>("PublicId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -1240,9 +1240,6 @@ namespace FortniteSpriteTracker.Server.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("NormalizedEpicDisplayName");
-
-                    b.HasIndex("PublicId")
-                        .IsUnique();
 
                     b.ToTable("Users");
                 });

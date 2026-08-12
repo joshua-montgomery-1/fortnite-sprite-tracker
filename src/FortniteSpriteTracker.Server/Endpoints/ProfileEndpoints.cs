@@ -67,5 +67,5 @@ public static class ProfileEndpoints
     }
 
     private static UserProfileDto ToDto(Data.Entities.UserAccount user) =>
-        new(user.Id, user.DisplayName, user.EpicDisplayName, !string.IsNullOrWhiteSpace(user.EpicDisplayName));
+        new(user.Id, user.PublicId, user.DisplayName, user.EpicDisplayName, !string.IsNullOrWhiteSpace(user.EpicDisplayName));
 }

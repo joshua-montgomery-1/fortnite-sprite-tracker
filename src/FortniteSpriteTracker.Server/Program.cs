@@ -3,6 +3,8 @@ using FortniteSpriteTracker.Server.Endpoints;
 using FortniteSpriteTracker.Server.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +19,10 @@ builder.Services.AddDbContext<SpriteTrackerDbContext>(options =>
     options.UseNpgsql(
         databaseConnectionString,
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
+builder.Services
+    .AddDataProtection()
+    .SetApplicationName("FortniteSpriteTracker")
+    .PersistKeysToDbContext<SpriteTrackerDbContext>();
 builder.Services.AddHostedService<DatabaseInitializer>();
 builder.Services.AddScoped<CurrentUserService>();
 
@@ -60,6 +66,16 @@ if (googleAuthenticationConfigured)
     {
         options.ClientId = googleClientId!;
         options.ClientSecret = googleClientSecret!;
+        options.Events.OnRemoteFailure = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("GoogleAuthentication");
+            logger.LogError(context.Failure, "Google authentication callback failed.");
+            context.Response.Redirect("/auth/error");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
     });
 }
 
@@ -80,9 +96,32 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/error", (HttpContext context) =>
+{
+    var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+    if (exception is not null)
+    {
+        context.RequestServices
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("UnhandledException")
+            .LogError(exception, "An unhandled request exception occurred.");
+    }
+
+    return Results.Problem(
+        title: "The request could not be completed.",
+        detail: "Check the live application logs for the underlying error.",
+        statusCode: StatusCodes.Status500InternalServerError);
+}).AllowAnonymous();
+
+app.MapGet("/auth/error", () => Results.Problem(
+    title: "Google sign-in could not be completed.",
+    detail: "The failure was written to the live application logs.",
+    statusCode: StatusCodes.Status500InternalServerError)).AllowAnonymous();
+
 app.MapAuthenticationEndpoints(googleAuthenticationConfigured);
 app.MapProfileEndpoints();
 app.MapCollectionEndpoints();
+app.MapPlayerEndpoints();
 app.MapDefaultEndpoints();
 app.MapFallbackToFile("index.html");
 
