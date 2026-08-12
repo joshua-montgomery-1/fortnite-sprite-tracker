@@ -76,6 +76,20 @@ docker build -t ghcr.io/YOUR_GITHUB_USER/fortnite-sprite-tracker:latest .
 docker push ghcr.io/YOUR_GITHUB_USER/fortnite-sprite-tracker:latest
 ```
 
+GHCR publishes new packages as private by default. After the first push, open the package's **Package settings**, choose **Change visibility**, and make it **Public**. Container Apps intentionally has no registry credentials in this free-first configuration, so the image must allow anonymous pulls. Verify that before deploying:
+
+```powershell
+docker logout ghcr.io
+docker manifest inspect ghcr.io/YOUR_GITHUB_USER/fortnite-sprite-tracker:latest
+```
+
+If the push itself requires authentication, create a GitHub personal access token with `write:packages`, then use it without putting the token in shell history:
+
+```powershell
+$env:GHCR_TOKEN | docker login ghcr.io --username YOUR_GITHUB_USER --password-stdin
+docker push ghcr.io/YOUR_GITHUB_USER/fortnite-sprite-tracker:latest
+```
+
 If Docker containers cannot reach NuGet (`NU1301: Network is unreachable`), publish with the host SDK and use the network-independent local Dockerfile:
 
 ```powershell
