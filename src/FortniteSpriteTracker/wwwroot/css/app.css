@@ -59,3 +59,4 @@ button,a,select { -webkit-tap-highlight-color:transparent; }
 @media(max-width:720px){.spriteVisual img{transform:translateY(-7px)}.card:hover .spriteVisual img{transform:translateY(-10px) scale(1.02)}}
 @media(max-width:900px){.profileSetup{grid-template-columns:1fr 1fr}.profileSetup>div{grid-column:1/-1}.profileSetup .primary{justify-self:start}}
 @media(max-width:560px){.profileSetup{grid-template-columns:1fr}.profileSetup>div{grid-column:auto}}
+.saveStatus{display:flex;align-items:center;justify-content:flex-end;gap:7px;height:18px;margin:-20px 0 10px;font:800 9px var(--font-mono);letter-spacing:.5px;color:#6b6d73}.saveStatus span{width:7px;height:7px;border-radius:50%;background:#8064ef}.saveStatus.saving span{animation:savePulse .8s ease-in-out infinite alternate}.saveStatus.saved{color:#267552}.saveStatus.saved span{background:#41b77e}@keyframes savePulse{to{opacity:.35;transform:scale(.75)}}

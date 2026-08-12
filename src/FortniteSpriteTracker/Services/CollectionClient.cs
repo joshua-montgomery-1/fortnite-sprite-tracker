@@ -58,5 +58,30 @@ public sealed class CollectionClient(HttpClient httpClient)
             ?? throw new InvalidOperationException("The collection response was empty.");
     }
 
+    public async Task<IReadOnlyList<SpriteProgressDto>> UpdateBatchAsync(
+        IReadOnlyList<UpdateSpriteProgressRequest> updates,
+        CancellationToken cancellationToken = default)
+    {
+        if (updates.Count == 0)
+        {
+            return [];
+        }
+
+        var token = await httpClient.GetFromJsonAsync<AntiforgeryTokenResponse>(
+            "api/antiforgery/token",
+            cancellationToken) ?? throw new InvalidOperationException("The antiforgery token response was empty.");
+
+        using var message = new HttpRequestMessage(HttpMethod.Put, "api/me/collection/batch")
+        {
+            Content = JsonContent.Create(new BatchUpdateSpriteProgressRequest(updates))
+        };
+        message.Headers.Add("X-XSRF-TOKEN", token.Token);
+
+        using var response = await httpClient.SendAsync(message, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<SpriteProgressDto[]>(cancellationToken) ?? [];
+    }
+
     private sealed record AntiforgeryTokenResponse(string Token);
 }

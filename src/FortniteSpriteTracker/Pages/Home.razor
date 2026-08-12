@@ -66,6 +66,13 @@
             </label>
         </div>
 
+        @if (profile is not null && saveStatus is not null)
+        {
+            <div class="saveStatus @(saveStatus == "Saved" ? "saved" : "saving")" role="status" aria-live="polite">
+                <span></span>@saveStatus
+            </div>
+        }
+
         <CollectionProgress OwnedCount="@owned.Count"
                             MasteredCount="@mastered.Count"
                             TotalEntries="@SpriteData.TotalEntries"

@@ -6,13 +6,16 @@ using Microsoft.AspNetCore.Components;
 
 namespace FortniteSpriteTracker.Pages;
 
-public partial class Home
+public partial class Home : IAsyncDisposable
 {
     private static readonly string[] CollectionFilters = ["All", "Owned", "Missing", "Mastered"];
     private readonly HashSet<string> owned = [];
     private readonly HashSet<string> mastered = [];
     private readonly Dictionary<string, LocalProgress> localProgress = new(StringComparer.Ordinal);
     private readonly HashSet<string> serverKeys = [];
+    private readonly Dictionary<string, LocalProgress> pendingAccountUpdates = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim saveLock = new(1, 1);
+    private CancellationTokenSource? saveDelay;
 
     [Inject] private BrowserStorage Storage { get; set; } = null!;
     [Inject] private BrowserPrintService Printer { get; set; } = null!;
@@ -29,6 +32,7 @@ public partial class Home
     private bool showImportPrompt;
     private bool importingAnonymousProgress;
     private string? syncError;
+    private string? saveStatus;
     private UserProfileDto? profile;
 
     private string CubeHeroUrl => SpriteData.VariantImageUrl("zeropoint", SpriteVariant.Cube);
@@ -301,9 +305,6 @@ public partial class Home
 
     private async Task ToggleOwned(string key)
     {
-        var wasOwned = owned.Contains(key);
-        var wasMastered = mastered.Contains(key);
-
         if (!owned.Remove(key))
         {
             owned.Add(key);
@@ -324,18 +325,11 @@ public partial class Home
 
         var progress = new LocalProgress(
             owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, profile.Id, true);
-        if (!await SaveToAccountAsync(key, progress))
-        {
-            SetProgress(key, wasOwned, wasMastered);
-            syncError = "That change couldn't be saved, so your database collection was restored.";
-        }
+        QueueAccountSave(key, progress);
     }
 
     private async Task ToggleMastered(string key)
     {
-        var wasOwned = owned.Contains(key);
-        var wasMastered = mastered.Contains(key);
-
         if (!mastered.Remove(key))
         {
             mastered.Add(key);
@@ -353,26 +347,98 @@ public partial class Home
 
         var progress = new LocalProgress(
             owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, profile.Id, true);
-        if (!await SaveToAccountAsync(key, progress))
+        QueueAccountSave(key, progress);
+    }
+
+    private void QueueAccountSave(string key, LocalProgress progress)
+    {
+        pendingAccountUpdates[key] = progress;
+        saveStatus = "Saving…";
+
+        saveDelay?.Cancel();
+        saveDelay?.Dispose();
+        saveDelay = new CancellationTokenSource();
+        _ = FlushAccountUpdatesAfterDelayAsync(saveDelay.Token);
+    }
+
+    private async Task FlushAccountUpdatesAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
         {
-            SetProgress(key, wasOwned, wasMastered);
-            syncError = "That change couldn't be saved, so your database collection was restored.";
+            await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken);
+            await FlushAccountUpdatesAsync(CancellationToken.None);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // A newer interaction restarted the batch window.
         }
     }
 
-    private void SetProgress(string key, bool isOwned, bool isMastered)
+    private async Task FlushAccountUpdatesAsync(CancellationToken cancellationToken)
     {
-        owned.Remove(key);
-        mastered.Remove(key);
-
-        if (isOwned || isMastered)
+        await saveLock.WaitAsync(cancellationToken);
+        try
         {
-            owned.Add(key);
+            if (profile is null || pendingAccountUpdates.Count == 0)
+            {
+                return;
+            }
+
+            var batch = pendingAccountUpdates.ToArray();
+            pendingAccountUpdates.Clear();
+            var requests = new List<UpdateSpriteProgressRequest>(batch.Length);
+
+            foreach (var item in batch)
+            {
+                if (TryGetSpriteVariant(item.Key, out var sprite, out var spriteVariant))
+                {
+                    requests.Add(new UpdateSpriteProgressRequest(
+                        sprite.Slug,
+                        spriteVariant.ToString(),
+                        item.Value.IsOwned,
+                        item.Value.IsMastered));
+                }
+            }
+
+            await Collection.UpdateBatchAsync(requests, cancellationToken);
+            serverKeys.UnionWith(batch
+                .Where(item => item.Value.IsOwned || item.Value.IsMastered)
+                .Select(item => item.Key));
+            foreach (var removed in batch.Where(item => !item.Value.IsOwned && !item.Value.IsMastered))
+            {
+                serverKeys.Remove(removed.Key);
+            }
+
+            saveStatus = pendingAccountUpdates.Count == 0 ? "Saved" : "Saving…";
+            syncError = null;
+            await InvokeAsync(StateHasChanged);
+
+            if (saveStatus == "Saved")
+            {
+                _ = HideSavedStatusAsync();
+            }
         }
-
-        if (isMastered)
+        catch (HttpRequestException)
         {
-            mastered.Add(key);
+            pendingAccountUpdates.Clear();
+            saveStatus = null;
+            await LoadAuthenticatedCollectionAsync();
+            syncError = "Those changes couldn't be saved, so your database collection was restored.";
+            await InvokeAsync(StateHasChanged);
+        }
+        finally
+        {
+            saveLock.Release();
+        }
+    }
+
+    private async Task HideSavedStatusAsync()
+    {
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        if (saveStatus == "Saved" && pendingAccountUpdates.Count == 0)
+        {
+            saveStatus = null;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -410,4 +476,12 @@ public partial class Home
         DateTimeOffset UpdatedAtUtc,
         Guid? AccountId,
         bool IsPending);
+
+    public ValueTask DisposeAsync()
+    {
+        saveDelay?.Cancel();
+        saveDelay?.Dispose();
+        saveLock.Dispose();
+        return ValueTask.CompletedTask;
+    }
 }
