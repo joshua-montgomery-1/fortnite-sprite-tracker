@@ -25,6 +25,9 @@ param budgetContactEmail string = ''
 @maxValue(20)
 param monthlyBudgetAmount int = 5
 
+@description('Changes on every deployment so Container Apps creates a revision and re-pulls mutable image tags.')
+param deploymentVersion string = utcNow('yyyyMMddHHmmss')
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
   location: location
@@ -46,6 +49,7 @@ module application 'app.bicep' = {
     googleClientSecret: googleClientSecret
     budgetContactEmail: budgetContactEmail
     monthlyBudgetAmount: monthlyBudgetAmount
+    deploymentVersion: deploymentVersion
   }
 }
 

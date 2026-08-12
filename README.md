@@ -121,6 +121,8 @@ az deployment sub create `
 
 Choose an Azure region close to the Supabase project. Use the Supabase session pooler on port 5432 unless the selected Azure environment can reach the direct IPv6 endpoint. Update Google OAuth with the deployed `/signin-google` callback URL.
 
+Each Bicep deployment stamps the Container App template with a new deployment version. This forces Azure to create a revision and re-pull mutable tags such as `latest`. For reproducible production releases, prefer an immutable version tag or image digest in `containerImage`.
+
 Container Apps retains live log streaming even though historical platform logs are disabled. Application authentication keys are persisted in Supabase, so scaling to zero or replacing the container does not invalidate every login cookie.
 
 ## Repository layout

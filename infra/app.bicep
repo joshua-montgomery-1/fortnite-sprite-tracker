@@ -12,6 +12,7 @@ param googleClientSecret string
 
 param budgetContactEmail string
 param monthlyBudgetAmount int
+param deploymentVersion string
 param budgetStartDate string = utcNow('yyyy-MM-01T00:00:00Z')
 
 var suffix = uniqueString(resourceGroup().id)
@@ -80,6 +81,10 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
             {
               name: 'ASPNETCORE_FORWARDEDHEADERS_ENABLED'
               value: 'true'
+            }
+            {
+              name: 'DEPLOYMENT_VERSION'
+              value: deploymentVersion
             }
             {
               name: 'ConnectionStrings__sprite-tracker'
