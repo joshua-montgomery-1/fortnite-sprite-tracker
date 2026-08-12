@@ -7,14 +7,31 @@
         <a href="/#collection">Collection</a>
         <a href="/players">Find a player</a>
     </div>
-    @if (Profile is null)
-    {
-        <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in with Google</a>
-    }
-    else
-    {
-        <span class="signin"><span>●</span> @Profile.DisplayName</span>
-    }
+    <div class="headerActions">
+        @if (Profile is null)
+        {
+            <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in with Google</a>
+        }
+        else
+        {
+            <span class="signin"><span>●</span> @Profile.DisplayName</span>
+        }
+        <details class="mobileMenu">
+            <summary aria-label="Open navigation menu"><span></span><span></span><span></span></summary>
+            <div class="mobileMenuPanel">
+                @if (Profile is not null)
+                {
+                    <div class="mobileAccount"><span>●</span><strong>@Profile.DisplayName</strong></div>
+                }
+                <a href="/#collection">Collection <span>→</span></a>
+                <a href="/players">Find a player <span>→</span></a>
+                @if (Profile is null)
+                {
+                    <a class="mobileSignIn" href="auth/login?returnUrl=/">Sign in with Google <span>↗</span></a>
+                }
+            </div>
+        </details>
+    </div>
 </nav>
 
 @code {

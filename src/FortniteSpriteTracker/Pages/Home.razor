@@ -9,6 +9,7 @@
                  FamilyCount="@SpriteData.Sprites.Length"
                  OnShowMissing="ShowMissing" />
 
+    <div class="lowerPage">
     <section class="collection" id="collection">
         @if (profile is { IsProfileComplete: false })
         {
@@ -155,6 +156,7 @@
         }
     </section>
 
-    <FieldNotes />
-    <SiteFooter />
+        <FieldNotes />
+        <SiteFooter />
+    </div>
 </main>
