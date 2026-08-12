@@ -1,0 +1,35 @@
+<section class="hero" id="top">
+    <div class="parallaxGrid"></div>
+    <div class="heroCopy">
+        <div class="eyebrow"><span class="liveDot"></span> LIVE SEASON · CHAPTER 7</div>
+        <h1>KNOW YOUR<br /><span>SPRITES.</span></h1>
+        <p>Track every companion and every real variant. Learn their powers, fill your field guide, and know exactly what to hunt next.</p>
+        <div class="heroActions">
+            <a class="primary" href="#collection">Track @TotalEntries entries <span>↓</span></a>
+            <button class="textButton" @onclick="OnShowMissing">Show what’s missing <span>→</span></button>
+        </div>
+    </div>
+    <div class="heroArt">
+        <div class="orbit orbitOne"></div>
+        <div class="orbit orbitTwo"></div>
+        <div class="rareSpriteGlow"></div>
+        <img class="rareSprite" src="@CubeHeroUrl" alt="Rare Cube Zero Point Sprite" />
+        <div class="rareLabel">
+            <small>RARE FIND</small>
+            <strong>CUBE ZERO POINT</strong>
+            <span>Storm Overdrive variant</span>
+        </div>
+        <div class="seasonTag">
+            <small>FIELD GUIDE</small>
+            <strong>@FamilyCount FAMILIES</strong>
+            <span>@TotalEntries valid variants</span>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string CubeHeroUrl { get; set; } = "";
+    [Parameter] public int TotalEntries { get; set; }
+    [Parameter] public int FamilyCount { get; set; }
+    [Parameter] public EventCallback OnShowMissing { get; set; }
+}

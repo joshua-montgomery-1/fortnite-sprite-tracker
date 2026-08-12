@@ -1,0 +1,22 @@
+<nav class="topbar">
+    <a class="brand" href="#top">
+        <span class="brandmark">S</span>
+        <span>SPRITE<em>SCOUT</em></span>
+    </a>
+    <div class="navlinks">
+        <a class="active" href="#collection">Collection</a>
+        <a href="#field-notes">Field notes</a>
+    </div>
+    @if (Profile is null)
+    {
+        <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in with Google</a>
+    }
+    else
+    {
+        <span class="signin"><span>●</span> @Profile.DisplayName</span>
+    }
+</nav>
+
+@code {
+    [Parameter] public UserProfileDto? Profile { get; set; }
+}

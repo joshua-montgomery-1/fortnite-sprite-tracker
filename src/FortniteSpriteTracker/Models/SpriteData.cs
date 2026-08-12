@@ -1,7 +1,24 @@
 namespace FortniteSpriteTracker.Models;
 
-public enum SpriteRarity { Rare, Epic, Legendary, Mythic }
-public enum SpriteVariant { Normal, Gold, Gummy, Galaxy, Holofoil, Gem, Cube, Quack }
+public enum SpriteRarity
+{
+    Rare,
+    Epic,
+    Legendary,
+    Mythic
+}
+
+public enum SpriteVariant
+{
+    Normal,
+    Gold,
+    Gummy,
+    Galaxy,
+    Holofoil,
+    Gem,
+    Cube,
+    Quack
+}
 
 public sealed record SpriteDefinition(
     string Name,
@@ -16,14 +33,30 @@ public sealed record SpriteVariantMetadata(SpriteVariant Variant, string Color, 
 
 public static class SpriteData
 {
-    public static readonly SpriteVariantMetadata[] VariantCatalog = [
-        new(SpriteVariant.Normal,"#a7a9ae","Core power","basic"), new(SpriteVariant.Gold,"#f1bd38","Bonus Sprite XP","gold"),
-        new(SpriteVariant.Gummy,"#ff6da9","+20% Sprite Dust","gummy"), new(SpriteVariant.Galaxy,"#7858ed","+30% ammunition","galaxy"),
-        new(SpriteVariant.Holofoil,"#67dff1","+5% rare finds","holofoil"), new(SpriteVariant.Gem,"#60dca5","-30% fall damage","gem"),
-        new(SpriteVariant.Cube,"#a955de","Storm Overdrive","cube"), new(SpriteVariant.Quack,"#ffd93f","Shared progress","quack") ];
+    public static readonly SpriteVariantMetadata[] VariantCatalog =
+    [
+        new(SpriteVariant.Normal, "#a7a9ae", "Core power", "basic"),
+        new(SpriteVariant.Gold, "#f1bd38", "Bonus Sprite XP", "gold"),
+        new(SpriteVariant.Gummy, "#ff6da9", "+20% Sprite Dust", "gummy"),
+        new(SpriteVariant.Galaxy, "#7858ed", "+30% ammunition", "galaxy"),
+        new(SpriteVariant.Holofoil, "#67dff1", "+5% rare finds", "holofoil"),
+        new(SpriteVariant.Gem, "#60dca5", "-30% fall damage", "gem"),
+        new(SpriteVariant.Cube, "#a955de", "Storm Overdrive", "cube"),
+        new(SpriteVariant.Quack, "#ffd93f", "Shared progress", "quack")
+    ];
+
     public static readonly SpriteVariant[] AllVariants = VariantCatalog.Select(v => v.Variant).ToArray();
+
     public static readonly IReadOnlyDictionary<SpriteVariant, SpriteVariantMetadata> Variants = VariantCatalog.ToDictionary(v => v.Variant);
-    public static readonly Dictionary<SpriteRarity, string> RarityColors = new() { [SpriteRarity.Rare]="#58a6ff", [SpriteRarity.Epic]="#c780ff", [SpriteRarity.Legendary]="#ffb23f", [SpriteRarity.Mythic]="#ff5d7c" };
+
+    public static readonly Dictionary<SpriteRarity, string> RarityColors = new()
+    {
+        [SpriteRarity.Rare] = "#58a6ff",
+        [SpriteRarity.Epic] = "#c780ff",
+        [SpriteRarity.Legendary] = "#ffb23f",
+        [SpriteRarity.Mythic] = "#ff5d7c"
+    };
+
     private static readonly string[] Core = ["Normal", "Gold", "Gummy", "Galaxy"];
     private static readonly string[] Holo = ["Normal", "Gold", "Gummy", "Galaxy", "Holofoil"];
 

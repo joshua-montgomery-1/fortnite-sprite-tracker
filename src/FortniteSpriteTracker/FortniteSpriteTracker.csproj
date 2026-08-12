@@ -16,4 +16,8 @@
     <Content Remove="wwwroot\lib\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FortniteSpriteTracker.Shared\FortniteSpriteTracker.Shared.csproj" />
+  </ItemGroup>
+
 </Project>
