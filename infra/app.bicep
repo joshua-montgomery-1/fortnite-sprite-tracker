@@ -22,9 +22,8 @@ resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
   name: environmentName
   location: location
   properties: {
-    appLogsConfiguration: {
-      destination: 'none'
-    }
+    // Omitting appLogsConfiguration selects "Don't save logs". Azure rejects
+    // the literal string "none" even though the CLI uses that spelling.
     zoneRedundant: false
     workloadProfiles: [
       {
