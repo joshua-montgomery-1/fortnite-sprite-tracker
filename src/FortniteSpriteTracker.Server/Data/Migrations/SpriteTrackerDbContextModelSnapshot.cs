@@ -1207,6 +1207,9 @@ namespace FortniteSpriteTracker.Server.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsCollectionPublic")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 

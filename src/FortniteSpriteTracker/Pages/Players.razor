@@ -46,7 +46,13 @@
                 <div>
                     <span class="sectionKicker">PUBLIC FIELD GUIDE</span>
                     <h2>@data.Player.EpicDisplayName</h2>
-                    <p>@data.Player.DisplayName · @data.Player.OwnedCount owned · @data.Player.MasteredCount mastered</p>
+                    <p>
+                        @data.Player.DisplayName
+                        @if (data.Player.IsCollectionPublic)
+                        {
+                            <text> · @data.Player.OwnedCount owned · @data.Player.MasteredCount mastered</text>
+                        }
+                    </p>
                 </div>
                 <div class="shareBox">
                     <label>PERMANENT PLAYER LINK</label>
@@ -54,7 +60,15 @@
                 </div>
             </header>
 
-            @if (IsOwnProfile)
+            @if (!data.Player.IsCollectionPublic)
+            {
+                <aside class="privateCollectionState">
+                    <span class="sectionKicker">PRIVATE COLLECTION</span>
+                    <strong>This user has made their collection private.</strong>
+                    <p>Their Sprite totals, collection entries, and comparisons are not available.</p>
+                </aside>
+            }
+            else if (IsOwnProfile)
             {
                 <aside class="compareNotice">This is your public collection. Share the permanent link so another signed-in player can compare it with theirs.</aside>
             }
@@ -71,6 +85,8 @@
                 </div>
             }
 
+            @if (data.Player.IsCollectionPublic)
+            {
             <div class="playerToolbar">
                 <div class="segmented">
                     <button class="@(mode == "collection" ? "selected" : "")" @onclick='() => mode = "collection"'>Their collection</button>
@@ -98,6 +114,7 @@
             @if (!VisibleEntries.Any())
             {
                 <div class="playerState"><strong>No sprites in this view</strong><span>Try another comparison tab or search.</span></div>
+            }
             }
         }
     </section>

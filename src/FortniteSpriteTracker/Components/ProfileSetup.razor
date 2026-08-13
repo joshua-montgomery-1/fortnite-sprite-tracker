@@ -40,7 +40,7 @@
         }
 
         isSaving = true;
-        await ProfileSaved.InvokeAsync(new(displayName.Trim(), epicDisplayName.Trim()));
+        await ProfileSaved.InvokeAsync(new(displayName.Trim(), epicDisplayName.Trim(), Profile.IsCollectionPublic));
         isSaving = false;
     }
 }

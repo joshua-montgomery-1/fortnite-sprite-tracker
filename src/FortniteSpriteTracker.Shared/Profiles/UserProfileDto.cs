@@ -5,4 +5,5 @@ public sealed record UserProfileDto(
     Guid PublicId,
     string DisplayName,
     string? EpicDisplayName,
+    bool IsCollectionPublic,
     bool IsProfileComplete);

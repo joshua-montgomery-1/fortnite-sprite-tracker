@@ -8,6 +8,7 @@ public sealed class UserAccount
     public required string DisplayName { get; set; }
     public string? EpicDisplayName { get; set; }
     public string? NormalizedEpicDisplayName { get; set; }
+    public bool IsCollectionPublic { get; set; } = true;
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public List<SpriteProgress> SpriteProgress { get; set; } = [];

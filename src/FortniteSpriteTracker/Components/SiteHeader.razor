@@ -18,7 +18,7 @@
         }
         else
         {
-            <span class="signin"><span>●</span> @Profile.DisplayName</span>
+            <a class="signin" href="/account"><span>●</span> @Profile.DisplayName</a>
         }
         <details class="mobileMenu">
             <summary aria-label="Open navigation menu"><span></span><span></span><span></span></summary>
@@ -29,7 +29,7 @@
                 }
                 else if (Profile is not null)
                 {
-                    <div class="mobileAccount"><span>●</span><strong>@Profile.DisplayName</strong></div>
+                    <a class="mobileAccount" href="/account"><span>●</span><strong>@Profile.DisplayName</strong></a>
                 }
                 <a href="/#collection">Collection <span>→</span></a>
                 <a href="/players">Find a player <span>→</span></a>
