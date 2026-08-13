@@ -1,2 +1,17 @@
 @inherits LayoutComponentBase
+@inject AccountState AccountState
 @Body
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await AccountState.LoadAsync();
+        }
+        catch (HttpRequestException)
+        {
+            // Individual pages can retry and display their relevant connection error.
+        }
+    }
+}

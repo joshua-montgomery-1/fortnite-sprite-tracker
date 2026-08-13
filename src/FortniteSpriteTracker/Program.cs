@@ -11,6 +11,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddScoped<BrowserStorage>();
 builder.Services.AddScoped<BrowserPrintService>();
 builder.Services.AddScoped<AccountClient>();
+builder.Services.AddScoped<AccountState>();
 builder.Services.AddScoped<CollectionClient>();
 builder.Services.AddScoped<PlayerClient>();
 

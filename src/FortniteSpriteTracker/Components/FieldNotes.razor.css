@@ -1,0 +1,9 @@
+.notes {
+    grid-template-columns: 1fr 1.3fr;
+}
+
+@media (max-width: 720px) {
+    .notes {
+        grid-template-columns: 1fr;
+    }
+}

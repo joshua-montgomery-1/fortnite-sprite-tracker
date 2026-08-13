@@ -20,6 +20,7 @@ public partial class Home : IAsyncDisposable
     [Inject] private BrowserStorage Storage { get; set; } = null!;
     [Inject] private BrowserPrintService Printer { get; set; } = null!;
     [Inject] private AccountClient Account { get; set; } = null!;
+    [Inject] private AccountState AccountState { get; set; } = null!;
     [Inject] private CollectionClient Collection { get; set; } = null!;
 
     private string filter = "All";
@@ -33,7 +34,7 @@ public partial class Home : IAsyncDisposable
     private bool importingAnonymousProgress;
     private string? syncError;
     private string? saveStatus;
-    private UserProfileDto? profile;
+    private UserProfileDto? profile => AccountState.Profile;
 
     private string CubeHeroUrl => SpriteData.VariantImageUrl("zeropoint", SpriteVariant.Cube);
     private int OwnedPercent => (int)Math.Round(owned.Count * 100d / SpriteData.TotalEntries);
@@ -106,7 +107,7 @@ public partial class Home : IAsyncDisposable
         {
             try
             {
-                profile = await Account.GetProfileAsync();
+                await AccountState.LoadAsync();
                 syncError = null;
                 return true;
             }
@@ -300,7 +301,7 @@ public partial class Home : IAsyncDisposable
 
     private async Task SaveProfileAsync(UpdateUserProfileRequest request)
     {
-        profile = await Account.UpdateProfileAsync(request);
+        AccountState.SetProfile(await Account.UpdateProfileAsync(request));
     }
 
     private async Task ToggleOwned(string key)

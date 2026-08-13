@@ -3,7 +3,7 @@
 <PageTitle>Sprite Scout - Fortnite Sprite Tracker</PageTitle>
 
 <main class="@(printBlank ? "printBlank" : "")">
-    <SiteHeader Profile="@profile" />
+    <SiteHeader Profile="@profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
     <HeroSection CubeHeroUrl="@CubeHeroUrl"
                  TotalEntries="@SpriteData.TotalEntries"
                  FamilyCount="@SpriteData.Sprites.Length"
@@ -94,7 +94,7 @@
         <div class="viewBar">
             <div>
                 <span>COLLECTION VIEW</span>
-                <p>@(viewMode == "Checklist" ? "Fast scan - every status at a glance" : "Detailed artwork, abilities, and variant cards")</p>
+                <p>@(viewMode == "Checklist" ? "Fast scan - every status at a glance" : "Detailed abilities and variant cards")</p>
             </div>
             <div class="viewActions">
                 <div class="exportActions">
