@@ -74,3 +74,10 @@ button,a,select { -webkit-tap-highlight-color:transparent; }
 @media(max-width:900px){.playerSearchPanel{grid-template-columns:1fr}.playerHero{align-items:flex-start;flex-direction:column}.shareBox{width:100%}.publicCollectionGrid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:720px){.playerPage{padding:28px 18px 60px}.playerSearchPanel{padding:22px;gap:25px}.playerSearchPanel h1{font-size:42px}.playerSearchPanel form>div{flex-direction:column}.playerSearchPanel input,.playerSearchPanel .primary{border-radius:7px}.playerSearchPanel .primary{margin-top:7px}.playerHero h2{font-size:38px}.comparisonSummary{grid-template-columns:1fr}.comparisonSummary div{border-right:0;border-bottom:1px solid #3a3e48}.playerToolbar{align-items:stretch;flex-direction:column}.playerToolbar .segmented{width:100%}.publicCollectionGrid{grid-template-columns:repeat(2,1fr)}.publicSpriteArt{height:150px}}
 @media(max-width:430px){.publicCollectionGrid{grid-template-columns:1fr}.shareBox>div{align-items:stretch;flex-direction:column}.shareBox input,.shareBox button{border-radius:7px}.shareBox button{padding:10px;margin-top:6px}}
+
+/* Readable on-screen checklist labels; print sizing remains unchanged. */
+@media screen {
+  .collectionMatrix thead th > small {font-size:8px;line-height:1.25;margin-top:4px}
+  .collectionMatrix tbody .spriteColumn small {font:800 8px/1.2 var(--font-mono);letter-spacing:.3px}
+  .collectionMatrix td button small {font:800 8px/1 var(--font-mono);letter-spacing:.2px}
+}

@@ -4,13 +4,14 @@
 @using FortniteSpriteTracker.Services
 @using FortniteSpriteTracker.Shared.Players
 @inject PlayerClient PlayerApi
+@inject AccountState AccountState
 @inject NavigationManager Navigation
 @inject IJSRuntime JavaScript
 
 <PageTitle>@(data is null ? "Find a player" : $"{data.Player.EpicDisplayName}'s Sprites") - Sprite Scout</PageTitle>
 
 <main>
-    <SiteHeader Profile="@viewerProfile" />
+    <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
     <section class="playerPage">
         <div class="playerSearchPanel">
             <div>
@@ -107,7 +108,6 @@
     [Parameter] public Guid? PublicId { get; set; }
 
     private PlayerCollectionDto? data;
-    private FortniteSpriteTracker.Shared.Profiles.UserProfileDto? viewerProfile;
     private string epicUsername = "";
     private string collectionQuery = "";
     private string mode = "collection";
@@ -152,6 +152,7 @@
     {
         data = null;
         mode = "collection";
+        await AccountState.LoadAsync();
         if (PublicId is null) return;
         loading = true;
         try
@@ -159,7 +160,6 @@
             data = await PlayerApi.GetAsync(PublicId.Value);
             if (data?.Viewer is not null)
             {
-                viewerProfile = new(Guid.Empty, data.Viewer.PublicId, data.Viewer.DisplayName, data.Viewer.EpicDisplayName, true);
                 if (!IsOwnProfile) mode = "target";
             }
         }
