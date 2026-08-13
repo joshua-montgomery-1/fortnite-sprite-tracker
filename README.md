@@ -123,6 +123,29 @@ Choose an Azure region close to the Supabase project. Use the Supabase session p
 
 Each Bicep deployment stamps the Container App template with a new deployment version. This forces Azure to create a revision and re-pull mutable tags such as `latest`. For reproducible production releases, prefer an immutable version tag or image digest in `containerImage`.
 
+## Automatic production releases
+
+The `Release Sprite Scout` GitHub Actions workflow builds and pushes immutable and `latest` GHCR images, then deploys the immutable image to Azure Container Apps on every push to `main`. It can also be run manually from the Actions tab.
+
+Complete these one-time setup steps before the first release:
+
+1. Create a GitHub environment named `production` (optional, but recommended for deployment protection rules).
+2. Configure Azure workload identity federation for this repository and its `production` environment. Grant that identity permission to create subscription deployments and manage the production resource group.
+3. Add these GitHub environment secrets:
+   - `AZURE_CLIENT_ID`
+   - `AZURE_TENANT_ID`
+   - `AZURE_SUBSCRIPTION_ID`
+   - `DATABASE_CONNECTION_STRING`
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+4. Optionally add these GitHub environment variables:
+   - `AZURE_LOCATION` (defaults to `eastus2`)
+   - `AZURE_RESOURCE_GROUP` (defaults to `rg-sprite-scout-prod`)
+   - `BUDGET_CONTACT_EMAIL` (omitting it disables budget email alerts)
+5. After the first image is published, make the repository's GHCR package public so Azure Container Apps can pull it without registry credentials.
+
+The federated credential's GitHub subject must be `repo:OWNER/REPOSITORY:environment:production`. No long-lived Azure password is stored in GitHub.
+
 Container Apps retains live log streaming even though historical platform logs are disabled. Application authentication keys are persisted in Supabase, so scaling to zero or replacing the container does not invalidate every login cookie.
 
 ## Repository layout
