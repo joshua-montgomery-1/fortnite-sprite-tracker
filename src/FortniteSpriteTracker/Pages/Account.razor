@@ -1,0 +1,179 @@
+@page "/account"
+@using FortniteSpriteTracker.Services
+@using FortniteSpriteTracker.Shared.Collections
+@inject AccountClient AccountApi
+@inject AccountState AccountState
+@inject CollectionClient CollectionApi
+@inject NavigationManager Navigation
+@inject IJSRuntime JavaScript
+
+<PageTitle>Account - Sprite Scout</PageTitle>
+
+<main>
+    <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
+    <section class="accountPage">
+        @if (loading)
+        {
+            <div class="playerState">Loading your account...</div>
+        }
+        else if (profile is not null)
+        {
+            <header class="accountHero">
+                <div>
+                    <span class="sectionKicker">YOUR ACCOUNT</span>
+                    <h1>SCOUT SETTINGS</h1>
+                    <p>Manage your public identity, collection privacy, and account.</p>
+                </div>
+                <div class="accountStats" aria-label="Collection totals">
+                    <div><strong>@ownedCount</strong><span>OWNED</span></div>
+                    <div><strong>@masteredCount</strong><span>MASTERED</span></div>
+                </div>
+            </header>
+
+            <div class="accountGrid">
+                <section class="accountCard" aria-labelledby="profile-title">
+                    <div class="accountCardHead">
+                        <div><span class="sectionKicker">PROFILE</span><h2 id="profile-title">Your scout identity</h2></div>
+                        @if (saveMessage is not null)
+                        {
+                            <span class="accountMessage @(saveSucceeded ? "success" : "error")" role="status">@saveMessage</span>
+                        }
+                    </div>
+                    <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                        <label>DISPLAY NAME<input maxlength="80" @bind="displayName" /></label>
+                        <label>EPIC GAMES DISPLAY NAME<input minlength="3" maxlength="16" @bind="epicDisplayName" /></label>
+                        <label class="privacySetting">
+                            <input type="checkbox" @bind="isCollectionPublic" />
+                            <span><strong>Public collection</strong><small>Allow other scouts to view your totals and Sprites and compare their collection with yours.</small></span>
+                        </label>
+                        <button class="primary" disabled="@saving">@(saving ? "Saving..." : "Save changes")</button>
+                    </form>
+                </section>
+
+                <aside class="accountCard profileLinkCard">
+                    <span class="sectionKicker">PLAYER PROFILE</span>
+                    <h2>@(isCollectionPublic ? "Ready to share" : "Collection private")</h2>
+                    <p>Your profile and Epic name remain discoverable. @(isCollectionPublic ? "Other scouts can view and compare your collection." : "Your totals, Sprites, and comparisons are hidden.")</p>
+                    <label>PERMANENT PROFILE LINK</label>
+                    <div class="accountLink"><input readonly value="@ProfileUrl" /><button @onclick="CopyLinkAsync">@(copied ? "Copied" : "Copy")</button></div>
+                    <a href="@($"players/{profile.PublicId:D}")">View public profile <span>→</span></a>
+                </aside>
+            </div>
+
+            <section class="accountCard accountAccess" aria-labelledby="access-title">
+                <div><span class="sectionKicker">ACCESS</span><h2 id="access-title">Sign-in session</h2><p>Sign out on this device without changing your saved collection.</p></div>
+                <button disabled="@busy" @onclick="LogoutAsync">Sign out</button>
+            </section>
+
+            <section class="accountCard dangerZone" aria-labelledby="danger-title">
+                <div><span class="sectionKicker">DANGER ZONE</span><h2 id="danger-title">Delete account</h2><p>Permanently delete your profile and all saved collection progress. This cannot be undone.</p></div>
+                <div class="deleteControl">
+                    <label>TYPE DELETE TO CONFIRM<input @bind="deleteConfirmation" autocomplete="off" /></label>
+                    <button disabled="@(busy || deleteConfirmation != "DELETE")" @onclick="DeleteAsync">@(deleting ? "Deleting..." : "Delete account")</button>
+                    @if (deleteError is not null)
+                    {
+                        <span role="alert">@deleteError</span>
+                    }
+                </div>
+            </section>
+        }
+    </section>
+    <SiteFooter />
+</main>
+
+@code {
+    private UserProfileDto? profile;
+    private string displayName = "";
+    private string epicDisplayName = "";
+    private string deleteConfirmation = "";
+    private string? saveMessage;
+    private string? deleteError;
+    private bool isCollectionPublic;
+    private bool loading = true;
+    private bool saving;
+    private bool deleting;
+    private bool busy;
+    private bool copied;
+    private bool saveSucceeded;
+    private int ownedCount;
+    private int masteredCount;
+
+    private string ProfileUrl => profile is null ? "" : new Uri(new Uri(Navigation.BaseUri), $"players/{profile.PublicId:D}").AbsoluteUri;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await AccountState.LoadAsync();
+            profile = AccountState.Profile;
+            if (profile is null)
+            {
+                Navigation.NavigateTo($"auth/login?returnUrl={Uri.EscapeDataString("/account")}", true);
+                return;
+            }
+
+            displayName = profile.DisplayName;
+            epicDisplayName = profile.EpicDisplayName ?? "";
+            isCollectionPublic = profile.IsCollectionPublic;
+            var collection = await CollectionApi.GetAsync();
+            ownedCount = collection.Count(item => item.IsOwned);
+            masteredCount = collection.Count(item => item.IsMastered);
+        }
+        catch (HttpRequestException)
+        {
+            saveMessage = "We couldn't load your account. Refresh and try again.";
+        }
+        finally { loading = false; }
+    }
+
+    private async Task SaveAsync()
+    {
+        var trimmedDisplayName = displayName.Trim();
+        var trimmedEpicName = epicDisplayName.Trim();
+        if (trimmedDisplayName.Length is < 1 or > 80 || (trimmedEpicName.Length > 0 && trimmedEpicName.Length is < 3 or > 16))
+        {
+            saveSucceeded = false;
+            saveMessage = "Enter a display name and an Epic name between 3 and 16 characters.";
+            return;
+        }
+
+        saving = true;
+        saveMessage = null;
+        try
+        {
+            profile = await AccountApi.UpdateProfileAsync(new(trimmedDisplayName, string.IsNullOrWhiteSpace(trimmedEpicName) ? null : trimmedEpicName, isCollectionPublic));
+            AccountState.SetProfile(profile);
+            saveSucceeded = true;
+            saveMessage = "Account settings saved.";
+        }
+        catch (HttpRequestException)
+        {
+            saveSucceeded = false;
+            saveMessage = "Your changes couldn't be saved. Try again.";
+        }
+        finally { saving = false; }
+    }
+
+    private async Task CopyLinkAsync()
+    {
+        await JavaScript.InvokeVoidAsync("navigator.clipboard.writeText", ProfileUrl);
+        copied = true;
+    }
+
+    private async Task LogoutAsync()
+    {
+        busy = true;
+        try { await AccountApi.LogoutAsync(); Navigation.NavigateTo("/", true); }
+        finally { busy = false; }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (deleteConfirmation != "DELETE") return;
+        busy = deleting = true;
+        deleteError = null;
+        try { await AccountApi.DeleteAccountAsync(); Navigation.NavigateTo("/", true); }
+        catch (HttpRequestException) { deleteError = "Your account couldn't be deleted. Try again."; }
+        finally { busy = deleting = false; }
+    }
+}

@@ -28,7 +28,7 @@ public static class PlayerEndpoints
 
             return player is null
                 ? Results.NotFound()
-                : Results.Ok(await ToSummaryAsync(database, player, cancellationToken));
+                : Results.Ok(await ToSummaryAsync(database, player, false, cancellationToken));
         });
 
         group.MapGet("/{publicId:guid}", async (
@@ -45,27 +45,34 @@ public static class PlayerEndpoints
                 return Results.NotFound();
             }
 
-            var collection = await GetCollectionAsync(database, player.Id, cancellationToken);
+            var collection = player.IsCollectionPublic
+                ? await GetCollectionAsync(database, player.Id, cancellationToken)
+                : [];
             PlayerSummaryDto? viewerSummary = null;
             IReadOnlyList<SpriteProgressDto> viewerCollection = [];
 
             if (context.User.Identity?.IsAuthenticated == true)
             {
                 var viewer = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
-                viewerSummary = await ToSummaryAsync(database, viewer, cancellationToken);
-                if (viewer.Id != player.Id)
+                viewerSummary = await ToSummaryAsync(database, viewer, true, cancellationToken);
+                if (player.IsCollectionPublic && viewer.Id != player.Id)
                 {
                     viewerCollection = await GetCollectionAsync(database, viewer.Id, cancellationToken);
                 }
-                else
+                else if (player.IsCollectionPublic)
                 {
                     viewerCollection = collection;
                 }
             }
 
             context.Response.Headers.CacheControl = "no-store";
-            var playerSummary = await ToSummaryAsync(database, player, cancellationToken);
-            return Results.Ok(new PlayerCollectionDto(playerSummary, collection, viewerSummary, viewerCollection));
+            var playerSummary = await ToSummaryAsync(database, player, false, cancellationToken);
+            return Results.Ok(new PlayerCollectionDto(
+                playerSummary,
+                collection,
+                viewerSummary,
+                viewerCollection,
+                player.IsCollectionPublic && viewerSummary is not null));
         });
 
         return endpoints;
@@ -90,8 +97,20 @@ public static class PlayerEndpoints
     private static async Task<PlayerSummaryDto> ToSummaryAsync(
         SpriteTrackerDbContext database,
         UserAccount user,
+        bool includePrivateStats,
         CancellationToken cancellationToken)
     {
+        if (!user.IsCollectionPublic && !includePrivateStats)
+        {
+            return new PlayerSummaryDto(
+                user.PublicId,
+                user.DisplayName,
+                user.EpicDisplayName ?? "Epic player",
+                false,
+                null,
+                null);
+        }
+
         var ownedCount = await database.SpriteProgress.CountAsync(
             item => item.UserId == user.Id && item.IsOwned,
             cancellationToken);
@@ -102,6 +121,7 @@ public static class PlayerEndpoints
             user.PublicId,
             user.DisplayName,
             user.EpicDisplayName ?? "Epic player",
+            user.IsCollectionPublic,
             ownedCount,
             masteredCount);
     }

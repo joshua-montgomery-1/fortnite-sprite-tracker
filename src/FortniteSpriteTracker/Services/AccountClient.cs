@@ -46,5 +46,34 @@ public sealed class AccountClient(HttpClient httpClient)
             ?? throw new InvalidOperationException("The profile response was empty.");
     }
 
+    public async Task LogoutAsync(CancellationToken cancellationToken = default)
+    {
+        var token = await GetAntiforgeryTokenAsync(cancellationToken);
+        using var message = new HttpRequestMessage(HttpMethod.Post, "auth/logout");
+        message.Headers.Add("X-XSRF-TOKEN", token);
+        using var response = await httpClient.SendAsync(message, cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeleteAccountAsync(CancellationToken cancellationToken = default)
+    {
+        var token = await GetAntiforgeryTokenAsync(cancellationToken);
+        using var message = new HttpRequestMessage(HttpMethod.Delete, "api/me/")
+        {
+            Content = JsonContent.Create(new DeleteAccountRequest("DELETE"))
+        };
+        message.Headers.Add("X-XSRF-TOKEN", token);
+        using var response = await httpClient.SendAsync(message, cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    private async Task<string> GetAntiforgeryTokenAsync(CancellationToken cancellationToken)
+    {
+        var token = await httpClient.GetFromJsonAsync<AntiforgeryTokenResponse>(
+            "api/antiforgery/token",
+            cancellationToken) ?? throw new InvalidOperationException("The antiforgery token response was empty.");
+        return token.Token;
+    }
+
     private sealed record AntiforgeryTokenResponse(string Token);
 }

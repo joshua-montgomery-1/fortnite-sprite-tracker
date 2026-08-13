@@ -6,11 +6,13 @@ public sealed record PlayerSummaryDto(
     Guid PublicId,
     string DisplayName,
     string EpicDisplayName,
-    int OwnedCount,
-    int MasteredCount);
+    bool IsCollectionPublic,
+    int? OwnedCount,
+    int? MasteredCount);
 
 public sealed record PlayerCollectionDto(
     PlayerSummaryDto Player,
     IReadOnlyList<SpriteProgressDto> Collection,
     PlayerSummaryDto? Viewer,
-    IReadOnlyList<SpriteProgressDto> ViewerCollection);
+    IReadOnlyList<SpriteProgressDto> ViewerCollection,
+    bool CanCompare);
