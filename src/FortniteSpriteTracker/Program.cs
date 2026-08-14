@@ -1,4 +1,4 @@
-using FortniteSpriteTracker.Server.Data;
+using FortniteSpriteTracker.DataAccess;
 using FortniteSpriteTracker.Server.Endpoints;
 using FortniteSpriteTracker.Server.Services;
 using FortniteSpriteTracker.Services;
@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,15 +30,11 @@ var databaseConnectionString = builder.Configuration.GetConnectionString("sprite
     ?? throw new InvalidOperationException(
         "The 'ConnectionStrings:sprite-tracker' configuration value is required.");
 
-builder.Services.AddDbContext<SpriteTrackerDbContext>(options =>
-    options.UseNpgsql(
-        databaseConnectionString,
-        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
+builder.Services.AddSpriteTrackerDataAccess(databaseConnectionString);
 builder.Services
     .AddDataProtection()
     .SetApplicationName("FortniteSpriteTracker")
     .PersistKeysToDbContext<SpriteTrackerDbContext>();
-builder.Services.AddHostedService<DatabaseInitializer>();
 builder.Services.AddScoped<CurrentUserService>();
 
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];

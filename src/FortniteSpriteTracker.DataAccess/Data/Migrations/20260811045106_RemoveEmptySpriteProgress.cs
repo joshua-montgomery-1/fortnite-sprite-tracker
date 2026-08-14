@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FortniteSpriteTracker.Server.Data.Migrations
+namespace FortniteSpriteTracker.DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class RemoveEmptySpriteProgress : Migration

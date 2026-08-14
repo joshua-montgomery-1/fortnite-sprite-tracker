@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using FortniteSpriteTracker.Server.Data;
-using FortniteSpriteTracker.Server.Data.Entities;
+using FortniteSpriteTracker.DataAccess;
+using FortniteSpriteTracker.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FortniteSpriteTracker.Server.Services;

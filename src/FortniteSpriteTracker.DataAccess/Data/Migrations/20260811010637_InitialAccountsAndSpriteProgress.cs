@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FortniteSpriteTracker.Server.Data.Migrations
+namespace FortniteSpriteTracker.DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class InitialAccountsAndSpriteProgress : Migration

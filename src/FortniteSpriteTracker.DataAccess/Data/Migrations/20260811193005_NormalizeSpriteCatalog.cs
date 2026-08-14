@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace FortniteSpriteTracker.Server.Data.Migrations
+namespace FortniteSpriteTracker.DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class NormalizeSpriteCatalog : Migration

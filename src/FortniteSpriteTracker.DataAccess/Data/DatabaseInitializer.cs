@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace FortniteSpriteTracker.Server.Data;
+namespace FortniteSpriteTracker.DataAccess;
 
 public sealed class DatabaseInitializer(
     IServiceScopeFactory scopeFactory,

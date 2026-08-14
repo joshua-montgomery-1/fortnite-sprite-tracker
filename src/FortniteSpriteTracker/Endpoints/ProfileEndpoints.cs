@@ -1,4 +1,5 @@
-using FortniteSpriteTracker.Server.Data;
+using FortniteSpriteTracker.DataAccess;
+using FortniteSpriteTracker.DataAccess.Entities;
 using FortniteSpriteTracker.Server.Services;
 using FortniteSpriteTracker.Shared.Profiles;
 using Microsoft.AspNetCore.Antiforgery;
@@ -94,6 +95,6 @@ public static class ProfileEndpoints
         response.Headers.Vary = "Cookie";
     }
 
-    private static UserProfileDto ToDto(Data.Entities.UserAccount user) =>
+    private static UserProfileDto ToDto(UserAccount user) =>
         new(user.Id, user.PublicId, user.DisplayName, user.EpicDisplayName, user.IsCollectionPublic, !string.IsNullOrWhiteSpace(user.EpicDisplayName));
 }

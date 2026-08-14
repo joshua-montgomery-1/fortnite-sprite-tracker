@@ -1,4 +1,4 @@
-namespace FortniteSpriteTracker.Server.Data.Entities;
+namespace FortniteSpriteTracker.DataAccess.Entities;
 
 public sealed class Season
 {

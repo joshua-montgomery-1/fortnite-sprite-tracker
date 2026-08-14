@@ -1,9 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FortniteSpriteTracker.Server.Data.Migrations
+namespace FortniteSpriteTracker.DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class PersistDataProtectionKeys : Migration

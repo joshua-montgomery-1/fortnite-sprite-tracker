@@ -7,6 +7,7 @@
   <Folder Name="/src/">
     <Project Path="src/FortniteSpriteTracker.AppHost/FortniteSpriteTracker.AppHost.csproj" />
     <Project Path="src/FortniteSpriteTracker.Client/FortniteSpriteTracker.Client.csproj" />
+    <Project Path="src/FortniteSpriteTracker.DataAccess/FortniteSpriteTracker.DataAccess.csproj" />
     <Project Path="src/FortniteSpriteTracker.ServiceDefaults/FortniteSpriteTracker.ServiceDefaults.csproj" />
     <Project Path="src/FortniteSpriteTracker.Shared/FortniteSpriteTracker.Shared.csproj" />
     <Project Path="src/FortniteSpriteTracker/FortniteSpriteTracker.csproj" />
