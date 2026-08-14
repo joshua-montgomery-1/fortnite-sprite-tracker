@@ -1,7 +1,6 @@
 name: Build Sprite Scout
 
 on:
-  push:
   pull_request:
 
 jobs:
