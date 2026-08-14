@@ -1,10 +1,10 @@
-using FortniteSpriteTracker.Server.Data;
+using FortniteSpriteTracker.DataAccess;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FortniteSpriteTracker.Server.Data.Migrations;
+namespace FortniteSpriteTracker.DataAccess.Migrations;
 
 [DbContext(typeof(SpriteTrackerDbContext))]
 [Migration("20260813160000_AddCollectionPrivacy")]

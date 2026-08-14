@@ -1,5 +1,5 @@
-using FortniteSpriteTracker.Server.Data;
-using FortniteSpriteTracker.Server.Data.Entities;
+using FortniteSpriteTracker.DataAccess;
+using FortniteSpriteTracker.DataAccess.Entities;
 using FortniteSpriteTracker.Server.Services;
 using FortniteSpriteTracker.Shared.Collections;
 using FortniteSpriteTracker.Shared.Players;
