@@ -16,7 +16,7 @@ jobs:
       - run: dotnet restore FortniteSpriteTracker.sln
       - run: dotnet build FortniteSpriteTracker.sln -c Release --no-restore
       - run: dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj -c Release --no-build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sprite-scout-server
           path: src/FortniteSpriteTracker/bin/Release/net10.0/publish
