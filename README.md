@@ -50,7 +50,7 @@ On Azure or another production host, set the same secret as the environment vari
 ## Build and publish
 
 ```powershell
-dotnet build FortniteSpriteTracker.sln -c Release
+dotnet build FortniteSpriteTracker.slnx -c Release
 dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj -c Release
 ```
 
@@ -150,7 +150,7 @@ Container Apps retains live log streaming even though historical platform logs a
 
 ## Repository layout
 
-- `FortniteSpriteTracker.sln` - root solution
+- `FortniteSpriteTracker.slnx` - root solution
 - `src/FortniteSpriteTracker` - ASP.NET Core Blazor Web App host, prerendering, authentication, and persistence API
 - `src/FortniteSpriteTracker.Client` - components and services compiled for WebAssembly interactivity
 - `src/FortniteSpriteTracker.Shared` - client/server API contracts
