@@ -1,12 +1,9 @@
-using FortniteSpriteTracker.Server.Data.Entities;
-using FortniteSpriteTracker.Models;
+using FortniteSpriteTracker.DataAccess.Entities;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using CatalogSpriteVariant = FortniteSpriteTracker.Models.SpriteVariant;
-using SpriteEntity = FortniteSpriteTracker.Server.Data.Entities.Sprite;
-using SpriteVariantEntity = FortniteSpriteTracker.Server.Data.Entities.SpriteVariant;
+using Catalog = FortniteSpriteTracker.Models;
 
-namespace FortniteSpriteTracker.Server.Data;
+namespace FortniteSpriteTracker.DataAccess;
 
 public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbContext> options) :
     DbContext(options),
@@ -15,8 +12,8 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<UserAccount> Users => Set<UserAccount>();
     public DbSet<Season> Seasons => Set<Season>();
-    public DbSet<SpriteEntity> Sprites => Set<SpriteEntity>();
-    public DbSet<SpriteVariantEntity> SpriteVariants => Set<SpriteVariantEntity>();
+    public DbSet<Sprite> Sprites => Set<Sprite>();
+    public DbSet<SpriteVariant> SpriteVariants => Set<SpriteVariant>();
     public DbSet<SpriteProgress> SpriteProgress => Set<SpriteProgress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -35,7 +32,7 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         seasons.HasIndex(season => new { season.Chapter, season.Number }).IsUnique();
         seasons.Property(season => season.Name).HasMaxLength(80);
 
-        var sprites = modelBuilder.Entity<SpriteEntity>();
+        var sprites = modelBuilder.Entity<Sprite>();
         sprites.HasIndex(sprite => sprite.Slug).IsUnique();
         sprites.HasIndex(sprite => new { sprite.SeasonId, sprite.Name }).IsUnique();
         sprites.Property(sprite => sprite.Name).HasMaxLength(80);
@@ -43,7 +40,7 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         sprites.Property(sprite => sprite.Rarity).HasMaxLength(40);
         sprites.Property(sprite => sprite.Ability).HasMaxLength(500);
 
-        var variants = modelBuilder.Entity<SpriteVariantEntity>();
+        var variants = modelBuilder.Entity<SpriteVariant>();
         variants.HasIndex(variant => new { variant.SpriteId, variant.Name }).IsUnique();
         variants.Property(variant => variant.Name).HasMaxLength(40);
         variants.Property(variant => variant.ImagePath).HasMaxLength(255);
@@ -64,8 +61,8 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
 
     private static void SeedCatalog(
         Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<Season> seasons,
-        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<SpriteEntity> sprites,
-        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<SpriteVariantEntity> variants)
+        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<Sprite> sprites,
+        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<SpriteVariant> variants)
     {
         seasons.HasData(new Season
         {
@@ -76,12 +73,12 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         });
 
         var variantId = 1;
-        for (var spriteIndex = 0; spriteIndex < SpriteData.Sprites.Length; spriteIndex++)
+        for (var spriteIndex = 0; spriteIndex < Catalog.SpriteData.Sprites.Length; spriteIndex++)
         {
-            var definition = SpriteData.Sprites[spriteIndex];
+            var definition = Catalog.SpriteData.Sprites[spriteIndex];
             var spriteId = spriteIndex + 1;
 
-            sprites.HasData(new SpriteEntity
+            sprites.HasData(new Sprite
             {
                 Id = spriteId,
                 SeasonId = 1,
@@ -91,14 +88,14 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
                 Ability = definition.Ability
             });
 
-            foreach (CatalogSpriteVariant variant in definition.Variants)
+            foreach (Catalog.SpriteVariant variant in definition.Variants)
             {
-                variants.HasData(new SpriteVariantEntity
+                variants.HasData(new SpriteVariant
                 {
                     Id = variantId++,
                     SpriteId = spriteId,
                     Name = variant.ToString(),
-                    ImagePath = SpriteData.VariantImageUrl(definition.Slug, variant)
+                    ImagePath = Catalog.SpriteData.VariantImageUrl(definition.Slug, variant)
                 });
             }
         }
