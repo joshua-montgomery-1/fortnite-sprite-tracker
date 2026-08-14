@@ -2,6 +2,8 @@ name: Build Sprite Scout
 
 on:
   pull_request:
+    paths-ignore:
+      - ".github/dependabot.yml"
 
 jobs:
   build:
