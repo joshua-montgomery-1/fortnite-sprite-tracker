@@ -13,8 +13,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet restore FortniteSpriteTracker.sln
-      - run: dotnet build FortniteSpriteTracker.sln -c Release --no-restore
+      - run: dotnet restore FortniteSpriteTracker.slnx
+      - run: dotnet build FortniteSpriteTracker.slnx -c Release --no-restore
       - run: dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj -c Release --no-build
       - uses: actions/upload-artifact@v7
         with:
