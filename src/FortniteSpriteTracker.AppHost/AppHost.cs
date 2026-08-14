@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var server = builder.AddProject<Projects.FortniteSpriteTracker_Server>("server");
+var server = builder.AddProject<Projects.FortniteSpriteTracker>("server");
 
 if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("sprite-tracker")))
 {

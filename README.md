@@ -1,6 +1,6 @@
 # Sprite Scout
 
-A Fortnite Sprite collection tracker built with .NET 10, Blazor WebAssembly, and an ASP.NET Core backend.
+A Fortnite Sprite collection tracker built as a .NET 10 Blazor Web App with server prerendering and WebAssembly interactivity.
 
 ## Features
 
@@ -17,8 +17,8 @@ The complete development stack is orchestrated by .NET Aspire and requires a Doc
 
 ```powershell
 dotnet tool restore
-dotnet user-secrets set "Authentication:Google:ClientId" "your-client-id" --project src/FortniteSpriteTracker.Server
-dotnet user-secrets set "Authentication:Google:ClientSecret" "your-client-secret" --project src/FortniteSpriteTracker.Server
+dotnet user-secrets set "Authentication:Google:ClientId" "your-client-id" --project src/FortniteSpriteTracker
+dotnet user-secrets set "Authentication:Google:ClientSecret" "your-client-secret" --project src/FortniteSpriteTracker
 dotnet run --project src/FortniteSpriteTracker.AppHost
 ```
 
@@ -51,7 +51,7 @@ On Azure or another production host, set the same secret as the environment vari
 
 ```powershell
 dotnet build FortniteSpriteTracker.sln -c Release
-dotnet publish src/FortniteSpriteTracker.Server/FortniteSpriteTracker.Server.csproj -c Release
+dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj -c Release
 ```
 
 The server hosts the Blazor WebAssembly output and authenticated API from the same origin. Supply the PostgreSQL connection string and Google credentials through environment variables or the hosting platform's secret store.
@@ -93,7 +93,7 @@ docker push ghcr.io/YOUR_GITHUB_USER/fortnite-sprite-tracker:latest
 If Docker containers cannot reach NuGet (`NU1301: Network is unreachable`), publish with the host SDK and use the network-independent local Dockerfile:
 
 ```powershell
-dotnet publish src/FortniteSpriteTracker.Server/FortniteSpriteTracker.Server.csproj `
+dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj `
   --configuration Release `
   --output container-publish
 
@@ -151,12 +151,12 @@ Container Apps retains live log streaming even though historical platform logs a
 ## Repository layout
 
 - `FortniteSpriteTracker.sln` - root solution
-- `src/FortniteSpriteTracker` - Blazor WebAssembly client
-- `src/FortniteSpriteTracker.Server` - ASP.NET Core host, authentication, and persistence API
+- `src/FortniteSpriteTracker` - ASP.NET Core Blazor Web App host, prerendering, authentication, and persistence API
+- `src/FortniteSpriteTracker.Client` - components and services compiled for WebAssembly interactivity
 - `src/FortniteSpriteTracker.Shared` - client/server API contracts
 - `src/FortniteSpriteTracker.AppHost` - Aspire orchestration for the server and PostgreSQL
 - `src/FortniteSpriteTracker.ServiceDefaults` - shared health checks, telemetry, and service discovery
 
 ## Notes
 
-This is an unofficial fan-made companion. Sprite artwork is checked into `wwwroot/images/sprites`, and its original source attribution is retained in `wwwroot/images/sprites/manifest.json`.
+This is an unofficial fan-made companion. Sprite artwork is checked into `src/FortniteSpriteTracker.Client/wwwroot/images/sprites`, and its original source attribution is retained in `src/FortniteSpriteTracker.Client/wwwroot/images/sprites/manifest.json`.
