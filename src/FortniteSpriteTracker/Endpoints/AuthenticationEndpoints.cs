@@ -22,7 +22,12 @@ public static class AuthenticationEndpoints
 
             var safeReturnUrl = IsLocalReturnUrl(returnUrl) ? returnUrl! : "/";
             return Results.Challenge(
-                new AuthenticationProperties { RedirectUri = safeReturnUrl },
+                new AuthenticationProperties
+                {
+                    RedirectUri = safeReturnUrl,
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+                },
                 [GoogleDefaults.AuthenticationScheme]);
         }).AllowAnonymous();
 
