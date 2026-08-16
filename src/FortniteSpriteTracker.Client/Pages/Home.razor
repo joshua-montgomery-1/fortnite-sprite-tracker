@@ -9,8 +9,8 @@
                  FamilyCount="@(catalog?.Families.Count ?? 0)"
                  Chapter="@(selectedSeason?.Chapter ?? 0)"
                  SeasonNumber="@(selectedSeason?.Number ?? 0)"
-                 IsSeasonActive="@(selectedSeason?.IsActive == true)"
-                 SeasonStatus="@(selectedSeason is null ? "" : selectedSeason.IsActive ? "LIVE" : "PREVIOUS")"
+                 IsSeasonActive="@SelectedSeasonIsActive"
+                 SeasonStatus="@SelectedSeasonStatus"
                  OnShowMissing="ShowMissing" />
 
     <div class="lowerPage">
