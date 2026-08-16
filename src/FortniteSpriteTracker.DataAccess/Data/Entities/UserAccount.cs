@@ -12,4 +12,6 @@ public sealed class UserAccount
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public List<SpriteProgress> SpriteProgress { get; set; } = [];
+    public List<TrackedPlayer> TrackedPlayers { get; set; } = [];
+    public List<TrackedPlayer> TrackedBy { get; set; } = [];
 }

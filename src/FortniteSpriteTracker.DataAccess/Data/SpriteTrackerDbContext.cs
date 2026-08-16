@@ -15,6 +15,7 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
     public DbSet<SeasonSpriteFamily> SeasonSpriteFamilies => Set<SeasonSpriteFamily>();
     public DbSet<SeasonSpriteVariant> SeasonSpriteVariants => Set<SeasonSpriteVariant>();
     public DbSet<SpriteProgress> SpriteProgress => Set<SpriteProgress>();
+    public DbSet<TrackedPlayer> TrackedPlayers => Set<TrackedPlayer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,5 +76,17 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
             .WithMany(variant => variant.Progress)
             .HasForeignKey(item => item.SpriteVariantId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        var trackedPlayers = modelBuilder.Entity<TrackedPlayer>();
+        trackedPlayers.HasKey(item => new { item.UserId, item.PlayerId });
+        trackedPlayers.HasOne(item => item.User)
+            .WithMany(user => user.TrackedPlayers)
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        trackedPlayers.HasOne(item => item.Player)
+            .WithMany(user => user.TrackedBy)
+            .HasForeignKey(item => item.PlayerId)
+            .OnDelete(DeleteBehavior.Cascade);
+        trackedPlayers.HasIndex(item => item.PlayerId);
     }
 }

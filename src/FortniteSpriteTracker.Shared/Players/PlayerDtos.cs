@@ -19,4 +19,14 @@ public sealed class PlayerCollectionDto
     public PlayerSummaryDto? Viewer { get; init; }
     public required IReadOnlyList<SpriteProgressDto> ViewerCollection { get; init; }
     public bool CanCompare { get; init; }
+    public bool IsTracked { get; init; }
+}
+
+public sealed class TrackedPlayerDto
+{
+    public required Guid PublicId { get; init; }
+    public required string DisplayName { get; init; }
+    public required string EpicDisplayName { get; init; }
+    public int TotalSprites { get; init; }
+    public int MasteredSprites { get; init; }
 }

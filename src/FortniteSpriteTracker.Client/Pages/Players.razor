@@ -1,15 +1,7 @@
 @page "/players"
 @page "/players/{PublicId:guid}"
-@using FortniteSpriteTracker.Services
-@using FortniteSpriteTracker.Shared.Catalog
-@using FortniteSpriteTracker.Shared.Players
-@inject PlayerClient PlayerApi
-@inject CatalogClient CatalogApi
-@inject AccountState AccountState
-@inject NavigationManager Navigation
-@inject IJSRuntime JavaScript
 
-<PageTitle>@(data is null ? "Find a player" : $"{data.Player.EpicDisplayName}'s Sprites") - Sprite Scout</PageTitle>
+<PageTitle>@(data is null ? "Find a player" : $"{data.Player.DisplayName} ({data.Player.EpicDisplayName})") - Sprite Scout</PageTitle>
 
 <main>
     <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
@@ -33,6 +25,14 @@
             </form>
         </div>
 
+        @if (searchResult is not null && PublicId is null)
+        {
+            <article class="playerSearchResult">
+                <div><span class="sectionKicker">PLAYER FOUND</span><strong>@PlayerName(searchResult)</strong></div>
+                <a class="primary" href="players/@searchResult.PublicId">View collection <span>→</span></a>
+            </article>
+        }
+
         @if (loading)
         {
             <div class="playerState">Loading this field guide...</div>
@@ -50,18 +50,35 @@
             <header class="playerHero">
                 <div>
                     <span class="sectionKicker">PUBLIC FIELD GUIDE</span>
-                    <h2>@data.Player.EpicDisplayName</h2>
+                    <h2>@PlayerName(data.Player)</h2>
                     <p>
-                        @data.Player.DisplayName
                         @if (data.Player.IsCollectionPublic)
                         {
-                            <text> · @data.Player.OwnedCount owned · @data.Player.MasteredCount mastered</text>
+                            <text>@data.Player.OwnedCount total sprites · @data.Player.MasteredCount mastered</text>
                         }
                     </p>
                 </div>
-                <div class="shareBox">
+                <div class="profileActions">
+                    @if (data.Viewer is not null && !IsOwnProfile)
+                    {
+                        @if (data.IsTracked && confirmingUntrack)
+                        {
+                            <div class="untrackConfirm" role="group" aria-label="Confirm untracking @PlayerName(data.Player)">
+                                <button class="cancelUntrack" disabled="@changingTracking" @onclick="() => confirmingUntrack = false">Cancel</button>
+                                <button class="confirmUntrack" disabled="@changingTracking" @onclick="ToggleTrackingAsync">@(changingTracking ? "Removing..." : "Yes, untrack")</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="trackButton @(data.IsTracked ? "tracked" : "")" disabled="@changingTracking" @onclick="BeginTrackingChangeAsync">
+                                @(changingTracking ? "Saving..." : data.IsTracked ? "Untrack" : "Track player")
+                            </button>
+                        }
+                    }
+                    <div class="shareBox">
                     <label>PERMANENT PLAYER LINK</label>
                     <div><input readonly value="@CanonicalUrl" /><button @onclick="CopyLinkAsync">@(copied ? "Copied" : "Copy")</button></div>
+                    </div>
                 </div>
             </header>
 
@@ -125,124 +142,3 @@
     </section>
     <SiteFooter />
 </main>
-
-@code {
-    [Parameter] public Guid? PublicId { get; set; }
-
-    private PlayerCollectionDto? data;
-    private SpriteCatalogDto? catalog;
-    private string epicUsername = "";
-    private string collectionQuery = "";
-    private string mode = "collection";
-    private string? searchMessage;
-    private string? catalogError;
-    private bool searching;
-    private bool loading;
-    private bool copied;
-
-    private bool IsOwnProfile => data?.Viewer?.PublicId == data?.Player.PublicId;
-    private string CanonicalUrl => new Uri(new Uri(Navigation.BaseUri), $"players/{data!.Player.PublicId:D}").AbsoluteUri;
-    private string LoginUrl => $"auth/login?returnUrl={Uri.EscapeDataString(new Uri(Navigation.Uri).PathAndQuery)}";
-    private HashSet<int> TargetKeys => Keys(data?.Collection ?? []);
-    private HashSet<int> ViewerKeys => Keys(data?.ViewerCollection ?? []);
-    private int TargetOnlyCount => TargetKeys.Except(ViewerKeys).Count();
-    private int ViewerOnlyCount => ViewerKeys.Except(TargetKeys).Count();
-    private int SharedCount => TargetKeys.Intersect(ViewerKeys).Count();
-
-    private IEnumerable<ViewEntry> VisibleEntries
-    {
-        get
-        {
-            if (data is null) return [];
-            var target = TargetKeys;
-            var viewer = ViewerKeys;
-            var keys = mode switch
-            {
-                "target" => target.Except(viewer),
-                "viewer" => viewer.Except(target),
-                "shared" => target.Intersect(viewer),
-                _ => target
-            };
-
-            return keys.Select(ToEntry)
-                .Where(entry => entry is not null && entry.Family.Name.Contains(collectionQuery, StringComparison.OrdinalIgnoreCase))
-                .Select(entry => entry!)
-                .OrderBy(entry => entry.Family.DisplayOrder)
-                .ThenBy(entry => entry.Variant.Style.DisplayOrder);
-        }
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        data = null;
-        mode = "collection";
-        catalogError = null;
-        try
-        {
-            var seasons = await CatalogApi.GetSeasonsAsync();
-            var catalogSeason = seasons.FirstOrDefault(item => item.IsActive && item.HasCatalog)
-                ?? seasons.FirstOrDefault(item => item.HasCatalog);
-            if (catalogSeason is null)
-            {
-                catalogError = "No seasonal Sprite guide is available yet.";
-                return;
-            }
-
-            catalog ??= await CatalogApi.GetAsync(catalogSeason.Id);
-            await AccountState.LoadAsync();
-        }
-        catch (HttpRequestException)
-        {
-            catalogError = "The current Sprite guide is temporarily unavailable. Please try again later.";
-            return;
-        }
-        if (PublicId is null) return;
-        loading = true;
-        try
-        {
-            data = await PlayerApi.GetAsync(PublicId.Value);
-            if (data?.Viewer is not null)
-            {
-                if (!IsOwnProfile) mode = "target";
-            }
-        }
-        finally { loading = false; }
-    }
-
-    private async Task SearchAsync()
-    {
-        if (string.IsNullOrWhiteSpace(epicUsername)) return;
-        searching = true;
-        searchMessage = null;
-        try
-        {
-            var result = await PlayerApi.FindByEpicUsernameAsync(epicUsername);
-            if (result is null) searchMessage = "No Sprite Scout account matched that exact Epic display name.";
-            else Navigation.NavigateTo($"players/{result.PublicId:D}");
-        }
-        catch (HttpRequestException) { searchMessage = "Player search is temporarily unavailable."; }
-        finally { searching = false; }
-    }
-
-    private async Task CopyLinkAsync()
-    {
-        await JavaScript.InvokeVoidAsync("navigator.clipboard.writeText", CanonicalUrl);
-        copied = true;
-    }
-
-    private static HashSet<int> Keys(IEnumerable<FortniteSpriteTracker.Shared.Collections.SpriteProgressDto> progress) =>
-        progress.Where(item => item.IsOwned).Select(item => item.SpriteVariantId).ToHashSet();
-
-    private ViewEntry? ToEntry(int key)
-    {
-        var family = catalog?.Families.FirstOrDefault(item => item.Variants.Any(candidate => candidate.Id == key));
-        var variant = family?.Variants.FirstOrDefault(item => item.Id == key);
-        var mastered = (mode == "viewer" ? data?.ViewerCollection : data?.Collection)
-            ?.Any(item => item.IsMastered && item.SpriteVariantId == key) == true;
-        return family is not null && variant is not null
-            ? new ViewEntry(family, variant, mastered)
-            : null;
-    }
-
-    private sealed record ViewEntry(SpriteFamilyDto Family, SpriteVariantDto Variant, bool IsMastered);
-}
