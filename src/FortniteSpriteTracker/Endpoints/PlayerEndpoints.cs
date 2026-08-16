@@ -3,8 +3,8 @@ using FortniteSpriteTracker.DataAccess.Entities;
 using FortniteSpriteTracker.Server.Services;
 using FortniteSpriteTracker.Shared.Collections;
 using FortniteSpriteTracker.Shared.Players;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.EntityFrameworkCore;
 
 namespace FortniteSpriteTracker.Server.Endpoints;
 
@@ -16,9 +16,13 @@ public static class PlayerEndpoints
     {
         var group = endpoints.MapGroup("/api/players").AllowAnonymous();
 
-        group.MapGet("/search", async (string epicUsername, SpriteTrackerDbContext database, CancellationToken cancellationToken) =>
+        group.MapGet("/search", async (
+            string epicUsername,
+            SpriteTrackerDbContext database,
+            CancellationToken cancellationToken) =>
         {
             var normalized = CurrentUserService.NormalizeEpicDisplayName(epicUsername);
+
             if (normalized is null)
             {
                 return Results.BadRequest();
@@ -43,6 +47,7 @@ public static class PlayerEndpoints
         {
             var player = await database.Users.AsNoTracking()
                 .SingleOrDefaultAsync(user => user.PublicId == publicId && user.EpicDisplayName != null, cancellationToken);
+
             if (player is null)
             {
                 return Results.NotFound();
@@ -51,15 +56,19 @@ public static class PlayerEndpoints
             var collection = player.IsCollectionPublic
                 ? await GetCollectionAsync(database, player.Id, cancellationToken)
                 : [];
+
             PlayerSummaryDto? viewerSummary = null;
             IReadOnlyList<SpriteProgressDto> viewerCollection = [];
+
             var isTracked = false;
 
             if (context.User.Identity?.IsAuthenticated == true)
             {
                 var viewer = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
+
                 isTracked = viewer.Id != player.Id && await database.TrackedPlayers.AsNoTracking()
                     .AnyAsync(item => item.UserId == viewer.Id && item.PlayerId == player.Id, cancellationToken);
+
                 if (player.IsCollectionPublic && viewer.Id != player.Id)
                 {
                     viewerCollection = await GetCollectionAsync(database, viewer.Id, cancellationToken);
@@ -75,9 +84,11 @@ public static class PlayerEndpoints
             }
 
             context.Response.Headers.CacheControl = "no-store";
+
             var playerSummary = player.IsCollectionPublic
                 ? ToSummary(player, collection.Count, collection.Count(item => item.IsMastered))
                 : ToSummary(player, null, null);
+
             return Results.Ok(new PlayerCollectionDto
             {
                 Player = playerSummary,
@@ -140,6 +151,7 @@ public static class PlayerEndpoints
                 .ThenBy(item => item.DisplayName)
                 .Take(MaximumTrackedPlayers)
                 .ToArrayAsync(cancellationToken);
+
             return Results.Ok(players);
         });
 
@@ -152,20 +164,33 @@ public static class PlayerEndpoints
             CancellationToken cancellationToken) =>
         {
             await antiforgery.ValidateRequestAsync(context);
+
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
+
             var player = await database.Users.SingleOrDefaultAsync(
                 item => item.PublicId == publicId && item.EpicDisplayName != null,
                 cancellationToken);
-            if (player is null) return Results.NotFound();
-            if (player.Id == user.Id) return Results.BadRequest("You cannot track your own profile.");
+
+            if (player is null)
+            {
+                return Results.NotFound();
+            }
+
+            if (player.Id == user.Id)
+            {
+                return Results.BadRequest("You cannot track your own profile.");
+            }
+
             var isAlreadyTracked = await database.TrackedPlayers.AnyAsync(
                 item => item.UserId == user.Id && item.PlayerId == player.Id,
                 cancellationToken);
+
             if (!isAlreadyTracked)
             {
                 var trackedCount = await database.TrackedPlayers.CountAsync(
                     item => item.UserId == user.Id,
                     cancellationToken);
+
                 if (trackedCount >= MaximumTrackedPlayers)
                 {
                     return Results.Conflict($"You can track up to {MaximumTrackedPlayers} players.");
@@ -174,6 +199,7 @@ public static class PlayerEndpoints
                 database.TrackedPlayers.Add(new TrackedPlayer { UserId = user.Id, PlayerId = player.Id });
                 await database.SaveChangesAsync(cancellationToken);
             }
+
             return Results.NoContent();
         });
 
@@ -186,15 +212,19 @@ public static class PlayerEndpoints
             CancellationToken cancellationToken) =>
         {
             await antiforgery.ValidateRequestAsync(context);
+
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
+
             var relationship = await database.TrackedPlayers.SingleOrDefaultAsync(
                 item => item.UserId == user.Id && item.Player.PublicId == publicId,
                 cancellationToken);
+
             if (relationship is not null)
             {
                 database.TrackedPlayers.Remove(relationship);
                 await database.SaveChangesAsync(cancellationToken);
             }
+
             return Results.NoContent();
         });
 
@@ -204,8 +234,10 @@ public static class PlayerEndpoints
     private static async Task<IReadOnlyList<SpriteProgressDto>> GetCollectionAsync(
         SpriteTrackerDbContext database,
         long userId,
-        CancellationToken cancellationToken) =>
-        await database.SpriteProgress.AsNoTracking()
+        CancellationToken cancellationToken)
+    {
+        var collection = await database.SpriteProgress
+            .AsNoTracking()
             .Where(item => item.UserId == userId && item.IsOwned)
             .OrderBy(item => item.SpriteVariantId)
             .Select(item => new SpriteProgressDto
@@ -216,6 +248,9 @@ public static class PlayerEndpoints
                 UpdatedAtUtc = item.UpdatedAtUtc
             })
             .ToArrayAsync(cancellationToken);
+
+        return collection;
+    }
 
     private static async Task<PlayerSummaryDto> ToSummaryAsync(
         SpriteTrackerDbContext database,
@@ -228,7 +263,8 @@ public static class PlayerEndpoints
             return ToSummary(user, null, null);
         }
 
-        var counts = await database.SpriteProgress.AsNoTracking()
+        var counts = await database.SpriteProgress
+            .AsNoTracking()
             .Where(item => item.UserId == user.Id)
             .GroupBy(_ => 1)
             .Select(items => new
@@ -237,11 +273,16 @@ public static class PlayerEndpoints
                 Mastered = items.Count(item => item.IsMastered)
             })
             .SingleOrDefaultAsync(cancellationToken);
+
         return ToSummary(user, counts?.Owned ?? 0, counts?.Mastered ?? 0);
     }
 
-    private static PlayerSummaryDto ToSummary(UserAccount user, int? ownedCount, int? masteredCount) =>
-        new()
+    private static PlayerSummaryDto ToSummary(
+        UserAccount user,
+        int? ownedCount,
+        int? masteredCount)
+    {
+        return new PlayerSummaryDto
         {
             PublicId = user.PublicId,
             DisplayName = user.DisplayName,
@@ -250,4 +291,5 @@ public static class PlayerEndpoints
             OwnedCount = ownedCount,
             MasteredCount = masteredCount
         };
+    }
 }
