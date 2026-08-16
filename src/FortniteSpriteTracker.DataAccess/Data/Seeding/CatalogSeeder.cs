@@ -130,6 +130,7 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
                     Ability = definition.Ability,
                     PrimaryColor = definition.PrimaryColor,
                     SecondaryColor = definition.SecondaryColor,
+                    ImagePath = definition.ImagePath,
                     DisplayOrder = definition.DisplayOrder
                 };
                 database.SeasonSpriteFamilies.Add(seasonFamily);
@@ -266,12 +267,14 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
     {
         var changed = item.Rarity != definition.Rarity || item.RarityColor != definition.RarityColor ||
             item.Ability != definition.Ability || item.PrimaryColor != definition.PrimaryColor ||
-            item.SecondaryColor != definition.SecondaryColor || item.DisplayOrder != definition.DisplayOrder;
+            item.SecondaryColor != definition.SecondaryColor || item.ImagePath != definition.ImagePath ||
+            item.DisplayOrder != definition.DisplayOrder;
         item.Rarity = definition.Rarity;
         item.RarityColor = definition.RarityColor;
         item.Ability = definition.Ability;
         item.PrimaryColor = definition.PrimaryColor;
         item.SecondaryColor = definition.SecondaryColor;
+        item.ImagePath = definition.ImagePath;
         item.DisplayOrder = definition.DisplayOrder;
         return changed;
     }

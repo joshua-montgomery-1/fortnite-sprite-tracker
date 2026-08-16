@@ -9,6 +9,7 @@ public sealed class SeasonSpriteFamily
     public required string Ability { get; set; }
     public required string PrimaryColor { get; set; }
     public required string SecondaryColor { get; set; }
+    public required string ImagePath { get; set; }
     public int DisplayOrder { get; set; }
     public Season Season { get; set; } = null!;
     public SpriteFamily SpriteFamily { get; set; } = null!;

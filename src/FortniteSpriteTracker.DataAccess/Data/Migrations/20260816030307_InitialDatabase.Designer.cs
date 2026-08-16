@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FortniteSpriteTracker.DataAccess.Data.Migrations
 {
     [DbContext(typeof(SpriteTrackerDbContext))]
-    [Migration("20260816025405_InitialDatabase")]
+    [Migration("20260816030307_InitialDatabase")]
     partial class InitialDatabase
     {
         /// <inheritdoc />
@@ -73,6 +73,11 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("PrimaryColor")
                         .IsRequired()

@@ -106,6 +106,7 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
                     Ability = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     PrimaryColor = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     SecondaryColor = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    ImagePath = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     DisplayOrder = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>

@@ -71,6 +71,11 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<string>("PrimaryColor")
                         .IsRequired()
                         .HasMaxLength(20)

@@ -27,6 +27,7 @@ public sealed class SpriteFamilySeed
     public required string Ability { get; init; }
     public required string PrimaryColor { get; init; }
     public required string SecondaryColor { get; init; }
+    public required string ImagePath { get; init; }
     public required int DisplayOrder { get; init; }
     public required IReadOnlyList<SpriteVariantSeed> Variants { get; init; }
 }

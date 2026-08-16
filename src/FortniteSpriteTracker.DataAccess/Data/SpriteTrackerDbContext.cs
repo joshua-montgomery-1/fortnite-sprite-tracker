@@ -60,6 +60,7 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         seasonFamilies.Property(item => item.Ability).HasMaxLength(500);
         seasonFamilies.Property(item => item.PrimaryColor).HasMaxLength(20);
         seasonFamilies.Property(item => item.SecondaryColor).HasMaxLength(20);
+        seasonFamilies.Property(item => item.ImagePath).HasMaxLength(300);
 
         var seasonVariants = modelBuilder.Entity<SeasonSpriteVariant>();
         seasonVariants.HasKey(item => new { item.SeasonId, item.SpriteVariantId });

@@ -104,7 +104,7 @@ public static class CatalogEndpoints
                     PrimaryColor = item.PrimaryColor,
                     SecondaryColor = item.SecondaryColor,
                     DisplayOrder = item.DisplayOrder,
-                    ImageUrl = variants.FirstOrDefault()?.ImagePath ?? string.Empty,
+                    ImageUrl = item.ImagePath ?? string.Empty,
                     Variants = variants
                 };
             }).ToArray();

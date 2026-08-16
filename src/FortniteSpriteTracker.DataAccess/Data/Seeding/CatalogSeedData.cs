@@ -86,6 +86,7 @@ public static class CatalogSeedData
         {
             Id = 1,
             Name = "Water",
+            ImagePath = "images/sprites/water_basic.webp",
             Slug = "water",
             Rarity = "Rare",
             RarityColor = "#58a6ff",
@@ -143,6 +144,7 @@ public static class CatalogSeedData
         {
             Id = 2,
             Name = "Earth",
+            ImagePath = "images/sprites/earth_basic.webp",
             Slug = "earth",
             Rarity = "Rare",
             RarityColor = "#58a6ff",
@@ -200,6 +202,7 @@ public static class CatalogSeedData
         {
             Id = 3,
             Name = "Fire",
+            ImagePath = "images/sprites/fire_basic.webp",
             Slug = "fire",
             Rarity = "Rare",
             RarityColor = "#58a6ff",
@@ -257,6 +260,7 @@ public static class CatalogSeedData
         {
             Id = 4,
             Name = "Fishy",
+            ImagePath = "images/sprites/fishy_basic.webp",
             Slug = "fishy",
             Rarity = "Rare",
             RarityColor = "#58a6ff",
@@ -302,6 +306,7 @@ public static class CatalogSeedData
         {
             Id = 5,
             Name = "Air",
+            ImagePath = "images/sprites/air_basic.webp",
             Slug = "air",
             Rarity = "Rare",
             RarityColor = "#58a6ff",
@@ -347,6 +352,7 @@ public static class CatalogSeedData
         {
             Id = 6,
             Name = "Duck",
+            ImagePath = "images/sprites/duck_basic.webp",
             Slug = "duck",
             Rarity = "Epic",
             RarityColor = "#c780ff",
@@ -392,6 +398,7 @@ public static class CatalogSeedData
         {
             Id = 7,
             Name = "Ghost",
+            ImagePath = "images/sprites/ghost_basic.webp",
             Slug = "ghost",
             Rarity = "Epic",
             RarityColor = "#c780ff",
@@ -437,6 +444,7 @@ public static class CatalogSeedData
         {
             Id = 8,
             Name = "Demon",
+            ImagePath = "images/sprites/demon_basic.webp",
             Slug = "demon",
             Rarity = "Epic",
             RarityColor = "#c780ff",
@@ -482,6 +490,7 @@ public static class CatalogSeedData
         {
             Id = 9,
             Name = "King",
+            ImagePath = "images/sprites/king_basic.webp",
             Slug = "king",
             Rarity = "Epic",
             RarityColor = "#c780ff",
@@ -527,6 +536,7 @@ public static class CatalogSeedData
         {
             Id = 10,
             Name = "Aura",
+            ImagePath = "images/sprites/drifter_basic.webp",
             Slug = "drifter",
             Rarity = "Epic",
             RarityColor = "#c780ff",
@@ -572,6 +582,7 @@ public static class CatalogSeedData
         {
             Id = 11,
             Name = "Striker",
+            ImagePath = "images/sprites/soccer_basic.webp",
             Slug = "soccer",
             Rarity = "Epic",
             RarityColor = "#c780ff",
@@ -617,6 +628,7 @@ public static class CatalogSeedData
         {
             Id = 12,
             Name = "Dream",
+            ImagePath = "images/sprites/dream_basic.webp",
             Slug = "dream",
             Rarity = "Legendary",
             RarityColor = "#ffb23f",
@@ -662,6 +674,7 @@ public static class CatalogSeedData
         {
             Id = 13,
             Name = "Punk",
+            ImagePath = "images/sprites/punk_basic.webp",
             Slug = "punk",
             Rarity = "Legendary",
             RarityColor = "#ffb23f",
@@ -707,6 +720,7 @@ public static class CatalogSeedData
         {
             Id = 14,
             Name = "Boss",
+            ImagePath = "images/sprites/boss_basic.webp",
             Slug = "boss",
             Rarity = "Legendary",
             RarityColor = "#ffb23f",
@@ -752,6 +766,7 @@ public static class CatalogSeedData
         {
             Id = 15,
             Name = "Seven",
+            ImagePath = "images/sprites/seven_basic.webp",
             Slug = "seven",
             Rarity = "Legendary",
             RarityColor = "#ffb23f",
@@ -797,6 +812,7 @@ public static class CatalogSeedData
         {
             Id = 16,
             Name = "Llama",
+            ImagePath = "images/sprites/llama_basic.webp",
             Slug = "llama",
             Rarity = "Legendary",
             RarityColor = "#ffb23f",
@@ -842,6 +858,7 @@ public static class CatalogSeedData
         {
             Id = 17,
             Name = "Peely",
+            ImagePath = "images/sprites/peely_basic.webp",
             Slug = "peely",
             Rarity = "Legendary",
             RarityColor = "#ffb23f",
@@ -887,6 +904,7 @@ public static class CatalogSeedData
         {
             Id = 18,
             Name = "Grim Reaper",
+            ImagePath = "images/sprites/grimreaper_basic.webp",
             Slug = "grimreaper",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
@@ -944,6 +962,7 @@ public static class CatalogSeedData
         {
             Id = 19,
             Name = "Zero Point",
+            ImagePath = "images/sprites/zeropoint_basic.webp",
             Slug = "zeropoint",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
@@ -1007,6 +1026,7 @@ public static class CatalogSeedData
         {
             Id = 20,
             Name = "Burnt Peanut",
+            ImagePath = "images/sprites/theburntpeanut_basic.webp",
             Slug = "theburntpeanut",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
@@ -1028,6 +1048,7 @@ public static class CatalogSeedData
         {
             Id = 21,
             Name = "Batman",
+            ImagePath = "images/sprites/batman_basic.webp",
             Slug = "batman",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
@@ -1079,6 +1100,7 @@ public static class CatalogSeedData
         {
             Id = 22,
             Name = "Pollo",
+            ImagePath = "images/sprites/pollo_basic.webp",
             Slug = "pollo",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
@@ -1100,6 +1122,7 @@ public static class CatalogSeedData
         {
             Id = 23,
             Name = "Vini Jr.",
+            ImagePath = "images/sprites/vinijr_basic.webp",
             Slug = "vinijr",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
@@ -1121,6 +1144,7 @@ public static class CatalogSeedData
         {
             Id = 24,
             Name = "John Wick",
+            ImagePath = "images/sprites/johnwick_basic.webp",
             Slug = "johnwick",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
@@ -1142,6 +1166,7 @@ public static class CatalogSeedData
         {
             Id = 25,
             Name = "Ironmouse",
+            ImagePath = "images/sprites/ironmouse_basic.webp",
             Slug = "ironmouse",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
