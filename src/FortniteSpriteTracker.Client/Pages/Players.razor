@@ -9,7 +9,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JavaScript
 
-<PageTitle>@(data is null ? "Find a player" : $"{data.Player.EpicDisplayName}'s Sprites") - Sprite Scout</PageTitle>
+<PageTitle>@(data is null ? "Find a player" : $"{data.Player.DisplayName} ({data.Player.EpicDisplayName})") - Sprite Scout</PageTitle>
 
 <main>
     <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
@@ -33,6 +33,14 @@
             </form>
         </div>
 
+        @if (searchResult is not null && PublicId is null)
+        {
+            <article class="playerSearchResult">
+                <div><span class="sectionKicker">PLAYER FOUND</span><strong>@PlayerName(searchResult)</strong></div>
+                <a class="primary" href="players/@searchResult.PublicId">View collection <span>→</span></a>
+            </article>
+        }
+
         @if (loading)
         {
             <div class="playerState">Loading this field guide...</div>
@@ -50,18 +58,25 @@
             <header class="playerHero">
                 <div>
                     <span class="sectionKicker">PUBLIC FIELD GUIDE</span>
-                    <h2>@data.Player.EpicDisplayName</h2>
+                    <h2>@PlayerName(data.Player)</h2>
                     <p>
-                        @data.Player.DisplayName
                         @if (data.Player.IsCollectionPublic)
                         {
-                            <text> · @data.Player.OwnedCount owned · @data.Player.MasteredCount mastered</text>
+                            <text>@data.Player.OwnedCount total sprites · @data.Player.MasteredCount mastered</text>
                         }
                     </p>
                 </div>
-                <div class="shareBox">
+                <div class="profileActions">
+                    @if (data.Viewer is not null && !IsOwnProfile)
+                    {
+                        <button class="trackButton @(data.IsTracked ? "tracked" : "")" disabled="@changingTracking" @onclick="ToggleTrackingAsync">
+                            @(changingTracking ? "Saving..." : data.IsTracked ? "Untrack" : "Track player")
+                        </button>
+                    }
+                    <div class="shareBox">
                     <label>PERMANENT PLAYER LINK</label>
                     <div><input readonly value="@CanonicalUrl" /><button @onclick="CopyLinkAsync">@(copied ? "Copied" : "Copy")</button></div>
+                    </div>
                 </div>
             </header>
 
@@ -135,10 +150,12 @@
     private string collectionQuery = "";
     private string mode = "collection";
     private string? searchMessage;
+    private PlayerSummaryDto? searchResult;
     private string? catalogError;
     private bool searching;
     private bool loading;
     private bool copied;
+    private bool changingTracking;
 
     private bool IsOwnProfile => data?.Viewer?.PublicId == data?.Player.PublicId;
     private string CanonicalUrl => new Uri(new Uri(Navigation.BaseUri), $"players/{data!.Player.PublicId:D}").AbsoluteUri;
@@ -214,15 +231,40 @@
         if (string.IsNullOrWhiteSpace(epicUsername)) return;
         searching = true;
         searchMessage = null;
+        searchResult = null;
         try
         {
             var result = await PlayerApi.FindByEpicUsernameAsync(epicUsername);
             if (result is null) searchMessage = "No Sprite Scout account matched that exact Epic display name.";
-            else Navigation.NavigateTo($"players/{result.PublicId:D}");
+            else searchResult = result;
         }
         catch (HttpRequestException) { searchMessage = "Player search is temporarily unavailable."; }
         finally { searching = false; }
     }
+
+    private async Task ToggleTrackingAsync()
+    {
+        if (data is null) return;
+        if (data.IsTracked && !await JavaScript.InvokeAsync<bool>("confirm", $"Untrack {PlayerName(data.Player)}?")) return;
+        changingTracking = true;
+        try
+        {
+            if (data.IsTracked) await PlayerApi.UntrackAsync(data.Player.PublicId);
+            else await PlayerApi.TrackAsync(data.Player.PublicId);
+            data = new PlayerCollectionDto
+            {
+                Player = data.Player,
+                Collection = data.Collection,
+                Viewer = data.Viewer,
+                ViewerCollection = data.ViewerCollection,
+                CanCompare = data.CanCompare,
+                IsTracked = !data.IsTracked
+            };
+        }
+        finally { changingTracking = false; }
+    }
+
+    private static string PlayerName(PlayerSummaryDto player) => $"{player.DisplayName} ({player.EpicDisplayName})";
 
     private async Task CopyLinkAsync()
     {

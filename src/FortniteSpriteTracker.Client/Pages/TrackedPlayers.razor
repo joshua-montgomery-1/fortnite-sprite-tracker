@@ -1,0 +1,80 @@
+@page "/tracked-players"
+@using FortniteSpriteTracker.Shared.Players
+@inject PlayerClient PlayerApi
+@inject AccountState AccountState
+@inject IJSRuntime JavaScript
+
+<PageTitle>Tracked players - Sprite Scout</PageTitle>
+
+<main>
+    <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
+    <section class="trackedPage">
+        <header class="trackedHero">
+            <div><span class="sectionKicker">PRIVATE PLAYER BOARD</span><h1>TRACKED PLAYERS</h1><p>Follow Sprite progress without changing anyone's public profile.</p></div>
+            <a class="primary" href="/players">Find a player <span>→</span></a>
+        </header>
+
+        @if (loading)
+        {
+            <div class="playerState">Loading tracked players...</div>
+        }
+        else if (!signedIn)
+        {
+            <div class="playerState"><strong>Sign in to track players</strong><span>Your tracked list is private to your account.</span><a class="primary" href="auth/login?returnUrl=/tracked-players">Sign in with Google</a></div>
+        }
+        else if (players.Count == 0)
+        {
+            <div class="playerState"><strong>No tracked players yet</strong><span>Find a player and choose Track player on their profile.</span></div>
+        }
+        else
+        {
+            <div class="trackedTableWrap">
+                <table class="trackedTable">
+                    <thead><tr><th>PLAYER</th><th>TOTAL SPRITES</th><th>MASTERED</th><th><span class="srOnly">Actions</span></th></tr></thead>
+                    <tbody>
+                    @foreach (var player in players)
+                    {
+                        <tr>
+                            <td><strong>@PlayerName(player)</strong></td>
+                            <td>@player.TotalSprites</td>
+                            <td>@player.MasteredSprites</td>
+                            <td><div class="trackedActions"><a href="players/@player.PublicId">View collection</a><button disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Untrack")</button></div></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <SiteFooter />
+</main>
+
+@code {
+    private IReadOnlyList<TrackedPlayerDto> players = [];
+    private bool loading = true;
+    private bool signedIn;
+    private Guid? removing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AccountState.LoadAsync();
+        var result = await PlayerApi.GetTrackedAsync();
+        signedIn = result is not null;
+        players = result ?? [];
+        loading = false;
+    }
+
+    private async Task UntrackAsync(TrackedPlayerDto player)
+    {
+        if (!await JavaScript.InvokeAsync<bool>("confirm", $"Untrack {PlayerName(player)}?")) return;
+        removing = player.PublicId;
+        try
+        {
+            await PlayerApi.UntrackAsync(player.PublicId);
+            players = players.Where(item => item.PublicId != player.PublicId).ToArray();
+        }
+        finally { removing = null; }
+    }
+
+    private static string PlayerName(TrackedPlayerDto player) => $"{player.DisplayName} ({player.EpicDisplayName})";
+}

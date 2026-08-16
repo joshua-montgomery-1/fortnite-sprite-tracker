@@ -6,6 +6,7 @@
     <div class="navlinks">
         <a href="/#collection">Collection</a>
         <a href="/players">Find a player</a>
+        @if (Profile is not null) { <a href="/tracked-players">Tracked players</a> }
     </div>
     <div class="headerActions">
         @if (IsAccountLoading)
@@ -33,6 +34,7 @@
                 }
                 <a href="/#collection">Collection <span>→</span></a>
                 <a href="/players">Find a player <span>→</span></a>
+                @if (Profile is not null) { <a href="/tracked-players">Tracked players <span>→</span></a> }
                 @if (!IsAccountLoading && Profile is null)
                 {
                     <a class="mobileSignIn" href="auth/login?returnUrl=/">Sign in with Google <span>↗</span></a>
