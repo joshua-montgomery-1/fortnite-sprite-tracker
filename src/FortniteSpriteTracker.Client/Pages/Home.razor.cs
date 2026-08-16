@@ -53,6 +53,36 @@ public partial class Home : IAsyncDisposable
     private string CubeHeroUrl => catalog?.Families
         .SelectMany(item => item.Variants)
         .FirstOrDefault(item => item.Style.Name == "Cube" && item.ImagePath.Contains("zeropoint"))?.ImagePath ?? "";
+    private bool SelectedSeasonIsActive
+    {
+        get
+        {
+            var now = DateTimeOffset.UtcNow;
+            return selectedSeason is not null &&
+                selectedSeason.StartAt <= now &&
+                (selectedSeason.EndAt is null || now < selectedSeason.EndAt);
+        }
+    }
+    private string SelectedSeasonStatus
+    {
+        get
+        {
+            if (selectedSeason is null)
+            {
+                return "";
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            if (now < selectedSeason.StartAt)
+            {
+                return "UPCOMING";
+            }
+
+            return selectedSeason.EndAt is null || now < selectedSeason.EndAt
+                ? "LIVE"
+                : "PREVIOUS";
+        }
+    }
     private int OwnedPercent => Percent(owned.Count);
     private int MasteredPercent => Percent(mastered.Count);
     private IEnumerable<VariantStyleDto> ActiveStyles => variant == "All"
