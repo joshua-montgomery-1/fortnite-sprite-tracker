@@ -64,7 +64,6 @@
                         @if (data.IsTracked && confirmingUntrack)
                         {
                             <div class="untrackConfirm" role="group" aria-label="Confirm untracking @PlayerName(data.Player)">
-                                <span>Remove from tracked players?</span>
                                 <button class="cancelUntrack" disabled="@changingTracking" @onclick="() => confirmingUntrack = false">Cancel</button>
                                 <button class="confirmUntrack" disabled="@changingTracking" @onclick="ToggleTrackingAsync">@(changingTracking ? "Removing..." : "Yes, untrack")</button>
                             </div>

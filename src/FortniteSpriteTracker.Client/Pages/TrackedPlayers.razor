@@ -42,7 +42,6 @@
                                     <a href="players/@player.PublicId">View collection</a>
                                     @if (confirming == player.PublicId)
                                     {
-                                        <span class="rowUntrackConfirm">Remove?</span>
                                         <button class="cancelUntrack" disabled="@(removing == player.PublicId)" @onclick="() => confirming = null">Cancel</button>
                                         <button class="confirmUntrack" disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Yes, untrack")</button>
                                     }
