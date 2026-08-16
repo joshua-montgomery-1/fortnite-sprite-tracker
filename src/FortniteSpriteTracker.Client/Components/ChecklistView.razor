@@ -3,12 +3,12 @@
         <thead>
             <tr>
                 <th class="spriteColumn"><span>SPRITE FAMILY</span></th>
-                @foreach (var variant in Variants)
+                @foreach (var style in Styles)
                 {
                     <th>
-                        <i style="background:@SpriteData.Variants[variant].Color"></i>
-                        <span>@variant</span>
-                        <small>@SpriteData.Variants[variant].Bonus</small>
+                        <i style="background:@style.Color"></i>
+                        <span>@style.Name</span>
+                        <small>@style.Bonus</small>
                     </th>
                 }
             </tr>
@@ -18,29 +18,29 @@
             {
                 <tr>
                     <th class="spriteColumn" title="@sprite.Ability">
-                        <img src="@SpriteData.ImageUrl(sprite.Slug)" alt="" />
+                        <img src="@sprite.ImageUrl" alt="" />
                         <span>
                             <strong>@sprite.Name</strong>
-                            <small><i style="background:@SpriteData.RarityColors[sprite.Rarity]"></i>@sprite.Rarity</small>
+                            <small><i style="background:@sprite.RarityColor"></i>@sprite.Rarity</small>
                         </span>
                     </th>
-                    @foreach (var variant in Variants)
+                    @foreach (var style in Styles)
                     {
-                        if (!sprite.Variants.Contains(variant))
+                        var spriteVariant = sprite.Variants.FirstOrDefault(item => item.Style.Id == style.Id);
+                        if (spriteVariant is null)
                         {
                             <td class="unavailable"><span>—</span></td>
                         }
                         else
                         {
-                            var key = SpriteData.Key(sprite.Name, variant);
-                            var isOwned = Owned.Contains(key);
-                            var isMastered = Mastered.Contains(key);
+                            var isOwned = Owned.Contains(spriteVariant.Id);
+                            var isMastered = Mastered.Contains(spriteVariant.Id);
 
                             <td class="@CellClass(isOwned, isMastered)">
-                                <img src="@SpriteData.VariantImageUrl(sprite.Slug, variant)" alt="@variant @sprite.Name" loading="eager" />
+                                <img src="@spriteVariant.ImagePath" alt="@style.Name @sprite.Name" loading="eager" />
                                 <div>
-                                    <button @onclick="() => OwnedToggled.InvokeAsync(key)">@(isOwned ? "✓" : "○")<small>OWN</small></button>
-                                    <button @onclick="() => MasteredToggled.InvokeAsync(key)">@(isMastered ? "★" : "☆")<small>MASTER</small></button>
+                                    <button @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓" : "○")<small>OWN</small></button>
+                                    <button @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★" : "☆")<small>MASTER</small></button>
                                 </div>
                             </td>
                         }
@@ -52,12 +52,12 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public IEnumerable<SpriteDefinition> Sprites { get; set; } = [];
-    [Parameter, EditorRequired] public IEnumerable<SpriteVariant> Variants { get; set; } = [];
-    [Parameter, EditorRequired] public IReadOnlySet<string> Owned { get; set; } = new HashSet<string>();
-    [Parameter, EditorRequired] public IReadOnlySet<string> Mastered { get; set; } = new HashSet<string>();
-    [Parameter] public EventCallback<string> OwnedToggled { get; set; }
-    [Parameter] public EventCallback<string> MasteredToggled { get; set; }
+    [Parameter, EditorRequired] public IEnumerable<SpriteFamilyDto> Sprites { get; set; } = [];
+    [Parameter, EditorRequired] public IEnumerable<VariantStyleDto> Styles { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlySet<int> Owned { get; set; } = new HashSet<int>();
+    [Parameter, EditorRequired] public IReadOnlySet<int> Mastered { get; set; } = new HashSet<int>();
+    [Parameter] public EventCallback<int> OwnedToggled { get; set; }
+    [Parameter] public EventCallback<int> MasteredToggled { get; set; }
 
     private static string CellClass(bool isOwned, bool isMastered) =>
         $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered" : "")}";

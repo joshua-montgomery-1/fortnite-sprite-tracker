@@ -73,7 +73,10 @@ public sealed class CollectionClient(HttpClient httpClient)
 
         using var message = new HttpRequestMessage(HttpMethod.Put, "api/me/collection/batch")
         {
-            Content = JsonContent.Create(new BatchUpdateSpriteProgressRequest(updates))
+            Content = JsonContent.Create(new BatchUpdateSpriteProgressRequest
+            {
+                Updates = updates
+            })
         };
         message.Headers.Add("X-XSRF-TOKEN", token.Token);
 

@@ -67,12 +67,14 @@ public static class PlayerEndpoints
 
             context.Response.Headers.CacheControl = "no-store";
             var playerSummary = await ToSummaryAsync(database, player, false, cancellationToken);
-            return Results.Ok(new PlayerCollectionDto(
-                playerSummary,
-                collection,
-                viewerSummary,
-                viewerCollection,
-                player.IsCollectionPublic && viewerSummary is not null));
+            return Results.Ok(new PlayerCollectionDto
+            {
+                Player = playerSummary,
+                Collection = collection,
+                Viewer = viewerSummary,
+                ViewerCollection = viewerCollection,
+                CanCompare = player.IsCollectionPublic && viewerSummary is not null
+            });
         });
 
         return endpoints;
@@ -80,18 +82,18 @@ public static class PlayerEndpoints
 
     private static async Task<IReadOnlyList<SpriteProgressDto>> GetCollectionAsync(
         SpriteTrackerDbContext database,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken) =>
         await database.SpriteProgress.AsNoTracking()
             .Where(item => item.UserId == userId && item.IsOwned)
-            .OrderBy(item => item.SpriteVariant.Sprite.Slug)
-            .ThenBy(item => item.SpriteVariant.Name)
-            .Select(item => new SpriteProgressDto(
-                item.SpriteVariant.Sprite.Slug,
-                item.SpriteVariant.Name,
-                item.IsOwned,
-                item.IsMastered,
-                item.UpdatedAtUtc))
+            .OrderBy(item => item.SpriteVariantId)
+            .Select(item => new SpriteProgressDto
+            {
+                SpriteVariantId = item.SpriteVariantId,
+                IsOwned = item.IsOwned,
+                IsMastered = item.IsMastered,
+                UpdatedAtUtc = item.UpdatedAtUtc
+            })
             .ToArrayAsync(cancellationToken);
 
     private static async Task<PlayerSummaryDto> ToSummaryAsync(
@@ -102,13 +104,15 @@ public static class PlayerEndpoints
     {
         if (!user.IsCollectionPublic && !includePrivateStats)
         {
-            return new PlayerSummaryDto(
-                user.PublicId,
-                user.DisplayName,
-                user.EpicDisplayName ?? "Epic player",
-                false,
-                null,
-                null);
+            return new PlayerSummaryDto
+            {
+                PublicId = user.PublicId,
+                DisplayName = user.DisplayName,
+                EpicDisplayName = user.EpicDisplayName ?? "Epic player",
+                IsCollectionPublic = false,
+                OwnedCount = null,
+                MasteredCount = null
+            };
         }
 
         var ownedCount = await database.SpriteProgress.CountAsync(
@@ -117,12 +121,14 @@ public static class PlayerEndpoints
         var masteredCount = await database.SpriteProgress.CountAsync(
             item => item.UserId == user.Id && item.IsMastered,
             cancellationToken);
-        return new PlayerSummaryDto(
-            user.PublicId,
-            user.DisplayName,
-            user.EpicDisplayName ?? "Epic player",
-            user.IsCollectionPublic,
-            ownedCount,
-            masteredCount);
+        return new PlayerSummaryDto
+        {
+            PublicId = user.PublicId,
+            DisplayName = user.DisplayName,
+            EpicDisplayName = user.EpicDisplayName ?? "Epic player",
+            IsCollectionPublic = user.IsCollectionPublic,
+            OwnedCount = ownedCount,
+            MasteredCount = masteredCount
+        };
     }
 }

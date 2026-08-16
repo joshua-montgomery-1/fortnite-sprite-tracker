@@ -10,5 +10,6 @@ builder.Services.AddScoped<AccountClient>();
 builder.Services.AddScoped<AccountState>();
 builder.Services.AddScoped<CollectionClient>();
 builder.Services.AddScoped<PlayerClient>();
+builder.Services.AddScoped<CatalogClient>();
 
 await builder.Build().RunAsync();

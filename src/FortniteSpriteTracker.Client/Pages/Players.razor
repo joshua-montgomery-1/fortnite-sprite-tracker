@@ -1,9 +1,10 @@
 @page "/players"
 @page "/players/{PublicId:guid}"
-@using FortniteSpriteTracker.Models
 @using FortniteSpriteTracker.Services
+@using FortniteSpriteTracker.Shared.Catalog
 @using FortniteSpriteTracker.Shared.Players
 @inject PlayerClient PlayerApi
+@inject CatalogClient CatalogApi
 @inject AccountState AccountState
 @inject NavigationManager Navigation
 @inject IJSRuntime JavaScript
@@ -35,6 +36,10 @@
         @if (loading)
         {
             <div class="playerState">Loading this field guide...</div>
+        }
+        else if (catalogError is not null)
+        {
+            <div class="playerState"><strong>Catalog unavailable</strong><span>@catalogError</span></div>
         }
         else if (PublicId is not null && data is null)
         {
@@ -104,10 +109,10 @@
                 @foreach (var entry in VisibleEntries)
                 {
                     <article class="publicSpriteCard">
-                        <div class="publicSpriteArt" style="--sprite-color:@entry.Sprite.PrimaryColor">
-                            <img src="@SpriteData.VariantImageUrl(entry.Sprite.Slug, entry.Variant)" alt="@entry.Variant @entry.Sprite.Name Sprite" />
+                        <div class="publicSpriteArt" style="--sprite-color:@entry.Family.PrimaryColor">
+                            <img src="@entry.Variant.ImagePath" alt="@entry.Variant.Style.Name @entry.Family.Name Sprite" />
                         </div>
-                        <div><span><i style="background:@SpriteData.Variants[entry.Variant].Color"></i>@entry.Variant</span><h3>@entry.Sprite.Name</h3><small>@entry.Sprite.Rarity @(entry.IsMastered ? " · MASTERED" : "")</small></div>
+                        <div><span><i style="background:@entry.Variant.Style.Color"></i>@entry.Variant.Style.Name</span><h3>@entry.Family.Name</h3><small>@entry.Family.Rarity @(entry.IsMastered ? " · MASTERED" : "")</small></div>
                     </article>
                 }
             </div>
@@ -125,10 +130,12 @@
     [Parameter] public Guid? PublicId { get; set; }
 
     private PlayerCollectionDto? data;
+    private SpriteCatalogDto? catalog;
     private string epicUsername = "";
     private string collectionQuery = "";
     private string mode = "collection";
     private string? searchMessage;
+    private string? catalogError;
     private bool searching;
     private bool loading;
     private bool copied;
@@ -136,8 +143,8 @@
     private bool IsOwnProfile => data?.Viewer?.PublicId == data?.Player.PublicId;
     private string CanonicalUrl => new Uri(new Uri(Navigation.BaseUri), $"players/{data!.Player.PublicId:D}").AbsoluteUri;
     private string LoginUrl => $"auth/login?returnUrl={Uri.EscapeDataString(new Uri(Navigation.Uri).PathAndQuery)}";
-    private HashSet<string> TargetKeys => Keys(data?.Collection ?? []);
-    private HashSet<string> ViewerKeys => Keys(data?.ViewerCollection ?? []);
+    private HashSet<int> TargetKeys => Keys(data?.Collection ?? []);
+    private HashSet<int> ViewerKeys => Keys(data?.ViewerCollection ?? []);
     private int TargetOnlyCount => TargetKeys.Except(ViewerKeys).Count();
     private int ViewerOnlyCount => ViewerKeys.Except(TargetKeys).Count();
     private int SharedCount => TargetKeys.Intersect(ViewerKeys).Count();
@@ -158,10 +165,10 @@
             };
 
             return keys.Select(ToEntry)
-                .Where(entry => entry is not null && entry.Sprite.Name.Contains(collectionQuery, StringComparison.OrdinalIgnoreCase))
+                .Where(entry => entry is not null && entry.Family.Name.Contains(collectionQuery, StringComparison.OrdinalIgnoreCase))
                 .Select(entry => entry!)
-                .OrderBy(entry => entry.Sprite.Name)
-                .ThenBy(entry => entry.Variant);
+                .OrderBy(entry => entry.Family.DisplayOrder)
+                .ThenBy(entry => entry.Variant.Style.DisplayOrder);
         }
     }
 
@@ -169,7 +176,26 @@
     {
         data = null;
         mode = "collection";
-        await AccountState.LoadAsync();
+        catalogError = null;
+        try
+        {
+            var seasons = await CatalogApi.GetSeasonsAsync();
+            var catalogSeason = seasons.FirstOrDefault(item => item.IsActive && item.HasCatalog)
+                ?? seasons.FirstOrDefault(item => item.HasCatalog);
+            if (catalogSeason is null)
+            {
+                catalogError = "No seasonal Sprite guide is available yet.";
+                return;
+            }
+
+            catalog ??= await CatalogApi.GetAsync(catalogSeason.Id);
+            await AccountState.LoadAsync();
+        }
+        catch (HttpRequestException)
+        {
+            catalogError = "The current Sprite guide is temporarily unavailable. Please try again later.";
+            return;
+        }
         if (PublicId is null) return;
         loading = true;
         try
@@ -204,19 +230,19 @@
         copied = true;
     }
 
-    private static HashSet<string> Keys(IEnumerable<FortniteSpriteTracker.Shared.Collections.SpriteProgressDto> progress) =>
-        progress.Where(item => item.IsOwned).Select(item => $"{item.SpriteSlug}::{item.Variant}").ToHashSet(StringComparer.OrdinalIgnoreCase);
+    private static HashSet<int> Keys(IEnumerable<FortniteSpriteTracker.Shared.Collections.SpriteProgressDto> progress) =>
+        progress.Where(item => item.IsOwned).Select(item => item.SpriteVariantId).ToHashSet();
 
-    private ViewEntry? ToEntry(string key)
+    private ViewEntry? ToEntry(int key)
     {
-        var parts = key.Split("::", 2);
-        var sprite = SpriteData.Sprites.FirstOrDefault(item => item.Slug.Equals(parts[0], StringComparison.OrdinalIgnoreCase));
+        var family = catalog?.Families.FirstOrDefault(item => item.Variants.Any(candidate => candidate.Id == key));
+        var variant = family?.Variants.FirstOrDefault(item => item.Id == key);
         var mastered = (mode == "viewer" ? data?.ViewerCollection : data?.Collection)
-            ?.Any(item => item.IsMastered && $"{item.SpriteSlug}::{item.Variant}".Equals(key, StringComparison.OrdinalIgnoreCase)) == true;
-        return sprite is not null && parts.Length == 2 && Enum.TryParse<SpriteVariant>(parts[1], true, out var variant)
-            ? new ViewEntry(sprite, variant, mastered)
+            ?.Any(item => item.IsMastered && item.SpriteVariantId == key) == true;
+        return family is not null && variant is not null
+            ? new ViewEntry(family, variant, mastered)
             : null;
     }
 
-    private sealed record ViewEntry(SpriteDefinition Sprite, SpriteVariant Variant, bool IsMastered);
+    private sealed record ViewEntry(SpriteFamilyDto Family, SpriteVariantDto Variant, bool IsMastered);
 }

@@ -6,5 +6,8 @@ public sealed class Season
     public int Chapter { get; set; }
     public int Number { get; set; }
     public required string Name { get; set; }
-    public List<Sprite> Sprites { get; set; } = [];
+    public DateTimeOffset StartAt { get; set; }
+    public DateTimeOffset? EndAt { get; set; }
+    public List<SeasonSpriteFamily> SpriteFamilies { get; set; } = [];
+    public List<SeasonSpriteVariant> SpriteVariants { get; set; } = [];
 }

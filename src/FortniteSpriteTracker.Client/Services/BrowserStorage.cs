@@ -40,4 +40,16 @@ public sealed class BrowserStorage(IJSRuntime js)
             // The tracker remains usable when browser storage is unavailable.
         }
     }
+
+    public async ValueTask RemoveAsync(string key)
+    {
+        try
+        {
+            await js.InvokeVoidAsync("localStorage.removeItem", key);
+        }
+        catch (JSException)
+        {
+            // The tracker remains usable when browser storage is unavailable.
+        }
+    }
 }

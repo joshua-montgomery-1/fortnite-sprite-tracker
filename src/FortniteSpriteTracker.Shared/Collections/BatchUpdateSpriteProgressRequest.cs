@@ -1,4 +1,6 @@
 namespace FortniteSpriteTracker.Shared.Collections;
 
-public sealed record BatchUpdateSpriteProgressRequest(
-    IReadOnlyList<UpdateSpriteProgressRequest> Updates);
+public sealed class BatchUpdateSpriteProgressRequest
+{
+    public required IReadOnlyList<UpdateSpriteProgressRequest> Updates { get; init; }
+}

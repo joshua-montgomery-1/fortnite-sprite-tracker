@@ -1,8 +1,9 @@
 namespace FortniteSpriteTracker.Shared.Collections;
 
-public sealed record SpriteProgressDto(
-    string SpriteSlug,
-    string Variant,
-    bool IsOwned,
-    bool IsMastered,
-    DateTimeOffset UpdatedAtUtc);
+public sealed class SpriteProgressDto
+{
+    public required int SpriteVariantId { get; init; }
+    public bool IsOwned { get; init; }
+    public bool IsMastered { get; init; }
+    public DateTimeOffset UpdatedAtUtc { get; init; }
+}

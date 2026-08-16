@@ -5,8 +5,12 @@
 <main class="@(printBlank ? "printBlank" : "")">
     <SiteHeader Profile="@profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
     <HeroSection CubeHeroUrl="@CubeHeroUrl"
-                 TotalEntries="@SpriteData.TotalEntries"
-                 FamilyCount="@SpriteData.Sprites.Length"
+                 TotalEntries="@(catalog?.TotalEntries ?? 0)"
+                 FamilyCount="@(catalog?.Families.Count ?? 0)"
+                 Chapter="@(selectedSeason?.Chapter ?? 0)"
+                 SeasonNumber="@(selectedSeason?.Number ?? 0)"
+                 IsSeasonActive="@(selectedSeason?.IsActive == true)"
+                 SeasonStatus="@(selectedSeason is null ? "" : selectedSeason.IsActive ? "LIVE" : "PREVIOUS")"
                  OnShowMissing="ShowMissing" />
 
     <div class="lowerPage">
@@ -38,7 +42,7 @@
                     <button class="primary" disabled="@importingAnonymousProgress" @onclick="ImportAnonymousProgressAsync">
                         @(importingAnonymousProgress ? "Importing..." : "Import selections")
                     </button>
-                    <button disabled="@importingAnonymousProgress" @onclick="DismissImportPrompt">Not now</button>
+                    <button disabled="@importingAnonymousProgress" @onclick="DiscardAnonymousProgressAsync">Discard browser selections</button>
                 </div>
             </aside>
         }
@@ -60,9 +64,12 @@
                 <p class="collectionIntro">Each available treatment is tracked separately. Missing cells are not part of that Sprite’s current in-game set.</p>
             </div>
             <label class="seasonSelect">
-                CURRENT SEASON
-                <select>
-                    <option>Chapter 7 · Season 3</option>
+                SEASONS
+                <select value="@selectedSeason?.Id" @onchange="SeasonChangedAsync">
+                    @foreach (var season in seasons)
+                    {
+                        <option value="@season.Id">@season.Name</option>
+                    }
                 </select>
             </label>
         </div>
@@ -76,17 +83,17 @@
 
         <CollectionProgress OwnedCount="@owned.Count"
                             MasteredCount="@mastered.Count"
-                            TotalEntries="@SpriteData.TotalEntries"
+                            TotalEntries="@(catalog?.TotalEntries ?? 0)"
                             OwnedPercent="@OwnedPercent"
                             MasteredPercent="@MasteredPercent" />
 
         <div class="variantLegend">
-            @foreach (var item in SpriteData.AllVariants)
+            @foreach (var item in catalog?.VariantStyles ?? [])
             {
-                <button class="@(variant == item.ToString() ? "active" : "")" @onclick="() => ToggleVariant(item)">
-                    <i style="background:@SpriteData.Variants[item].Color"></i>
-                    @item
-                    <small>@SpriteData.Variants[item].Bonus</small>
+                <button class="@(variant == item.Name ? "active" : "")" @onclick="() => ToggleVariant(item)">
+                    <i style="background:@item.Color"></i>
+                    @item.Name
+                    <small>@item.Bonus</small>
                 </button>
             }
         </div>
@@ -129,18 +136,30 @@
                 </select>
                 <select @bind="variant">
                     <option>All</option>
-                    @foreach (var item in SpriteData.AllVariants)
+                    @foreach (var item in catalog?.VariantStyles ?? [])
                     {
-                        <option>@item</option>
+                        <option>@item.Name</option>
                     }
                 </select>
             </div>
         </div>
 
-        @if (viewMode == "Checklist")
+        @if (catalogLoading)
+        {
+            <div class="playerState">Loading the current Sprite catalog...</div>
+        }
+        else if (catalogEmpty)
+        {
+            <div class="playerState"><strong>@catalogEmptyTitle</strong><span>@catalogEmptyMessage</span></div>
+        }
+        else if (catalogError is not null)
+        {
+            <aside class="syncNotice syncError" role="alert"><div><strong>Catalog unavailable</strong><span>@catalogError</span></div></aside>
+        }
+        else if (viewMode == "Checklist")
         {
             <ChecklistView Sprites="@VisibleSprites"
-                           Variants="@ActiveVariants"
+                           Styles="@ActiveStyles"
                            Owned="@owned"
                            Mastered="@mastered"
                            OwnedToggled="ToggleOwned"

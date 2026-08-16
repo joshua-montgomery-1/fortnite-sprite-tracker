@@ -2,7 +2,7 @@ namespace FortniteSpriteTracker.DataAccess.Entities;
 
 public sealed class UserAccount
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public long Id { get; set; }
     public Guid PublicId { get; set; } = Guid.NewGuid();
     public required string GoogleSubject { get; set; }
     public required string DisplayName { get; set; }

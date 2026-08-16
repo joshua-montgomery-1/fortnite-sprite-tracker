@@ -1,25 +1,26 @@
 using FortniteSpriteTracker.DataAccess.Entities;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Catalog = FortniteSpriteTracker.Models;
 
 namespace FortniteSpriteTracker.DataAccess;
 
-public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbContext> options) :
-    DbContext(options),
-    IDataProtectionKeyContext
+public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbContext> options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<UserAccount> Users => Set<UserAccount>();
     public DbSet<Season> Seasons => Set<Season>();
-    public DbSet<Sprite> Sprites => Set<Sprite>();
+    public DbSet<SpriteFamily> SpriteFamilies => Set<SpriteFamily>();
+    public DbSet<VariantStyle> VariantStyles => Set<VariantStyle>();
     public DbSet<SpriteVariant> SpriteVariants => Set<SpriteVariant>();
+    public DbSet<SeasonSpriteFamily> SeasonSpriteFamilies => Set<SeasonSpriteFamily>();
+    public DbSet<SeasonSpriteVariant> SeasonSpriteVariants => Set<SeasonSpriteVariant>();
     public DbSet<SpriteProgress> SpriteProgress => Set<SpriteProgress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var users = modelBuilder.Entity<UserAccount>();
         users.HasKey(user => user.Id);
+        users.Property(user => user.Id).ValueGeneratedOnAdd();
         users.HasIndex(user => user.PublicId).IsUnique();
         users.HasIndex(user => user.GoogleSubject).IsUnique();
         users.HasIndex(user => user.NormalizedEpicDisplayName);
@@ -32,18 +33,36 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         seasons.HasIndex(season => new { season.Chapter, season.Number }).IsUnique();
         seasons.Property(season => season.Name).HasMaxLength(80);
 
-        var sprites = modelBuilder.Entity<Sprite>();
-        sprites.HasIndex(sprite => sprite.Slug).IsUnique();
-        sprites.HasIndex(sprite => new { sprite.SeasonId, sprite.Name }).IsUnique();
-        sprites.Property(sprite => sprite.Name).HasMaxLength(80);
-        sprites.Property(sprite => sprite.Slug).HasMaxLength(80);
-        sprites.Property(sprite => sprite.Rarity).HasMaxLength(40);
-        sprites.Property(sprite => sprite.Ability).HasMaxLength(500);
+        var families = modelBuilder.Entity<SpriteFamily>();
+        families.Property(family => family.Id).ValueGeneratedOnAdd();
+        families.HasIndex(family => family.Slug).IsUnique();
+        families.Property(family => family.Name).HasMaxLength(80);
+        families.Property(family => family.Slug).HasMaxLength(80);
+
+        var styles = modelBuilder.Entity<VariantStyle>();
+        styles.Property(style => style.Id).ValueGeneratedOnAdd();
+        styles.HasIndex(style => style.Name).IsUnique();
+        styles.Property(style => style.Name).HasMaxLength(40);
+        styles.Property(style => style.Color).HasMaxLength(20);
+        styles.Property(style => style.Bonus).HasMaxLength(120);
+        styles.Property(style => style.ImageSuffix).HasMaxLength(40);
 
         var variants = modelBuilder.Entity<SpriteVariant>();
-        variants.HasIndex(variant => new { variant.SpriteId, variant.Name }).IsUnique();
-        variants.Property(variant => variant.Name).HasMaxLength(40);
+        variants.Property(variant => variant.Id).ValueGeneratedOnAdd();
+        variants.HasIndex(variant => new { variant.SpriteFamilyId, variant.VariantStyleId }).IsUnique();
         variants.Property(variant => variant.ImagePath).HasMaxLength(255);
+
+        var seasonFamilies = modelBuilder.Entity<SeasonSpriteFamily>();
+        seasonFamilies.HasKey(item => new { item.SeasonId, item.SpriteFamilyId });
+        seasonFamilies.HasIndex(item => new { item.SeasonId, item.DisplayOrder });
+        seasonFamilies.Property(item => item.Rarity).HasMaxLength(40);
+        seasonFamilies.Property(item => item.RarityColor).HasMaxLength(20);
+        seasonFamilies.Property(item => item.Ability).HasMaxLength(500);
+        seasonFamilies.Property(item => item.PrimaryColor).HasMaxLength(20);
+        seasonFamilies.Property(item => item.SecondaryColor).HasMaxLength(20);
+
+        var seasonVariants = modelBuilder.Entity<SeasonSpriteVariant>();
+        seasonVariants.HasKey(item => new { item.SeasonId, item.SpriteVariantId });
 
         var progress = modelBuilder.Entity<SpriteProgress>();
         progress.HasKey(item => new { item.UserId, item.SpriteVariantId });
@@ -54,50 +73,6 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         progress.HasOne(item => item.SpriteVariant)
             .WithMany(variant => variant.Progress)
             .HasForeignKey(item => item.SpriteVariantId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        SeedCatalog(seasons, sprites, variants);
-    }
-
-    private static void SeedCatalog(
-        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<Season> seasons,
-        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<Sprite> sprites,
-        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<SpriteVariant> variants)
-    {
-        seasons.HasData(new Season
-        {
-            Id = 1,
-            Chapter = 7,
-            Number = 3,
-            Name = "Chapter 7 · Season 3"
-        });
-
-        var variantId = 1;
-        for (var spriteIndex = 0; spriteIndex < Catalog.SpriteData.Sprites.Length; spriteIndex++)
-        {
-            var definition = Catalog.SpriteData.Sprites[spriteIndex];
-            var spriteId = spriteIndex + 1;
-
-            sprites.HasData(new Sprite
-            {
-                Id = spriteId,
-                SeasonId = 1,
-                Name = definition.Name,
-                Slug = definition.Slug,
-                Rarity = definition.Rarity.ToString(),
-                Ability = definition.Ability
-            });
-
-            foreach (Catalog.SpriteVariant variant in definition.Variants)
-            {
-                variants.HasData(new SpriteVariant
-                {
-                    Id = variantId++,
-                    SpriteId = spriteId,
-                    Name = variant.ToString(),
-                    ImagePath = Catalog.SpriteData.VariantImageUrl(definition.Slug, variant)
-                });
-            }
-        }
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
