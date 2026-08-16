@@ -40,10 +40,8 @@ public sealed class SpriteFamilyDto
     public required string PrimaryColor { get; init; }
     public required string SecondaryColor { get; init; }
     public int DisplayOrder { get; init; }
+    public required string ImageUrl { get; init; }
     public required IReadOnlyList<SpriteVariantDto> Variants { get; init; }
-    public string ImageUrl => Variants.FirstOrDefault(item => item.Style.Name == "Normal")?.ImagePath
-        ?? Variants.FirstOrDefault()?.ImagePath
-        ?? string.Empty;
 }
 
 public sealed class SpriteVariantDto
