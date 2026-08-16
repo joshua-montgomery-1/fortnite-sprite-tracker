@@ -1,5 +1,5 @@
-using FortniteSpriteTracker.Models;
 using FortniteSpriteTracker.Services;
+using FortniteSpriteTracker.Shared.Catalog;
 using FortniteSpriteTracker.Shared.Collections;
 using FortniteSpriteTracker.Shared.Profiles;
 using Microsoft.AspNetCore.Components;
@@ -8,12 +8,13 @@ namespace FortniteSpriteTracker.Pages;
 
 public partial class Home : IAsyncDisposable
 {
+    private const string BrowserProgressKey = "sprite-scout-progress";
     private static readonly string[] CollectionFilters = ["All", "Owned", "Missing", "Mastered"];
-    private readonly HashSet<string> owned = [];
-    private readonly HashSet<string> mastered = [];
-    private readonly Dictionary<string, LocalProgress> localProgress = new(StringComparer.Ordinal);
-    private readonly HashSet<string> serverKeys = [];
-    private readonly Dictionary<string, LocalProgress> pendingAccountUpdates = new(StringComparer.Ordinal);
+    private readonly HashSet<int> owned = [];
+    private readonly HashSet<int> mastered = [];
+    private readonly Dictionary<int, LocalProgress> localProgress = [];
+    private readonly HashSet<int> serverKeys = [];
+    private readonly Dictionary<int, LocalProgress> pendingAccountUpdates = [];
     private readonly SemaphoreSlim saveLock = new(1, 1);
     private CancellationTokenSource? saveDelay;
 
@@ -22,7 +23,20 @@ public partial class Home : IAsyncDisposable
     [Inject] private AccountClient Account { get; set; } = null!;
     [Inject] private AccountState AccountState { get; set; } = null!;
     [Inject] private CollectionClient Collection { get; set; } = null!;
+    [Inject] private CatalogClient Catalog { get; set; } = null!;
 
+    [PersistentState]
+    public HomeCatalogState? InitialCatalogState { get; set; }
+
+    private SpriteCatalogDto? catalog;
+    private IReadOnlyList<SeasonDto> seasons = [];
+    private SeasonDto? selectedSeason;
+    private bool browserProgressLoaded;
+    private bool catalogLoading = true;
+    private bool catalogEmpty;
+    private string? catalogError;
+    private string catalogEmptyTitle = "No Sprite guide is available yet";
+    private string catalogEmptyMessage = "Check back when a seasonal collection has been published.";
     private string filter = "All";
     private string rarity = "All";
     private string variant = "All";
@@ -36,16 +50,46 @@ public partial class Home : IAsyncDisposable
     private string? saveStatus;
     private UserProfileDto? profile => AccountState.Profile;
 
-    private string CubeHeroUrl => SpriteData.VariantImageUrl("zeropoint", SpriteVariant.Cube);
-    private int OwnedPercent => (int)Math.Round(owned.Count * 100d / SpriteData.TotalEntries);
-    private int MasteredPercent => (int)Math.Round(mastered.Count * 100d / SpriteData.TotalEntries);
+    private string CubeHeroUrl => catalog?.Families
+        .SelectMany(item => item.Variants)
+        .FirstOrDefault(item => item.Style.Name == "Cube" && item.ImagePath.Contains("zeropoint"))?.ImagePath ?? "";
+    private int OwnedPercent => Percent(owned.Count);
+    private int MasteredPercent => Percent(mastered.Count);
+    private IEnumerable<VariantStyleDto> ActiveStyles => variant == "All"
+        ? catalog?.VariantStyles ?? []
+        : catalog?.VariantStyles.Where(item => item.Name == variant) ?? [];
+    private IEnumerable<SpriteFamilyDto> VisibleSprites => catalog?.Families.Where(SpriteIsVisible) ?? [];
 
-    private IEnumerable<SpriteVariant> ActiveVariants =>
-        variant == "All"
-            ? SpriteData.AllVariants
-            : [Enum.Parse<SpriteVariant>(variant)];
+    protected override async Task OnInitializedAsync()
+    {
+        if (InitialCatalogState is not null)
+        {
+            seasons = InitialCatalogState.Seasons;
+            selectedSeason = seasons.FirstOrDefault(item => item.Id == InitialCatalogState.SelectedSeasonId);
+            catalog = InitialCatalogState.Catalog;
+            RestoreCatalogDisplayState();
+            return;
+        }
 
-    private IEnumerable<SpriteDefinition> VisibleSprites => SpriteData.Sprites.Where(SpriteIsVisible);
+        try
+        {
+            seasons = await Catalog.GetSeasonsAsync();
+            selectedSeason = seasons.FirstOrDefault(item => item.IsActive)
+                ?? seasons.FirstOrDefault();
+            await LoadSelectedCatalogAsync();
+            InitialCatalogState = new HomeCatalogState
+            {
+                Seasons = seasons.ToArray(),
+                SelectedSeasonId = selectedSeason?.Id,
+                Catalog = catalog
+            };
+        }
+        catch (HttpRequestException)
+        {
+            catalogError = "The current Sprite guide is temporarily unavailable. Please try again later.";
+            catalogLoading = false;
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -54,28 +98,10 @@ public partial class Home : IAsyncDisposable
             return;
         }
 
-        var savedOwned = await Storage.GetAsync("sprite-scout-owned", Array.Empty<string>());
-        var savedMastered = await Storage.GetAsync("sprite-scout-mastered", Array.Empty<string>());
-        var savedProgress = await Storage.GetAsync(
-            "sprite-scout-progress-v2",
-            new Dictionary<string, LocalProgress>());
-
-        foreach (var item in savedProgress)
+        if (!browserProgressLoaded)
         {
-            if (item.Value.AccountId is null)
-            {
-                localProgress[item.Key] = item.Value;
-            }
-        }
-
-        foreach (var key in savedOwned.Union(savedMastered))
-        {
-            localProgress.TryAdd(key, new LocalProgress(
-                savedOwned.Contains(key) || savedMastered.Contains(key),
-                savedMastered.Contains(key),
-                DateTimeOffset.MinValue,
-                null,
-                false));
+            await LoadBrowserProgressAsync();
+            browserProgressLoaded = true;
         }
 
         var accountLoaded = await LoadAccountAsync();
@@ -88,7 +114,6 @@ public partial class Home : IAsyncDisposable
 
         if (profile is not null)
         {
-            showImportPrompt = localProgress.Values.Any(item => item.IsOwned || item.IsMastered);
             await LoadAuthenticatedCollectionAsync();
         }
         else
@@ -99,10 +124,140 @@ public partial class Home : IAsyncDisposable
         StateHasChanged();
     }
 
+    private void RestoreCatalogDisplayState()
+    {
+        catalogLoading = false;
+        catalogEmpty = catalog is null;
+        catalogError = null;
+        if (catalogEmpty)
+        {
+            SetCatalogEmptyMessage();
+        }
+    }
+
+    private async Task LoadSelectedCatalogAsync()
+    {
+        catalogLoading = true;
+        catalog = null;
+        catalogEmpty = false;
+        catalogError = null;
+
+        if (selectedSeason is null)
+        {
+            catalogEmpty = true;
+            SetCatalogEmptyMessage();
+            catalogLoading = false;
+            return;
+        }
+
+        if (!selectedSeason.HasCatalog)
+        {
+            catalogEmpty = true;
+            SetCatalogEmptyMessage();
+            catalogLoading = false;
+            return;
+        }
+
+        catalog = await Catalog.GetAsync(selectedSeason.Id);
+        catalogLoading = false;
+    }
+
+    private void SetCatalogEmptyMessage()
+    {
+        if (selectedSeason is null)
+        {
+            catalogEmptyTitle = "No Sprite guide is available yet";
+            catalogEmptyMessage = "Check back when a seasonal collection has been published.";
+            return;
+        }
+
+        catalogEmptyTitle = selectedSeason.IsActive
+            ? $"The {selectedSeason.Name} guide is coming soon"
+            : $"No guide was published for {selectedSeason.Name}";
+        catalogEmptyMessage = selectedSeason.IsActive
+            ? "This season is live. Its Sprite collection will appear here once it is ready."
+            : "Choose another season to explore its Sprite collection.";
+    }
+
+    private async Task SeasonChangedAsync(ChangeEventArgs args)
+    {
+        if (!int.TryParse(args.Value?.ToString(), out var seasonId))
+        {
+            return;
+        }
+
+        selectedSeason = seasons.FirstOrDefault(item => item.Id == seasonId);
+        filter = "All";
+        rarity = "All";
+        variant = "All";
+        query = "";
+        try
+        {
+            await LoadSelectedCatalogAsync();
+            if (catalog is not null && profile is not null)
+            {
+                await LoadAuthenticatedCollectionAsync();
+            }
+            else
+            {
+                ApplyLocalProgress();
+            }
+        }
+        catch (HttpRequestException)
+        {
+            catalogError = "This Sprite guide is temporarily unavailable. Please try again later.";
+            catalogLoading = false;
+        }
+    }
+
+    private async Task LoadBrowserProgressAsync()
+    {
+        var savedProgress = await Storage.GetAsync(
+            BrowserProgressKey,
+            new Dictionary<int, LocalProgress>());
+
+        foreach (var item in savedProgress)
+        {
+            if (FindVariant(item.Key) is not null)
+            {
+                localProgress[item.Key] = item.Value;
+            }
+        }
+    }
+
+    private int Percent(int count) => catalog?.TotalEntries > 0
+        ? (int)Math.Round(count * 100d / catalog.TotalEntries)
+        : 0;
+
+    private bool SpriteIsVisible(SpriteFamilyDto sprite)
+    {
+        var matchesStatus = filter switch
+        {
+            "Owned" => sprite.Variants.Any(item => owned.Contains(item.Id)),
+            "Missing" => sprite.Variants.Any(item => !owned.Contains(item.Id)),
+            "Mastered" => sprite.Variants.Any(item => mastered.Contains(item.Id)),
+            _ => true
+        };
+        var matchesRarity = rarity == "All" || sprite.Rarity == rarity;
+        var matchesVariant = variant == "All" || sprite.Variants.Any(item => item.Style.Name == variant);
+        var matchesQuery = $"{sprite.Name} {sprite.Ability}".Contains(query, StringComparison.OrdinalIgnoreCase);
+        return matchesStatus && matchesRarity && matchesVariant && matchesQuery;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (localProgress.Count == 0)
+        {
+            await Storage.RemoveAsync(BrowserProgressKey);
+            return;
+        }
+
+        await Storage.SetAsync(BrowserProgressKey, localProgress);
+    }
+
     private async Task<bool> LoadAccountAsync()
     {
         const int maximumAttempts = 3;
-
         for (var attempt = 1; attempt <= maximumAttempts; attempt++)
         {
             try
@@ -117,45 +272,12 @@ public partial class Home : IAsyncDisposable
             }
             catch (HttpRequestException)
             {
-                syncError = "We couldn't verify your account. Refresh to load your database collection; browser selections are shown temporarily.";
+                syncError = "We couldn't verify your account. Browser selections are shown temporarily.";
                 return false;
             }
         }
 
         return false;
-    }
-
-    private bool SpriteIsVisible(SpriteDefinition sprite)
-    {
-        var matchesStatus = filter switch
-        {
-            "Owned" => sprite.Variants.Any(item => owned.Contains(SpriteData.Key(sprite.Name, item))),
-            "Missing" => sprite.Variants.Any(item => !owned.Contains(SpriteData.Key(sprite.Name, item))),
-            "Mastered" => sprite.Variants.Any(item => mastered.Contains(SpriteData.Key(sprite.Name, item))),
-            _ => true
-        };
-
-        var matchesRarity = rarity == "All" || sprite.Rarity.ToString() == rarity;
-        var matchesVariant = variant == "All" || sprite.Variants.Contains(Enum.Parse<SpriteVariant>(variant));
-        var matchesQuery = $"{sprite.Name} {sprite.Ability}".Contains(query, StringComparison.OrdinalIgnoreCase);
-
-        return matchesStatus && matchesRarity && matchesVariant && matchesQuery;
-    }
-
-    private async Task SaveAsync()
-    {
-        var anonymousOwned = localProgress
-            .Where(item => item.Value.IsOwned || item.Value.IsMastered)
-            .Select(item => item.Key)
-            .ToArray();
-        var anonymousMastered = localProgress
-            .Where(item => item.Value.IsMastered)
-            .Select(item => item.Key)
-            .ToArray();
-
-        await Storage.SetAsync("sprite-scout-owned", anonymousOwned);
-        await Storage.SetAsync("sprite-scout-mastered", anonymousMastered);
-        await Storage.SetAsync("sprite-scout-progress-v2", localProgress);
     }
 
     private async Task LoadAuthenticatedCollectionAsync()
@@ -164,12 +286,26 @@ public partial class Home : IAsyncDisposable
         {
             var serverProgress = await Collection.GetAsync();
             var serverByKey = serverProgress
-                .Select(item => ToLocalProgress(item, profile!.Id))
-                .Where(item => item is not null)
-                .ToDictionary(item => item!.Value.Key, item => item!.Value.Progress);
-
+                .Where(item => FindVariant(item.SpriteVariantId) is not null)
+                .ToDictionary(
+                    item => item.SpriteVariantId,
+                    item => new LocalProgress(
+                        item.IsOwned,
+                        item.IsMastered));
             serverKeys.Clear();
             serverKeys.UnionWith(serverByKey.Keys);
+            foreach (var localItem in localProgress.ToArray())
+            {
+                if (serverByKey.TryGetValue(localItem.Key, out var serverItem) &&
+                    (!localItem.Value.IsOwned || serverItem.IsOwned) &&
+                    (!localItem.Value.IsMastered || serverItem.IsMastered))
+                {
+                    localProgress.Remove(localItem.Key);
+                }
+            }
+
+            await SaveAsync();
+            showImportPrompt = localProgress.Values.Any(item => item.IsOwned || item.IsMastered);
             owned.Clear();
             mastered.Clear();
             ApplyProgress(serverByKey);
@@ -183,34 +319,26 @@ public partial class Home : IAsyncDisposable
         }
     }
 
-    private static (string Key, LocalProgress Progress)? ToLocalProgress(
-        SpriteProgressDto item,
-        Guid accountId)
-    {
-        var sprite = SpriteData.Sprites.FirstOrDefault(candidate =>
-            string.Equals(candidate.Slug, item.SpriteSlug, StringComparison.OrdinalIgnoreCase));
-        if (sprite is null || !Enum.TryParse<SpriteVariant>(item.Variant, true, out var spriteVariant))
-        {
-            return null;
-        }
-
-        return (
-            SpriteData.Key(sprite.Name, spriteVariant),
-            new LocalProgress(item.IsOwned, item.IsMastered, item.UpdatedAtUtc, accountId, false));
-    }
+    private SpriteVariantDto? FindVariant(int id) => catalog?.Families
+        .SelectMany(item => item.Variants)
+        .FirstOrDefault(item => item.Id == id);
 
     private void ApplyLocalProgress()
     {
         owned.Clear();
         mastered.Clear();
-
         ApplyProgress(localProgress);
     }
 
-    private void ApplyProgress(IEnumerable<KeyValuePair<string, LocalProgress>> progress)
+    private void ApplyProgress(IEnumerable<KeyValuePair<int, LocalProgress>> progress)
     {
         foreach (var item in progress)
         {
+            if (FindVariant(item.Key) is null)
+            {
+                continue;
+            }
+
             if (item.Value.IsOwned || item.Value.IsMastered)
             {
                 owned.Add(item.Key);
@@ -232,12 +360,9 @@ public partial class Home : IAsyncDisposable
 
         importingAnonymousProgress = true;
         syncError = null;
-
         try
         {
-            foreach (var item in localProgress.Where(item =>
-                         !serverKeys.Contains(item.Key)
-                         && (item.Value.IsOwned || item.Value.IsMastered)).ToArray())
+            foreach (var item in localProgress.Where(item => !serverKeys.Contains(item.Key) && (item.Value.IsOwned || item.Value.IsMastered)).ToArray())
             {
                 if (!await SaveToAccountAsync(item.Key, item.Value))
                 {
@@ -260,102 +385,79 @@ public partial class Home : IAsyncDisposable
         }
     }
 
-    private void DismissImportPrompt() => showImportPrompt = false;
-
-    private async Task<bool> SaveToAccountAsync(string key, LocalProgress progress)
+    private async Task DiscardAnonymousProgressAsync()
     {
-        if (profile is null || !TryGetSpriteVariant(key, out var sprite, out var spriteVariant))
+        localProgress.Clear();
+        showImportPrompt = false;
+        await SaveAsync();
+    }
+
+    private async Task<bool> SaveToAccountAsync(int id, LocalProgress progress)
+    {
+        if (profile is null || FindVariant(id) is null)
         {
             return profile is null;
         }
 
         try
         {
-            await Collection.UpdateAsync(new UpdateSpriteProgressRequest(
-                sprite.Slug,
-                spriteVariant.ToString(),
-                progress.IsOwned,
-                progress.IsMastered));
+            await Collection.UpdateAsync(new UpdateSpriteProgressRequest
+            {
+                SpriteVariantId = id,
+                IsOwned = progress.IsOwned,
+                IsMastered = progress.IsMastered
+            });
             return true;
         }
         catch (HttpRequestException)
         {
-            // The local selection remains saved and can be synchronized on a later visit.
             return false;
         }
     }
 
-    private static bool TryGetSpriteVariant(
-        string key,
-        out SpriteDefinition sprite,
-        out SpriteVariant spriteVariant)
-    {
-        var separatorIndex = key.LastIndexOf("::", StringComparison.Ordinal);
-        var spriteName = separatorIndex > 0 ? key[..separatorIndex] : string.Empty;
-        var variantName = separatorIndex > 0 ? key[(separatorIndex + 2)..] : string.Empty;
-
-        spriteVariant = default;
-        sprite = SpriteData.Sprites.FirstOrDefault(candidate => candidate.Name == spriteName)!;
-        return sprite is not null && Enum.TryParse(variantName, out spriteVariant);
-    }
-
-    private async Task SaveProfileAsync(UpdateUserProfileRequest request)
-    {
+    private async Task SaveProfileAsync(UpdateUserProfileRequest request) =>
         AccountState.SetProfile(await Account.UpdateProfileAsync(request));
-    }
 
-    private async Task ToggleOwned(string key)
+    private async Task ToggleOwned(int id)
     {
-        if (!owned.Remove(key))
+        if (!owned.Remove(id))
         {
-            owned.Add(key);
+            owned.Add(id);
         }
         else
         {
-            mastered.Remove(key);
+            mastered.Remove(id);
         }
 
+        await RecordChangeAsync(id);
+    }
+
+    private async Task ToggleMastered(int id)
+    {
+        if (!mastered.Remove(id))
+        {
+            mastered.Add(id);
+            owned.Add(id);
+        }
+
+        await RecordChangeAsync(id);
+    }
+
+    private async Task RecordChangeAsync(int id)
+    {
+        var progress = new LocalProgress(
+            owned.Contains(id),
+            mastered.Contains(id));
         if (profile is null)
         {
-            localProgress[key] = new LocalProgress(
-                owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, null, false);
+            localProgress[id] = progress;
             await SaveAsync();
             showAnonymousWarning = true;
             return;
         }
 
-        var progress = new LocalProgress(
-            owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, profile.Id, true);
-        QueueAccountSave(key, progress);
-    }
-
-    private async Task ToggleMastered(string key)
-    {
-        if (!mastered.Remove(key))
-        {
-            mastered.Add(key);
-            owned.Add(key);
-        }
-
-        if (profile is null)
-        {
-            localProgress[key] = new LocalProgress(
-                owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, null, false);
-            await SaveAsync();
-            showAnonymousWarning = true;
-            return;
-        }
-
-        var progress = new LocalProgress(
-            owned.Contains(key), mastered.Contains(key), DateTimeOffset.UtcNow, profile.Id, true);
-        QueueAccountSave(key, progress);
-    }
-
-    private void QueueAccountSave(string key, LocalProgress progress)
-    {
-        pendingAccountUpdates[key] = progress;
+        pendingAccountUpdates[id] = progress;
         saveStatus = "Saving…";
-
         saveDelay?.Cancel();
         saveDelay?.Dispose();
         saveDelay = new CancellationTokenSource();
@@ -371,7 +473,6 @@ public partial class Home : IAsyncDisposable
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // A newer interaction restarted the batch window.
         }
     }
 
@@ -387,33 +488,18 @@ public partial class Home : IAsyncDisposable
 
             var batch = pendingAccountUpdates.ToArray();
             pendingAccountUpdates.Clear();
-            var requests = new List<UpdateSpriteProgressRequest>(batch.Length);
-
-            foreach (var item in batch)
+            var requests = batch.Select(item => new UpdateSpriteProgressRequest
             {
-                if (TryGetSpriteVariant(item.Key, out var sprite, out var spriteVariant))
-                {
-                    requests.Add(new UpdateSpriteProgressRequest(
-                        sprite.Slug,
-                        spriteVariant.ToString(),
-                        item.Value.IsOwned,
-                        item.Value.IsMastered));
-                }
-            }
-
+                SpriteVariantId = item.Key,
+                IsOwned = item.Value.IsOwned,
+                IsMastered = item.Value.IsMastered
+            }).ToArray();
             await Collection.UpdateBatchAsync(requests, cancellationToken);
-            serverKeys.UnionWith(batch
-                .Where(item => item.Value.IsOwned || item.Value.IsMastered)
-                .Select(item => item.Key));
-            foreach (var removed in batch.Where(item => !item.Value.IsOwned && !item.Value.IsMastered))
-            {
-                serverKeys.Remove(removed.Key);
-            }
-
+            serverKeys.UnionWith(batch.Where(item => item.Value.IsOwned).Select(item => item.Key));
+            serverKeys.ExceptWith(batch.Where(item => !item.Value.IsOwned).Select(item => item.Key));
             saveStatus = pendingAccountUpdates.Count == 0 ? "Saved" : "Saving…";
             syncError = null;
             await InvokeAsync(StateHasChanged);
-
             if (saveStatus == "Saved")
             {
                 _ = HideSavedStatusAsync();
@@ -444,18 +530,13 @@ public partial class Home : IAsyncDisposable
     }
 
     private void ShowMissing() => filter = "Missing";
-
-    private void ToggleVariant(SpriteVariant item) =>
-        variant = variant == item.ToString() ? "All" : item.ToString();
-
+    private void ToggleVariant(VariantStyleDto item) => variant = variant == item.Name ? "All" : item.Name;
     private void ShowChecklist() => viewMode = "Checklist";
-
     private void ShowFieldGuide() => viewMode = "Field Guide";
 
     private async Task PrintChecklist(bool blank)
     {
         var previousState = (viewMode, filter, rarity, variant, query);
-
         printBlank = blank;
         viewMode = "Checklist";
         filter = "All";
@@ -463,20 +544,22 @@ public partial class Home : IAsyncDisposable
         variant = "All";
         query = "";
         StateHasChanged();
-
         await Task.Delay(350);
         await Printer.PrintAsync();
-
         printBlank = false;
         (viewMode, filter, rarity, variant, query) = previousState;
     }
 
     private sealed record LocalProgress(
         bool IsOwned,
-        bool IsMastered,
-        DateTimeOffset UpdatedAtUtc,
-        Guid? AccountId,
-        bool IsPending);
+        bool IsMastered);
+
+    public sealed class HomeCatalogState
+    {
+        public required SeasonDto[] Seasons { get; init; }
+        public int? SelectedSeasonId { get; init; }
+        public SpriteCatalogDto? Catalog { get; init; }
+    }
 
     public ValueTask DisposeAsync()
     {

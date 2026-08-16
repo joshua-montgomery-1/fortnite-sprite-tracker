@@ -17,7 +17,7 @@ public static class ProfileEndpoints
 
         group.MapGet("/", async (HttpContext context, CurrentUserService currentUser, CancellationToken cancellationToken) =>
         {
-            SetPrivateNoStoreHeaders(context.Response);
+            SetNoStoreHeader(context.Response);
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
             return Results.Ok(ToDto(user));
         });
@@ -88,13 +88,18 @@ public static class ProfileEndpoints
         return endpoints;
     }
 
-    private static void SetPrivateNoStoreHeaders(HttpResponse response)
+    private static void SetNoStoreHeader(HttpResponse response)
     {
-        response.Headers.CacheControl = "no-store, no-cache, private";
-        response.Headers.Pragma = "no-cache";
-        response.Headers.Vary = "Cookie";
+        response.Headers.CacheControl = "no-store";
     }
 
     private static UserProfileDto ToDto(UserAccount user) =>
-        new(user.Id, user.PublicId, user.DisplayName, user.EpicDisplayName, user.IsCollectionPublic, !string.IsNullOrWhiteSpace(user.EpicDisplayName));
+        new UserProfileDto
+        {
+            PublicId = user.PublicId,
+            DisplayName = user.DisplayName,
+            EpicDisplayName = user.EpicDisplayName,
+            IsCollectionPublic = user.IsCollectionPublic,
+            IsProfileComplete = !string.IsNullOrWhiteSpace(user.EpicDisplayName)
+        };
 }

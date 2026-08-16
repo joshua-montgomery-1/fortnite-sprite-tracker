@@ -2,7 +2,7 @@ namespace FortniteSpriteTracker.DataAccess.Entities;
 
 public sealed class SpriteProgress
 {
-    public Guid UserId { get; set; }
+    public long UserId { get; set; }
     public int SpriteVariantId { get; set; }
     public bool IsOwned { get; set; }
     public bool IsMastered { get; set; }

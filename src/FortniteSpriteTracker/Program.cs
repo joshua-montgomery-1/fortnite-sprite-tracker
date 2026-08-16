@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics;
+using FortniteSpriteTracker.DataAccess.Seeding;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,7 @@ builder.Services.AddScoped<AccountClient>();
 builder.Services.AddScoped<AccountState>();
 builder.Services.AddScoped<CollectionClient>();
 builder.Services.AddScoped<PlayerClient>();
+builder.Services.AddScoped<CatalogClient>();
 
 var databaseConnectionString = builder.Configuration.GetConnectionString("sprite-tracker")
     ?? throw new InvalidOperationException(
@@ -135,11 +138,26 @@ app.MapGet("/auth/error", () => Results.Problem(
 
 app.MapAuthenticationEndpoints(googleAuthenticationConfigured);
 app.MapProfileEndpoints();
+app.MapCatalogEndpoints();
 app.MapCollectionEndpoints();
 app.MapPlayerEndpoints();
 app.MapDefaultEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(AccountClient).Assembly);
+
+if (args.Contains("--seed-catalog", StringComparer.Ordinal))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var database = scope.ServiceProvider.GetRequiredService<SpriteTrackerDbContext>();
+    await database.Database.MigrateAsync();
+    var seeder = scope.ServiceProvider.GetRequiredService<CatalogSeeder>();
+    var result = await seeder.SeedAsync();
+    app.Logger.LogInformation(
+        "Catalog seed complete: {Inserted} inserted, {Updated} updated.",
+        result.Inserted,
+        result.Updated);
+    return;
+}
 
 app.Run();

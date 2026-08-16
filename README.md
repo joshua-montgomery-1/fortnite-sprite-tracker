@@ -24,6 +24,16 @@ dotnet run --project src/FortniteSpriteTracker.AppHost
 
 Aspire starts PostgreSQL, waits for it to become healthy, injects its connection string into the server, applies EF Core migrations, and starts the hosted Blazor application. Configure Google OAuth with the server's `/signin-google` callback URL. Google credentials are optional for startup but required to sign in.
 
+The Sprite catalog is intentionally not populated during normal startup. Seed or reconcile the committed catalog explicitly after configuring the target connection string:
+
+```powershell
+dotnet run --project src/FortniteSpriteTracker -- --seed-catalog
+```
+
+The command applies pending migrations, reconciles the fixed-ID Chapter 7 Season 3 catalog, reports its changes, and exits without starting the web server. Running it repeatedly is safe.
+
+This catalog revision establishes a clean-slate database schema and replaces the earlier migration history. Its initial migration removes the known legacy application tables before recreating them, so existing accounts, authentication keys, and collection progress are intentionally discarded.
+
 The application stores Google's immutable subject identifier, the user's chosen display name, and an optional Epic Games Display Name. Email addresses and Google avatar URLs are not persisted.
 
 ## Use Supabase PostgreSQL

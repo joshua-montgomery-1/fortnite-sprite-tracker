@@ -19,21 +19,20 @@ public static class CollectionEndpoints
             SpriteTrackerDbContext database,
             CancellationToken cancellationToken) =>
         {
-            SetPrivateNoStoreHeaders(context.Response);
+            SetNoStoreHeader(context.Response);
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
             var progress = await database.SpriteProgress
                 .AsNoTracking()
                 .Where(item => item.UserId == user.Id)
-                .OrderBy(item => item.SpriteVariant.Sprite.Slug)
-                .ThenBy(item => item.SpriteVariant.Name)
-                .Select(item => new SpriteProgressDto(
-                    item.SpriteVariant.Sprite.Slug,
-                    item.SpriteVariant.Name,
-                    item.IsOwned,
-                    item.IsMastered,
-                    item.UpdatedAtUtc))
+                .OrderBy(item => item.SpriteVariantId)
+                .Select(item => new SpriteProgressDto
+                {
+                    SpriteVariantId = item.SpriteVariantId,
+                    IsOwned = item.IsOwned,
+                    IsMastered = item.IsMastered,
+                    UpdatedAtUtc = item.UpdatedAtUtc
+                })
                 .ToArrayAsync(cancellationToken);
-
             return Results.Ok(progress);
         });
 
@@ -46,32 +45,20 @@ public static class CollectionEndpoints
             CancellationToken cancellationToken) =>
         {
             await antiforgery.ValidateRequestAsync(context);
-            var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
-            var spriteSlug = request.SpriteSlug.Trim().ToLowerInvariant();
-            var variant = request.Variant.Trim();
-
-            var spriteVariant = await database.SpriteVariants
-                .Include(item => item.Sprite)
-                .SingleOrDefaultAsync(
-                    item => item.Sprite.Slug == spriteSlug && item.Name == variant,
-                    cancellationToken);
-
-            if (spriteVariant is null)
+            if (!await IsAvailableAsync(database, request.SpriteVariantId, cancellationToken))
             {
-                return Results.ValidationProblem(new Dictionary<string, string[]>
-                {
-                    [nameof(request.SpriteSlug)] = ["The Sprite or variant is not available in the catalog."]
-                });
+                return InvalidVariant(nameof(request.SpriteVariantId));
             }
 
+            var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
             var progress = await database.SpriteProgress.FindAsync(
-                [user.Id, spriteVariant.Id], cancellationToken);
-
+                [user.Id, request.SpriteVariantId],
+                cancellationToken);
+            var updatedAtUtc = DateTimeOffset.UtcNow;
             var isMastered = request.IsMastered;
             var isOwned = request.IsOwned || isMastered;
-            var updatedAtUtc = DateTimeOffset.UtcNow;
 
-            if (!isOwned && !isMastered)
+            if (!isOwned)
             {
                 if (progress is not null)
                 {
@@ -79,12 +66,7 @@ public static class CollectionEndpoints
                     await database.SaveChangesAsync(cancellationToken);
                 }
 
-                return Results.Ok(new SpriteProgressDto(
-                    spriteSlug,
-                    variant,
-                    false,
-                    false,
-                    updatedAtUtc));
+                return Results.Ok(ToDto(request.SpriteVariantId, false, false, updatedAtUtc));
             }
 
             if (progress is null)
@@ -92,22 +74,16 @@ public static class CollectionEndpoints
                 progress = new SpriteProgress
                 {
                     UserId = user.Id,
-                    SpriteVariantId = spriteVariant.Id
+                    SpriteVariantId = request.SpriteVariantId
                 };
                 database.SpriteProgress.Add(progress);
             }
 
+            progress.IsOwned = true;
             progress.IsMastered = isMastered;
-            progress.IsOwned = isOwned;
             progress.UpdatedAtUtc = updatedAtUtc;
             await database.SaveChangesAsync(cancellationToken);
-
-            return Results.Ok(new SpriteProgressDto(
-                spriteVariant.Sprite.Slug,
-                spriteVariant.Name,
-                progress.IsOwned,
-                progress.IsMastered,
-                progress.UpdatedAtUtc));
+            return Results.Ok(ToDto(progress.SpriteVariantId, true, isMastered, updatedAtUtc));
         });
 
         group.MapPut("/batch", async (
@@ -119,75 +95,53 @@ public static class CollectionEndpoints
             CancellationToken cancellationToken) =>
         {
             await antiforgery.ValidateRequestAsync(context);
-
-            if (request.Updates.Count is < 1 or > 117)
+            var maximumBatchSize = await database.SpriteVariants.CountAsync(cancellationToken);
+            if (request.Updates.Count < 1 || request.Updates.Count > maximumBatchSize)
             {
                 return Results.ValidationProblem(new Dictionary<string, string[]>
                 {
-                    [nameof(request.Updates)] = ["A batch must contain between 1 and 117 updates."]
+                    [nameof(request.Updates)] = [$"A batch must contain between 1 and {maximumBatchSize} updates."]
                 });
             }
 
-            var normalizedUpdates = request.Updates
-                .Select(update => new
-                {
-                    Slug = update.SpriteSlug.Trim().ToLowerInvariant(),
-                    Variant = update.Variant.Trim(),
-                    update.IsOwned,
-                    update.IsMastered
-                })
-                .GroupBy(update => $"{update.Slug}::{update.Variant}", StringComparer.OrdinalIgnoreCase)
+            var updates = request.Updates
+                .GroupBy(item => item.SpriteVariantId)
                 .Select(group => group.Last())
                 .ToArray();
-
-            var slugs = normalizedUpdates.Select(update => update.Slug).Distinct().ToArray();
-            var variants = await database.SpriteVariants
-                .Include(item => item.Sprite)
-                .Where(item => slugs.Contains(item.Sprite.Slug))
-                .ToArrayAsync(cancellationToken);
-            var variantByKey = variants.ToDictionary(
-                item => $"{item.Sprite.Slug}::{item.Name}",
-                StringComparer.OrdinalIgnoreCase);
-
-            if (normalizedUpdates.Any(update =>
-                    !variantByKey.ContainsKey($"{update.Slug}::{update.Variant}")))
+            var requestedIds = updates.Select(item => item.SpriteVariantId).ToArray();
+            var availableIds = await database.SeasonSpriteVariants
+                .Where(item => requestedIds.Contains(item.SpriteVariantId))
+                .Select(item => item.SpriteVariantId)
+                .ToHashSetAsync(cancellationToken);
+            if (requestedIds.Any(id => !availableIds.Contains(id)))
             {
-                return Results.ValidationProblem(new Dictionary<string, string[]>
-                {
-                    [nameof(request.Updates)] = ["The batch contains a Sprite or variant that is not available in the catalog."]
-                });
+                return InvalidVariant(nameof(request.Updates));
             }
 
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
-            var variantIds = variantByKey.Values.Select(item => item.Id).ToArray();
-            var existingProgress = await database.SpriteProgress
-                .Where(item => item.UserId == user.Id && variantIds.Contains(item.SpriteVariantId))
+            var existing = await database.SpriteProgress
+                .Where(item => item.UserId == user.Id && requestedIds.Contains(item.SpriteVariantId))
                 .ToDictionaryAsync(item => item.SpriteVariantId, cancellationToken);
-            var results = new List<SpriteProgressDto>(normalizedUpdates.Length);
             var updatedAtUtc = DateTimeOffset.UtcNow;
+            var results = new List<SpriteProgressDto>(updates.Length);
 
-            foreach (var update in normalizedUpdates)
+            foreach (var update in updates)
             {
-                var spriteVariant = variantByKey[$"{update.Slug}::{update.Variant}"];
-                existingProgress.TryGetValue(spriteVariant.Id, out var progress);
+                existing.TryGetValue(update.SpriteVariantId, out var progress);
                 var isMastered = update.IsMastered;
                 var isOwned = update.IsOwned || isMastered;
-
-                if (!isOwned)
+                if (!isOwned && progress is not null)
                 {
-                    if (progress is not null)
-                    {
-                        database.SpriteProgress.Remove(progress);
-                    }
+                    database.SpriteProgress.Remove(progress);
                 }
-                else
+                else if (isOwned)
                 {
                     if (progress is null)
                     {
                         progress = new SpriteProgress
                         {
                             UserId = user.Id,
-                            SpriteVariantId = spriteVariant.Id
+                            SpriteVariantId = update.SpriteVariantId
                         };
                         database.SpriteProgress.Add(progress);
                     }
@@ -197,12 +151,7 @@ public static class CollectionEndpoints
                     progress.UpdatedAtUtc = updatedAtUtc;
                 }
 
-                results.Add(new SpriteProgressDto(
-                    spriteVariant.Sprite.Slug,
-                    spriteVariant.Name,
-                    isOwned,
-                    isMastered,
-                    updatedAtUtc));
+                results.Add(ToDto(update.SpriteVariantId, isOwned, isMastered, updatedAtUtc));
             }
 
             await database.SaveChangesAsync(cancellationToken);
@@ -212,10 +161,31 @@ public static class CollectionEndpoints
         return endpoints;
     }
 
-    private static void SetPrivateNoStoreHeaders(HttpResponse response)
+    private static Task<bool> IsAvailableAsync(
+        SpriteTrackerDbContext database,
+        int variantId,
+        CancellationToken cancellationToken) =>
+        database.SeasonSpriteVariants.AnyAsync(
+            item => item.SpriteVariantId == variantId,
+            cancellationToken);
+
+    private static IResult InvalidVariant(string field) =>
+        Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            [field] = ["The Sprite variant is not available in the active catalog."]
+        });
+
+    private static SpriteProgressDto ToDto(int id, bool isOwned, bool isMastered, DateTimeOffset updatedAtUtc) =>
+        new SpriteProgressDto
+        {
+            SpriteVariantId = id,
+            IsOwned = isOwned,
+            IsMastered = isMastered,
+            UpdatedAtUtc = updatedAtUtc
+        };
+
+    private static void SetNoStoreHeader(HttpResponse response)
     {
-        response.Headers.CacheControl = "no-store, no-cache, private";
-        response.Headers.Pragma = "no-cache";
-        response.Headers.Vary = "Cookie";
+        response.Headers.CacheControl = "no-store";
     }
 }

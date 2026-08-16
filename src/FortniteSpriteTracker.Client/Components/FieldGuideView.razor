@@ -1,15 +1,15 @@
 <div class="grid">
     @foreach (var sprite in Sprites)
     {
-        var keys = sprite.Variants.Select(variant => SpriteData.Key(sprite.Name, variant)).ToArray();
+        var keys = sprite.Variants.Select(item => item.Id).ToArray();
 
         <article class="card @(keys.All(Mastered.Contains) ? "done" : "")">
             <div class="cardTop">
-                <span class="rarity"><i style="background:@SpriteData.RarityColors[sprite.Rarity]"></i>@sprite.Rarity</span>
+                <span class="rarity"><i style="background:@sprite.RarityColor"></i>@sprite.Rarity</span>
                 <span class="variantProgress">@keys.Count(Owned.Contains) OWNED · @keys.Count(Mastered.Contains) MASTERED</span>
             </div>
             <div class="spriteVisual" style="--c1:@sprite.PrimaryColor">
-                <img src="@SpriteData.ImageUrl(sprite.Slug)" alt="@sprite.Name Sprite" loading="eager" />
+                <img src="@sprite.ImageUrl" alt="@sprite.Name Sprite" loading="eager" />
             </div>
             <div class="cardBody">
                 <h3>@sprite.Name <small>SPRITE</small></h3>
@@ -22,21 +22,20 @@
                     <i>→</i>
                 </div>
                 <div class="variantCarousel" tabindex="0">
-                    @foreach (var variant in sprite.Variants)
+                    @foreach (var spriteVariant in sprite.Variants)
                     {
-                        var key = SpriteData.Key(sprite.Name, variant);
-                        var isOwned = Owned.Contains(key);
-                        var isMastered = Mastered.Contains(key);
+                        var isOwned = Owned.Contains(spriteVariant.Id);
+                        var isMastered = Mastered.Contains(spriteVariant.Id);
 
                         <div class="variantTile @(isOwned ? "owned" : "") @(isMastered ? "mastered" : "")">
                             <span class="variantArt">
-                                <img src="@SpriteData.VariantImageUrl(sprite.Slug, variant)" alt="@variant @sprite.Name Sprite" loading="eager" />
+                                <img src="@spriteVariant.ImagePath" alt="@spriteVariant.Style.Name @sprite.Name Sprite" loading="eager" />
                             </span>
-                            <span class="variantName"><i style="background:@SpriteData.Variants[variant].Color"></i>@variant</span>
-                            <small>@SpriteData.Variants[variant].Bonus</small>
+                            <span class="variantName"><i style="background:@spriteVariant.Style.Color"></i>@spriteVariant.Style.Name</span>
+                            <small>@spriteVariant.Style.Bonus</small>
                             <div class="variantActions">
-                                <button class="ownButton" @onclick="() => OwnedToggled.InvokeAsync(key)">@(isOwned ? "✓ Owned" : "+ Own")</button>
-                                <button class="masterButton" @onclick="() => MasteredToggled.InvokeAsync(key)">@(isMastered ? "★ Mastered" : "☆ Master")</button>
+                                <button class="ownButton" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓ Owned" : "+ Own")</button>
+                                <button class="masterButton" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★ Mastered" : "☆ Master")</button>
                             </div>
                         </div>
                     }
@@ -47,9 +46,9 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public IEnumerable<SpriteDefinition> Sprites { get; set; } = [];
-    [Parameter, EditorRequired] public IReadOnlySet<string> Owned { get; set; } = new HashSet<string>();
-    [Parameter, EditorRequired] public IReadOnlySet<string> Mastered { get; set; } = new HashSet<string>();
-    [Parameter] public EventCallback<string> OwnedToggled { get; set; }
-    [Parameter] public EventCallback<string> MasteredToggled { get; set; }
+    [Parameter, EditorRequired] public IEnumerable<SpriteFamilyDto> Sprites { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlySet<int> Owned { get; set; } = new HashSet<int>();
+    [Parameter, EditorRequired] public IReadOnlySet<int> Mastered { get; set; } = new HashSet<int>();
+    [Parameter] public EventCallback<int> OwnedToggled { get; set; }
+    [Parameter] public EventCallback<int> MasteredToggled { get; set; }
 }
