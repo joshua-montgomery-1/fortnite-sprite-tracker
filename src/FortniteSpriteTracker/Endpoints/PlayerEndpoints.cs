@@ -99,27 +99,42 @@ public static class PlayerEndpoints
         {
             context.Response.Headers.CacheControl = "no-store";
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
-            var players = await (
-                from trackedPlayer in database.TrackedPlayers.AsNoTracking()
-                where trackedPlayer.UserId == user.Id
-                join progress in database.SpriteProgress.AsNoTracking()
-                    on trackedPlayer.PlayerId equals progress.UserId into playerProgress
-                from progress in playerProgress.DefaultIfEmpty()
-                group progress by new
+
+            var trackedPlayerStats = database.TrackedPlayers
+                .AsNoTracking()
+                .Where(trackedPlayer => trackedPlayer.UserId == user.Id)
+                .GroupJoin(
+                    database.SpriteProgress.AsNoTracking(),
+                    trackedPlayer => trackedPlayer.PlayerId,
+                    progress => progress.UserId,
+                    (trackedPlayer, progress) => new
+                    {
+                        TrackedPlayer = trackedPlayer,
+                        Progress = progress
+                    })
+                .SelectMany(
+                    item => item.Progress.DefaultIfEmpty(),
+                    (item, progress) => new
+                    {
+                        item.TrackedPlayer,
+                        Progress = progress
+                    })
+                .GroupBy(item => new
                 {
-                    trackedPlayer.Player.PublicId,
-                    trackedPlayer.Player.DisplayName,
-                    trackedPlayer.Player.EpicDisplayName
-                }
-                into player
-                select new TrackedPlayerDto
+                    item.TrackedPlayer.Player.PublicId,
+                    item.TrackedPlayer.Player.DisplayName,
+                    item.TrackedPlayer.Player.EpicDisplayName
+                })
+                .Select(player => new TrackedPlayerDto
                 {
                     PublicId = player.Key.PublicId,
                     DisplayName = player.Key.DisplayName,
                     EpicDisplayName = player.Key.EpicDisplayName ?? "Epic player",
-                    TotalSprites = player.Count(progress => progress != null && progress.IsOwned),
-                    MasteredSprites = player.Count(progress => progress != null && progress.IsMastered)
-                })
+                    TotalSprites = player.Count(item => item.Progress != null && item.Progress.IsOwned),
+                    MasteredSprites = player.Count(item => item.Progress != null && item.Progress.IsMastered)
+                });
+
+            var players = await trackedPlayerStats
                 .OrderByDescending(item => item.TotalSprites)
                 .ThenByDescending(item => item.MasteredSprites)
                 .ThenBy(item => item.DisplayName)
