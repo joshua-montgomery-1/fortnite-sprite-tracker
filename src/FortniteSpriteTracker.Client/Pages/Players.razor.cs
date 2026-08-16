@@ -29,6 +29,7 @@ public partial class Players
     private bool loading;
     private bool copied;
     private bool changingTracking;
+    private bool confirmingUntrack;
 
     private bool IsOwnProfile => data?.Viewer?.PublicId == data?.Player.PublicId;
     private string CanonicalUrl => new Uri(new Uri(Navigation.BaseUri), $"players/{data!.Player.PublicId:D}").AbsoluteUri;
@@ -143,14 +144,20 @@ public partial class Players
         }
     }
 
+    private Task BeginTrackingChangeAsync()
+    {
+        if (data?.IsTracked == true)
+        {
+            confirmingUntrack = true;
+            return Task.CompletedTask;
+        }
+
+        return ToggleTrackingAsync();
+    }
+
     private async Task ToggleTrackingAsync()
     {
         if (data is null)
-        {
-            return;
-        }
-
-        if (data.IsTracked && !await JavaScript.InvokeAsync<bool>("confirm", $"Untrack {PlayerName(data.Player)}?"))
         {
             return;
         }
@@ -180,6 +187,7 @@ public partial class Players
         finally
         {
             changingTracking = false;
+            confirmingUntrack = false;
         }
     }
 

@@ -2,7 +2,6 @@
 @using FortniteSpriteTracker.Shared.Players
 @inject PlayerClient PlayerApi
 @inject AccountState AccountState
-@inject IJSRuntime JavaScript
 
 <PageTitle>Tracked players - Sprite Scout</PageTitle>
 
@@ -38,7 +37,21 @@
                             <td><strong>@PlayerName(player)</strong></td>
                             <td>@player.TotalSprites</td>
                             <td>@player.MasteredSprites</td>
-                            <td><div class="trackedActions"><a href="players/@player.PublicId">View collection</a><button disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Untrack")</button></div></td>
+                            <td>
+                                <div class="trackedActions">
+                                    <a href="players/@player.PublicId">View collection</a>
+                                    @if (confirming == player.PublicId)
+                                    {
+                                        <span class="rowUntrackConfirm">Remove?</span>
+                                        <button class="cancelUntrack" disabled="@(removing == player.PublicId)" @onclick="() => confirming = null">Cancel</button>
+                                        <button class="confirmUntrack" disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Yes, untrack")</button>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => confirming = player.PublicId">Untrack</button>
+                                    }
+                                </div>
+                            </td>
                         </tr>
                     }
                     </tbody>
@@ -54,6 +67,7 @@
     private bool loading = true;
     private bool signedIn;
     private Guid? removing;
+    private Guid? confirming;
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,14 +80,13 @@
 
     private async Task UntrackAsync(TrackedPlayerDto player)
     {
-        if (!await JavaScript.InvokeAsync<bool>("confirm", $"Untrack {PlayerName(player)}?")) return;
         removing = player.PublicId;
         try
         {
             await PlayerApi.UntrackAsync(player.PublicId);
             players = players.Where(item => item.PublicId != player.PublicId).ToArray();
         }
-        finally { removing = null; }
+        finally { removing = confirming = null; }
     }
 
     private static string PlayerName(TrackedPlayerDto player) => $"{player.DisplayName} ({player.EpicDisplayName})";

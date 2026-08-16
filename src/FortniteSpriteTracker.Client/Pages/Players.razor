@@ -61,9 +61,20 @@
                 <div class="profileActions">
                     @if (data.Viewer is not null && !IsOwnProfile)
                     {
-                        <button class="trackButton @(data.IsTracked ? "tracked" : "")" disabled="@changingTracking" @onclick="ToggleTrackingAsync">
-                            @(changingTracking ? "Saving..." : data.IsTracked ? "Untrack" : "Track player")
-                        </button>
+                        @if (data.IsTracked && confirmingUntrack)
+                        {
+                            <div class="untrackConfirm" role="group" aria-label="Confirm untracking @PlayerName(data.Player)">
+                                <span>Remove from tracked players?</span>
+                                <button class="cancelUntrack" disabled="@changingTracking" @onclick="() => confirmingUntrack = false">Cancel</button>
+                                <button class="confirmUntrack" disabled="@changingTracking" @onclick="ToggleTrackingAsync">@(changingTracking ? "Removing..." : "Yes, untrack")</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="trackButton @(data.IsTracked ? "tracked" : "")" disabled="@changingTracking" @onclick="BeginTrackingChangeAsync">
+                                @(changingTracking ? "Saving..." : data.IsTracked ? "Untrack" : "Track player")
+                            </button>
+                        }
                     }
                     <div class="shareBox">
                     <label>PERMANENT PLAYER LINK</label>
