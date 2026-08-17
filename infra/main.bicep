@@ -9,6 +9,12 @@ param resourceGroupName string = 'rg-sprite-scout-prod'
 @description('Public OCI image, such as ghcr.io/owner/fortnite-sprite-tracker:sha.')
 param containerImage string
 
+@description('Apex hostname bound to the production Container App. Its A and asuid TXT records must exist before deployment.')
+param customDomainName string = 'spritescout.com'
+
+@description('WWW hostname bound to the production Container App. Its CNAME and asuid.www TXT records must exist before deployment.')
+param wwwCustomDomainName string = 'www.spritescout.com'
+
 @secure()
 param databaseConnectionString string
 
@@ -44,6 +50,8 @@ module application 'app.bicep' = {
   params: {
     location: location
     containerImage: containerImage
+    customDomainName: customDomainName
+    wwwCustomDomainName: wwwCustomDomainName
     databaseConnectionString: databaseConnectionString
     googleClientId: googleClientId
     googleClientSecret: googleClientSecret
