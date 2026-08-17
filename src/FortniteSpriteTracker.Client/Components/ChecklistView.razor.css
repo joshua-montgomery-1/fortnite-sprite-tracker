@@ -1,0 +1,281 @@
+.collectionMatrix tbody .spriteColumn {
+  height: 92px;
+  padding: 8px 12px;
+  gap: 12px;
+}
+.collectionMatrix tbody .spriteColumn img {
+  width: 64px;
+  height: 64px;
+  object-position: center;
+  flex: 0 0 64px;
+}
+.collectionMatrix td {
+  height: 92px;
+  padding: 7px 5px;
+  vertical-align: middle;
+}
+.collectionMatrix td > img {
+  display: block;
+  width: 64px;
+  height: 56px;
+  margin: 0 auto 5px;
+  object-position: center;
+}
+.collectionMatrix td > div {
+  align-items: center;
+  gap: 8px;
+}
+.collectionMatrix td button {
+  width: 43px;
+  height: 25px;
+  border-radius: 5px;
+  grid-template-columns: 13px 1fr;
+  padding: 3px;
+  font-size: 11px;
+}
+@media (max-width: 720px) {
+  .collectionMatrix tbody .spriteColumn {
+    height: 88px;
+    padding: 7px 9px;
+    gap: 8px;
+  }
+  .collectionMatrix tbody .spriteColumn img {
+    width: 54px;
+    height: 54px;
+    flex-basis: 54px;
+  }
+  .collectionMatrix td {
+    height: 88px;
+  }
+  .collectionMatrix td > img {
+    width: 58px;
+    height: 52px;
+  }
+  .collectionMatrix td > div {
+    gap: 6px;
+  }
+}
+.collectionMatrix tbody .spriteColumn,
+.collectionMatrix td {
+  box-sizing: border-box;
+  height: 98px;
+}
+.collectionMatrix td {
+  padding: 4px 4px 34px;
+  overflow: hidden;
+}
+.collectionMatrix td > img {
+  width: 68px;
+  height: 60px;
+  margin: 0 auto;
+}
+.collectionMatrix td > div {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 32px;
+  display: flex;
+  gap: 0;
+  border-top: 1px solid #ddd9d1;
+  background: #f8f7f3;
+}
+.collectionMatrix td button {
+  flex: 1;
+  width: auto;
+  height: 32px;
+  border: 0;
+  border-right: 1px solid #ddd9d1;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 3px;
+  font-size: 12px;
+}
+.collectionMatrix td button:last-child {
+  border-right: 0;
+}
+.collectionMatrix td button small {
+  font-size: 6px;
+  letter-spacing: 0.25px;
+}
+.collectionMatrix td.owned button:first-child {
+  box-shadow: inset 0 -3px 0 #62bde9;
+}
+.collectionMatrix td.mastered button:last-child {
+  box-shadow: inset 0 -3px 0 #8caf25;
+}
+.collectionMatrix td button:focus-visible {
+  position: relative;
+  z-index: 2;
+  outline: 2px solid #7557f6;
+  outline-offset: -2px;
+}
+@media (max-width: 720px) {
+  .collectionMatrix tbody .spriteColumn,
+  .collectionMatrix td {
+    height: 94px;
+  }
+  .collectionMatrix td {
+    padding-bottom: 36px;
+  }
+  .collectionMatrix td > img {
+    width: 62px;
+    height: 54px;
+  }
+  .collectionMatrix td > div,
+  .collectionMatrix td button {
+    height: 34px;
+  }
+  .collectionMatrix td button small {
+    font-size: 6px;
+  }
+}
+.collectionMatrix tbody tr:hover .spriteColumn,
+.collectionMatrix tbody tr:hover td:not(.unavailable) {
+  box-shadow: none;
+}
+.collectionMatrix td button:focus {
+  outline: none;
+}
+.collectionMatrix td button:hover {
+  background: #efede7;
+}
+.collectionMatrix td button:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #7557f6;
+}
+.collectionMatrix td.owned button:first-child:focus-visible {
+  box-shadow:
+    inset 0 0 0 2px #248dc0,
+    inset 0 -3px 0 #248dc0;
+}
+.collectionMatrix td.mastered button:last-child:focus-visible {
+  box-shadow:
+    inset 0 0 0 2px #6f8f18,
+    inset 0 -3px 0 #6f8f18;
+}
+@media screen {
+  .collectionMatrix thead th > small {
+    font-size: 8px;
+    line-height: 1.25;
+    margin-top: 4px;
+  }
+  .collectionMatrix tbody .spriteColumn small {
+    font: 800 8px/1.2 var(--font-mono);
+    letter-spacing: 0.3px;
+  }
+  .collectionMatrix td button small {
+    font: 800 8px/1 var(--font-mono);
+    letter-spacing: 0.2px;
+  }
+}
+@media (max-width: 720px) {
+  .collectionMatrix .spriteColumn {
+    width: 155px;
+  }
+  .collectionMatrix {
+    min-width: 940px;
+  }
+  .collectionMatrix tbody .spriteColumn img {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Print rules live here after the normal isolated rules so their cascade remains intact. */
+@media print {
+  .matrixWrap {
+    overflow: visible;
+    border: 1px solid #aaa;
+    box-shadow: none;
+  }
+  .collectionMatrix {
+    min-width: 0 !important;
+    width: 100%;
+    table-layout: fixed;
+  }
+  .collectionMatrix thead {
+    display: table-header-group;
+  }
+  .collectionMatrix thead th {
+    position: static;
+    height: 34px;
+    padding: 3px;
+  }
+  .collectionMatrix thead th > span {
+    font-size: 6pt;
+  }
+  .collectionMatrix thead th > small {
+    font-size: 4.5pt;
+  }
+  .collectionMatrix .spriteColumn {
+    position: static;
+    width: 126px;
+  }
+  .collectionMatrix tbody .spriteColumn,
+  .collectionMatrix td {
+    height: 43px;
+  }
+  .collectionMatrix tbody .spriteColumn {
+    padding: 2px 5px;
+  }
+  .collectionMatrix tbody .spriteColumn img {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+  .collectionMatrix tbody .spriteColumn strong {
+    font-size: 7.5pt;
+  }
+  .collectionMatrix tbody .spriteColumn small {
+    font-size: 4.5pt;
+  }
+  .collectionMatrix tbody tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .collectionMatrix tbody tr:nth-child(13) {
+    break-before: page;
+    page-break-before: always;
+  }
+  .collectionMatrix td {
+    padding: 1px 2px 16px;
+    overflow: hidden;
+  }
+  .collectionMatrix td > img {
+    width: 31px;
+    height: 25px;
+    margin: 0 auto;
+  }
+  .collectionMatrix td > div,
+  .collectionMatrix td button {
+    height: 15px;
+  }
+  .collectionMatrix td button {
+    font-size: 5.5pt;
+    gap: 2px;
+  }
+  .collectionMatrix td button small {
+    font-size: 4pt;
+  }
+  .collectionMatrix td.unavailable {
+    font-size: 8pt;
+    background: repeating-linear-gradient(
+      135deg,
+      #f2f0eb,
+      #f2f0eb 4px,
+      #ebe8e1 4px,
+      #ebe8e1 8px
+    ) !important;
+  }
+  .collectionMatrix tbody tr:nth-child(even) .spriteColumn {
+    background: #efede7;
+  }
+  .collectionMatrix th,
+  .collectionMatrix td {
+    border-color: #c9c5bd;
+  }
+}

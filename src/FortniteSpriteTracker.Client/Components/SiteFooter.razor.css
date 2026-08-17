@@ -1,0 +1,28 @@
+footer {
+  padding: 28px 5vw;
+  background: #171b25;
+  color: #a6a8af;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+footer .brand {
+  color: #fff;
+}
+footer .brandmark {
+  width: 25px;
+  height: 25px;
+  font-size: 12px;
+}
+footer p {
+  margin: 0;
+}
+@media (max-width: 720px) {
+  footer {
+    align-items: flex-start;
+    gap: 20px;
+    flex-direction: column;
+  }
+}

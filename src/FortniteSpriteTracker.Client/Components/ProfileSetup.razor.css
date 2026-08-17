@@ -1,0 +1,65 @@
+.profileSetup {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto;
+  align-items: end;
+  gap: 16px;
+  margin: 0 0 28px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #d8d4cc;
+  border-radius: 10px;
+  box-shadow: 0 5px 0 #dedad1;
+}
+.profileSetup h2 {
+  font-size: 24px;
+  margin: 4px 0;
+}
+.profileSetup p {
+  font-size: 11px;
+  color: #666a72;
+  margin: 0;
+  max-width: 430px;
+}
+.profileSetup label {
+  display: grid;
+  gap: 6px;
+  font: 8px var(--font-mono);
+  letter-spacing: 0.8px;
+  color: #74767c;
+}
+.profileSetup input {
+  min-width: 0;
+  border: 1px solid #d8d4cc;
+  border-radius: 7px;
+  padding: 10px;
+  font-family: var(--font-geist);
+  font-size: 12px;
+  color: var(--ink);
+}
+.profileSetup .primary {
+  border: 0;
+  cursor: pointer;
+}
+.profileSetup .primary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+@media (max-width: 900px) {
+  .profileSetup {
+    grid-template-columns: 1fr 1fr;
+  }
+  .profileSetup > div {
+    grid-column: 1/-1;
+  }
+  .profileSetup .primary {
+    justify-self: start;
+  }
+}
+@media (max-width: 560px) {
+  .profileSetup {
+    grid-template-columns: 1fr;
+  }
+  .profileSetup > div {
+    grid-column: auto;
+  }
+}

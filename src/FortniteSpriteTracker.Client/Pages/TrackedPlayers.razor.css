@@ -1,0 +1,127 @@
+.trackedPage {
+  min-height: calc(100vh - 76px);
+  padding: 58px 5vw 90px;
+  max-width: 1350px;
+  margin: auto;
+}
+.trackedHero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+.trackedHero h1 {
+  font-size: clamp(44px, 6vw, 72px);
+  line-height: 0.9;
+  letter-spacing: -4px;
+  margin: 9px 0 13px;
+}
+.trackedHero p {
+  margin: 0;
+  color: #686a71;
+}
+.trackedTableWrap {
+  overflow-x: auto;
+  border: 1px solid #d5d1c8;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 7px 0 #dedad1;
+}
+.trackedTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.trackedTable th {
+  text-align: left;
+  padding: 13px 18px;
+  border-bottom: 1px solid #d5d1c8;
+  background: #efede7;
+  font: 800 8px var(--font-mono);
+  letter-spacing: 1px;
+  color: #73757b;
+}
+.trackedTable td {
+  padding: 17px 18px;
+  border-bottom: 1px solid #e1ded7;
+  font-size: 13px;
+}
+.trackedTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+.trackedTable th:nth-child(2),
+.trackedTable th:nth-child(3),
+.trackedTable td:nth-child(2),
+.trackedTable td:nth-child(3) {
+  text-align: center;
+}
+.trackedTable td:nth-child(2),
+.trackedTable td:nth-child(3) {
+  font-size: 20px;
+  font-weight: 900;
+}
+.trackedActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+.trackedActions a,
+.trackedActions button {
+  border: 1px solid #cbc6bc;
+  border-radius: 6px;
+  background: #f5f3ed;
+  padding: 8px 10px;
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 850;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.trackedActions button {
+  color: #a33d49;
+}
+.trackedActions button:disabled {
+  opacity: 0.55;
+}
+.untrackConfirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid #e1b8b2;
+  border-radius: 8px;
+  background: #fff8f7;
+}
+.untrackConfirm button {
+  height: 29px;
+  border: 1px solid #d0c9c0;
+  border-radius: 5px;
+  padding: 0 9px;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.cancelUntrack {
+  background: #fff !important;
+  color: #555860 !important;
+}
+.confirmUntrack {
+  border-color: #b83443 !important;
+  background: #b83443 !important;
+  color: #fff !important;
+}
+@media (max-width: 900px) {
+  .trackedHero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 720px) {
+  .trackedPage {
+    padding: 34px 18px 60px;
+  }
+  .trackedTable {
+    min-width: 690px;
+  }
+}
