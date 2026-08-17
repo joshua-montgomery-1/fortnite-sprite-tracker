@@ -63,6 +63,7 @@ public partial class Home : IAsyncDisposable
                 (selectedSeason.EndAt is null || now < selectedSeason.EndAt);
         }
     }
+    private bool SelectedSeasonIsUpcoming => selectedSeason is not null && DateTimeOffset.UtcNow < selectedSeason.StartAt;
     private string SelectedSeasonStatus
     {
         get
@@ -450,6 +451,11 @@ public partial class Home : IAsyncDisposable
 
     private async Task ToggleOwned(int id)
     {
+        if (SelectedSeasonIsUpcoming)
+        {
+            return;
+        }
+
         if (!owned.Remove(id))
         {
             owned.Add(id);
@@ -464,6 +470,11 @@ public partial class Home : IAsyncDisposable
 
     private async Task ToggleMastered(int id)
     {
+        if (SelectedSeasonIsUpcoming)
+        {
+            return;
+        }
+
         if (!mastered.Remove(id))
         {
             mastered.Add(id);

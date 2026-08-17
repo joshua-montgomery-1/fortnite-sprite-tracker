@@ -110,7 +110,8 @@ public static class CollectionEndpoints
                 .ToArray();
             var requestedIds = updates.Select(item => item.SpriteVariantId).ToArray();
             var availableIds = await database.SeasonSpriteVariants
-                .Where(item => requestedIds.Contains(item.SpriteVariantId))
+                .Where(item => requestedIds.Contains(item.SpriteVariantId) &&
+                    item.Season.StartAt <= DateTimeOffset.UtcNow)
                 .Select(item => item.SpriteVariantId)
                 .ToHashSetAsync(cancellationToken);
             if (requestedIds.Any(id => !availableIds.Contains(id)))
@@ -166,13 +167,14 @@ public static class CollectionEndpoints
         int variantId,
         CancellationToken cancellationToken) =>
         database.SeasonSpriteVariants.AnyAsync(
-            item => item.SpriteVariantId == variantId,
+            item => item.SpriteVariantId == variantId &&
+                item.Season.StartAt <= DateTimeOffset.UtcNow,
             cancellationToken);
 
     private static IResult InvalidVariant(string field) =>
         Results.ValidationProblem(new Dictionary<string, string[]>
         {
-            [field] = ["The Sprite variant is not available in the active catalog."]
+            [field] = ["The Sprite variant is not available in a season that has started."]
         });
 
     private static SpriteProgressDto ToDto(int id, bool isOwned, bool isMastered, DateTimeOffset updatedAtUtc) =>
