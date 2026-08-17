@@ -2,6 +2,7 @@ param location string
 param containerImage string
 param customDomainName string
 param wwwCustomDomainName string
+param bindCustomDomainCertificates bool
 
 @secure()
 param databaseConnectionString string
@@ -79,14 +80,25 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
         allowInsecure: false
         targetPort: 8080
         transport: 'auto'
-        customDomains: [
+        customDomains: bindCustomDomainCertificates ? [
           {
             name: customDomainName
-            bindingType: 'Auto'
+            bindingType: 'SniEnabled'
+            certificateId: resourceId('Microsoft.App/managedEnvironments/managedCertificates', environmentName, 'cert-sprite-scout-apex')
           }
           {
             name: wwwCustomDomainName
-            bindingType: 'Auto'
+            bindingType: 'SniEnabled'
+            certificateId: resourceId('Microsoft.App/managedEnvironments/managedCertificates', environmentName, 'cert-sprite-scout-www')
+          }
+        ] : [
+          {
+            name: customDomainName
+            bindingType: 'Disabled'
+          }
+          {
+            name: wwwCustomDomainName
+            bindingType: 'Disabled'
           }
         ]
       }

@@ -44,6 +44,24 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   }
 }
 
+module applicationBootstrap 'app.bicep' = {
+  name: 'sprite-scout-application-bootstrap'
+  scope: resourceGroup
+  params: {
+    location: location
+    containerImage: containerImage
+    customDomainName: customDomainName
+    wwwCustomDomainName: wwwCustomDomainName
+    bindCustomDomainCertificates: false
+    databaseConnectionString: databaseConnectionString
+    googleClientId: googleClientId
+    googleClientSecret: googleClientSecret
+    budgetContactEmail: budgetContactEmail
+    monthlyBudgetAmount: monthlyBudgetAmount
+    deploymentVersion: deploymentVersion
+  }
+}
+
 module application 'app.bicep' = {
   name: 'sprite-scout-application'
   scope: resourceGroup
@@ -52,6 +70,7 @@ module application 'app.bicep' = {
     containerImage: containerImage
     customDomainName: customDomainName
     wwwCustomDomainName: wwwCustomDomainName
+    bindCustomDomainCertificates: true
     databaseConnectionString: databaseConnectionString
     googleClientId: googleClientId
     googleClientSecret: googleClientSecret
@@ -59,6 +78,9 @@ module application 'app.bicep' = {
     monthlyBudgetAmount: monthlyBudgetAmount
     deploymentVersion: deploymentVersion
   }
+  dependsOn: [
+    applicationBootstrap
+  ]
 }
 
 output applicationUrl string = application.outputs.applicationUrl
