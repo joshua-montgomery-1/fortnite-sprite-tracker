@@ -1,0 +1,249 @@
+.hero {
+  min-height: 560px;
+  padding: 60px 7vw;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4vw;
+  align-items: center;
+  overflow: hidden;
+  border-bottom: 1px solid #d8d4cb;
+  position: sticky;
+  top: 76px;
+  z-index: 0;
+  isolation: isolate;
+  background: linear-gradient(115deg, #f4f2ec 0 58%, #ece8df 100%);
+}
+.parallaxGrid {
+  position: absolute;
+  inset: -100px;
+  z-index: -1;
+  background-image: radial-gradient(#d8d4ca 1px, transparent 1px);
+  background-size: 18px 18px;
+  will-change: transform;
+}
+.heroCopy {
+  will-change: transform;
+}
+.heroArt {
+  min-height: 430px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  will-change: transform;
+}
+.orbit {
+  position: absolute;
+  border: 1px solid #c9c5ba;
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+.orbitOne {
+  width: 440px;
+  height: 250px;
+}
+.orbitTwo {
+  width: 320px;
+  height: 410px;
+  transform: rotate(32deg);
+}
+.rareSpriteGlow {
+  position: absolute;
+  width: 330px;
+  height: 330px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #8f50f85c, transparent 68%);
+  filter: blur(8px);
+}
+.rareSprite {
+  width: min(390px, 80%);
+  height: 390px;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 35px 30px #49327a55);
+  animation: rareFloat 4.5s ease-in-out infinite;
+}
+.rareLabel {
+  position: absolute;
+  left: 2%;
+  top: 8%;
+  z-index: 3;
+  display: grid;
+  background: #171b25;
+  color: #fff;
+  border-radius: 7px;
+  padding: 10px 13px;
+  box-shadow: 4px 4px 0 var(--lime);
+  transform: rotate(-3deg);
+}
+.rareLabel small {
+  font: 7px var(--font-mono);
+  color: var(--lime);
+  letter-spacing: 1px;
+}
+.rareLabel strong {
+  font-size: 14px;
+}
+.rareLabel span {
+  font-size: 8px;
+  color: #aaaeb8;
+}
+.rareLabel:after {
+  content: "MYTHIC";
+  position: absolute;
+  right: -43px;
+  top: 7px;
+  background: #ff5d7c;
+  color: #fff;
+  padding: 3px 5px;
+  border-radius: 3px;
+  font: 6px var(--font-mono);
+  letter-spacing: 1px;
+}
+@keyframes rareFloat {
+  50% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+}
+.heroSprite {
+  width: 260px;
+  height: 260px;
+  border-radius: 45% 45% 50% 50%;
+  background: linear-gradient(150deg, #a895ff, #5435e8);
+  position: relative;
+  box-shadow:
+    inset -18px -25px 50px #3822a2,
+    0 35px 60px #6a54d94d;
+  animation: float 4s ease-in-out infinite;
+}
+.heroSprite:after {
+  content: "";
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 30%, #fff8 0 3%, transparent 30%);
+}
+.ear {
+  position: absolute;
+  width: 90px;
+  height: 145px;
+  background: #856bf7;
+  top: -70px;
+  border-radius: 80% 10% 50% 40%;
+  z-index: -1;
+}
+.ear.left {
+  left: 15px;
+  transform: rotate(-22deg);
+}
+.ear.right {
+  right: 15px;
+  transform: scaleX(-1) rotate(-22deg);
+}
+.face {
+  position: absolute;
+  top: 105px;
+  left: 60px;
+  display: flex;
+  gap: 56px;
+}
+.face i {
+  width: 24px;
+  height: 34px;
+  background: #171525;
+  border-radius: 50%;
+  box-shadow: inset 7px 8px 0 #fff;
+}
+.spark {
+  position: absolute;
+  color: #7958f5;
+  font-size: 30px;
+}
+.s1 {
+  top: 30px;
+  left: 20%;
+}
+.s2 {
+  right: 10%;
+  bottom: 30px;
+  color: #ee4b85;
+}
+.s3 {
+  font-size: 80px;
+  right: 12%;
+  top: 10px;
+}
+.seasonTag {
+  position: absolute;
+  right: 0;
+  bottom: 5%;
+  background: #fff;
+  border: 1px solid #d2cec6;
+  border-radius: 8px;
+  padding: 13px 18px;
+  box-shadow: 8px 8px 0 #171b25;
+  display: grid;
+}
+.seasonTag small {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #777;
+}
+.seasonTag strong {
+  font-size: 20px;
+}
+.seasonTag span {
+  font-size: 10px;
+  color: #ee4b72;
+  font-weight: 750;
+}
+@keyframes float {
+  50% {
+    transform: translateY(-14px) rotate(2deg);
+  }
+}
+@media (max-width: 1000px) {
+  .hero {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+  .orbitOne {
+    width: 300px;
+  }
+}
+@media (max-width: 720px) {
+  .hero {
+    top: 64px;
+    padding: 45px 22px 20px;
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .hero h1 {
+    font-size: 64px;
+    letter-spacing: -5px;
+  }
+  .heroArt {
+    min-height: 350px;
+  }
+  .rareSprite {
+    width: 270px;
+    height: 270px;
+  }
+  .rareLabel {
+    left: 2%;
+    top: 4%;
+  }
+  .orbitTwo {
+    height: 285px;
+    width: 220px;
+  }
+  .seasonTag {
+    right: 5%;
+    bottom: 6%;
+  }
+}
+@media (max-width: 430px) {
+  .heroActions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

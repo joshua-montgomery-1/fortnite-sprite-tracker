@@ -1,0 +1,350 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.card {
+  background: #fff;
+  border: 1px solid #d8d5cd;
+  border-radius: 9px;
+  overflow: hidden;
+  box-shadow: 0 4px 0 transparent;
+  transition: 0.2s;
+  animation: enter 0.35s both;
+  animation-delay: var(--delay);
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 0 #dedad1;
+}
+.card.done {
+  border-color: #9bda62;
+}
+.cardTop {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+}
+.rarity {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-family: var(--font-mono);
+  font-weight: 750;
+}
+.rarity i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.variantProgress {
+  font: 7px var(--font-mono);
+  letter-spacing: 0.5px;
+  color: #898b90;
+}
+.done .variantProgress {
+  color: #6a8c22;
+}
+.spriteVisual {
+  width: 100%;
+  height: 210px;
+  border-top: 1px solid #ebe8e1;
+  border-bottom: 1px solid #e3e0d9;
+  background: radial-gradient(circle at center, #fff 0, #eeeae2 62%, #dfdbd1);
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.spriteVisual:before {
+  content: "";
+  position: absolute;
+  width: 165px;
+  height: 165px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--c1) 0, transparent 68%);
+  opacity: 0.35;
+}
+.spriteVisual img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 15px 12px #17171725);
+  transition: 0.2s;
+}
+.card:hover .spriteVisual img {
+  transform: translateY(-4px) scale(1.025);
+}
+.imageCredit {
+  position: absolute;
+  bottom: 7px;
+  right: 8px;
+  font: 6px var(--font-mono);
+  letter-spacing: 0.8px;
+  color: #9a9a9b;
+  z-index: 2;
+}
+.cardBody {
+  padding: 15px;
+}
+.cardBody h3 {
+  font-size: 18px;
+  margin: 0 0 11px;
+  letter-spacing: -0.5px;
+}
+.cardBody h3 small {
+  font-size: 7px;
+  font-family: var(--font-mono);
+  color: #999;
+  letter-spacing: 1px;
+}
+.ability {
+  background: #f2f0ea;
+  border-radius: 6px;
+  padding: 9px 10px;
+  margin-bottom: 11px;
+  min-height: 66px;
+}
+.ability > span {
+  font: 7px var(--font-mono);
+  color: #7858ed;
+  letter-spacing: 1px;
+  font-weight: 800;
+}
+.ability p {
+  font-size: 10px;
+  line-height: 1.4;
+  color: #555860;
+  margin: 4px 0 0;
+  height: auto;
+}
+.carouselLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 2px 7px;
+  font: 7px var(--font-mono);
+  letter-spacing: 0.7px;
+  color: #888a8f;
+}
+.carouselLabel i {
+  font-size: 12px;
+  color: #7557f6;
+  font-style: normal;
+}
+.variantCarousel {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  padding: 0 1px 9px;
+  scrollbar-width: thin;
+  scrollbar-color: #b6afcf #ece9e2;
+}
+.variantCarousel:focus-visible {
+  outline: 2px solid #7557f6;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.variantCarousel::-webkit-scrollbar {
+  height: 6px;
+}
+.variantCarousel::-webkit-scrollbar-track {
+  background: #ece9e2;
+  border-radius: 5px;
+}
+.variantCarousel::-webkit-scrollbar-thumb {
+  background: #a99dcf;
+  border-radius: 5px;
+}
+.variantCarousel > button {
+  flex: 0 0 112px;
+  scroll-snap-align: start;
+  border: 1px solid #dedbd4;
+  background: #faf9f6;
+  border-radius: 7px;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: 1fr 18px;
+  text-align: left;
+  position: relative;
+  color: #5f6167;
+  cursor: pointer;
+}
+.variantCarousel > button:hover {
+  border-color: #9c8bea;
+}
+.variantCarousel > button.owned {
+  background: #f1f7dc;
+  border-color: #b6d451;
+}
+.variantArt {
+  grid-column: 1/-1;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: radial-gradient(circle, #fff, #e8e4db);
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+.variantArt img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  filter: drop-shadow(0 7px 5px #1b1b1b20);
+}
+.variantName {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 800;
+}
+.variantName i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.variantCarousel small {
+  grid-column: 1;
+  font-size: 6px;
+  color: #8d8e92;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.variantCarousel b {
+  grid-column: 2;
+  grid-row: 2/4;
+  width: 17px;
+  height: 17px;
+  border: 1px solid #c9c6bf;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+}
+.variantCarousel .owned b {
+  background: var(--lime);
+  border-color: #a9c932;
+}
+.empty {
+  padding: 70px;
+  text-align: center;
+  color: #777;
+  background: #eae7df;
+  border-radius: 8px;
+}
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.variantTile {
+  flex: 0 0 140px;
+  scroll-snap-align: start;
+  border: 1px solid #dedbd4;
+  background: #faf9f6;
+  border-radius: 7px;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: 1fr;
+  text-align: left;
+  position: relative;
+  color: #5f6167;
+}
+.variantTile.owned {
+  background: #f4fbff;
+  border-color: #83caef;
+}
+.variantTile.mastered {
+  background: #f1f7dc;
+  border-color: #b6d451;
+  box-shadow: inset 0 -3px 0 var(--lime);
+}
+.variantTile .variantArt {
+  grid-column: auto;
+  height: 82px;
+}
+.variantTile small {
+  grid-column: auto;
+  margin: 2px 0 7px;
+}
+.variantActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.variantActions button {
+  border: 1px solid #d2cfc8;
+  background: #fff;
+  border-radius: 4px;
+  min-height: 26px;
+  padding: 3px;
+  font-size: 7px;
+  font-weight: 800;
+  cursor: pointer;
+  color: #62646a;
+}
+.variantActions button:hover {
+  border-color: #7557f6;
+}
+.variantTile.owned .ownButton {
+  background: #dff4ff;
+  border-color: #6dc1ec;
+  color: #205c7b;
+}
+.variantTile.mastered .masterButton {
+  background: var(--lime);
+  border-color: #a9c932;
+  color: #171b25;
+}
+.spriteVisual img {
+  transform: translateY(-10px);
+}
+.card:hover .spriteVisual img {
+  transform: translateY(-14px) scale(1.025);
+}
+@media (max-width: 720px) {
+  .spriteVisual img {
+    transform: translateY(-7px);
+  }
+  .card:hover .spriteVisual img {
+    transform: translateY(-10px) scale(1.02);
+  }
+}
+@media (max-width: 1000px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .spriteVisual {
+    height: 150px;
+  }
+  .ability {
+    min-height: 83px;
+  }
+}
+@media (max-width: 430px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .cardBody p {
+    height: auto;
+    min-height: 36px;
+  }
+}

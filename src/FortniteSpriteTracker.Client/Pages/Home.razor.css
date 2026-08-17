@@ -1,0 +1,103 @@
+.viewActions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.exportActions {
+  display: flex;
+  border: 1px solid #d4d0c8;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #fff;
+}
+.exportActions button {
+  border: 0;
+  border-right: 1px solid #d4d0c8;
+  background: #fff;
+  padding: 9px 11px;
+  color: #41434a;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.exportActions button:last-child {
+  border-right: 0;
+}
+.exportActions button:hover {
+  background: #f1efe9;
+}
+.exportActions button b {
+  font-size: 12px;
+  margin-right: 4px;
+  color: #7557f6;
+}
+@media (max-width: 720px) {
+  .viewActions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exportActions {
+    width: 100%;
+  }
+  .exportActions button {
+    flex: 1;
+  }
+  .viewActions .viewToggle {
+    width: 100%;
+  }
+}
+.saveStatus {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  height: 18px;
+  margin: -20px 0 10px;
+  font: 800 9px var(--font-mono);
+  letter-spacing: 0.5px;
+  color: #6b6d73;
+}
+.saveStatus span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8064ef;
+}
+.saveStatus.saving span {
+  animation: savePulse 0.8s ease-in-out infinite alternate;
+}
+.saveStatus.saved {
+  color: #267552;
+}
+.saveStatus.saved span {
+  background: #41b77e;
+}
+@keyframes savePulse {
+  to {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+}
+.lowerPage {
+  position: relative;
+  z-index: 2;
+  background: var(--paper);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -22px 60px #17172226;
+  overflow: hidden;
+}
+.lowerPage .collection {
+  position: static;
+  z-index: auto;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+@media print {
+  .lowerPage {
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+}
