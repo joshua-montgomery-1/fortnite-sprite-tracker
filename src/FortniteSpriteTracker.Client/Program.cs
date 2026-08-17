@@ -3,7 +3,17 @@ using FortniteSpriteTracker.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddAuthenticationStateDeserialization();
+builder.Services.AddScoped<AuthenticationNavigation>();
+builder.Services.AddTransient<SessionExpiredHandler>();
+builder.Services.AddScoped(sp =>
+{
+    var handler = sp.GetRequiredService<SessionExpiredHandler>();
+    handler.InnerHandler = new HttpClientHandler();
+    return new HttpClient(handler) { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) };
+});
 builder.Services.AddScoped<BrowserStorage>();
 builder.Services.AddScoped<BrowserPrintService>();
 builder.Services.AddScoped<AccountClient>();
