@@ -37,30 +37,16 @@ resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
   }
 }
 
-resource apexManagedCertificate 'Microsoft.App/managedEnvironments/managedCertificates@2025-01-01' = {
+// Managed certificates require the custom hostnames to exist before issuance,
+// so they are bootstrapped once outside Bicep and renewed automatically by Azure.
+resource apexManagedCertificate 'Microsoft.App/managedEnvironments/managedCertificates@2025-01-01' existing = {
   parent: environment
   name: 'cert-sprite-scout-apex'
-  location: location
-  properties: {
-    subjectName: customDomainName
-    domainControlValidation: 'HTTP'
-  }
-  dependsOn: [
-    application
-  ]
 }
 
-resource wwwManagedCertificate 'Microsoft.App/managedEnvironments/managedCertificates@2025-01-01' = {
+resource wwwManagedCertificate 'Microsoft.App/managedEnvironments/managedCertificates@2025-01-01' existing = {
   parent: environment
   name: 'cert-sprite-scout-www'
-  location: location
-  properties: {
-    subjectName: wwwCustomDomainName
-    domainControlValidation: 'CNAME'
-  }
-  dependsOn: [
-    application
-  ]
 }
 
 resource application 'Microsoft.App/containerApps@2025-01-01' = {
@@ -82,11 +68,13 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
         customDomains: [
           {
             name: customDomainName
-            bindingType: 'Auto'
+            bindingType: 'SniEnabled'
+            certificateId: apexManagedCertificate.id
           }
           {
             name: wwwCustomDomainName
-            bindingType: 'Auto'
+            bindingType: 'SniEnabled'
+            certificateId: wwwManagedCertificate.id
           }
         ]
       }
