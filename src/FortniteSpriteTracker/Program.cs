@@ -15,7 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveWebAssemblyComponents();
+    .AddInteractiveWebAssemblyComponents()
+    .AddAuthenticationStateSerialization();
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped(sp =>
 {
     var navigation = sp.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
@@ -25,6 +27,7 @@ builder.Services.AddScoped<BrowserStorage>();
 builder.Services.AddScoped<BrowserPrintService>();
 builder.Services.AddScoped<AccountClient>();
 builder.Services.AddScoped<AccountState>();
+builder.Services.AddScoped<AuthenticationNavigation>();
 builder.Services.AddScoped<CollectionClient>();
 builder.Services.AddScoped<PlayerClient>();
 builder.Services.AddScoped<CatalogClient>();
@@ -61,17 +64,6 @@ var authentication = builder.Services
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
         options.LoginPath = "/auth/login";
-        options.Events.OnRedirectToLogin = context =>
-        {
-            if (context.Request.Path.StartsWithSegments("/api"))
-            {
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                return Task.CompletedTask;
-            }
-
-            context.Response.Redirect(context.RedirectUri);
-            return Task.CompletedTask;
-        };
     });
 
 if (googleAuthenticationConfigured)

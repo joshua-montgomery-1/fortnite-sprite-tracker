@@ -15,6 +15,7 @@ public sealed class AccountClient(HttpClient httpClient)
             NoCache = true,
             NoStore = true
         };
+        request.Options.Set(SessionExpiredHandler.SuppressRedirect, true);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized)

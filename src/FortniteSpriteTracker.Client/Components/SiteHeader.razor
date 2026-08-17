@@ -6,39 +6,59 @@
     <div class="navlinks">
         <a href="/#collection">Collection</a>
         <a href="/players">Find a player</a>
-        @if (Profile is not null) { <a href="/tracked-players">Tracked players</a> }
+        <AuthorizeView>
+            <Authorized><a href="/tracked-players">Tracked players</a></Authorized>
+        </AuthorizeView>
     </div>
     <div class="headerActions">
-        @if (IsAccountLoading)
-        {
-            <span class="signin" aria-label="Loading account">Loading...</span>
-        }
-        else if (Profile is null)
-        {
-            <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in with Google</a>
-        }
-        else
-        {
-            <a class="signin" href="/account"><span>●</span> @Profile.DisplayName</a>
-        }
-        <details class="mobileMenu">
-            <summary aria-label="Open navigation menu"><span></span><span></span><span></span></summary>
-            <div class="mobileMenuPanel">
+        <AuthorizeView>
+            <Authorized>
                 @if (IsAccountLoading)
                 {
-                    <div class="mobileAccount"><strong>Loading account...</strong></div>
+                    <span class="signin" aria-label="Loading account">Loading...</span>
                 }
                 else if (Profile is not null)
                 {
-                    <a class="mobileAccount" href="/account"><span>●</span><strong>@Profile.DisplayName</strong></a>
+                    <a class="signin" href="/account"><span>●</span> @Profile.DisplayName</a>
                 }
+                else
+                {
+                    <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in again</a>
+                }
+            </Authorized>
+            <NotAuthorized>
+                <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in with Google</a>
+            </NotAuthorized>
+        </AuthorizeView>
+        <details class="mobileMenu">
+            <summary aria-label="Open navigation menu"><span></span><span></span><span></span></summary>
+            <div class="mobileMenuPanel">
+                <AuthorizeView>
+                    <Authorized>
+                        @if (IsAccountLoading)
+                        {
+                            <div class="mobileAccount"><strong>Loading account...</strong></div>
+                        }
+                        else if (Profile is not null)
+                        {
+                            <a class="mobileAccount" href="/account"><span>●</span><strong>@Profile.DisplayName</strong></a>
+                        }
+                    </Authorized>
+                </AuthorizeView>
                 <a href="/#collection">Collection <span>→</span></a>
                 <a href="/players">Find a player <span>→</span></a>
-                @if (Profile is not null) { <a href="/tracked-players">Tracked players <span>→</span></a> }
-                @if (!IsAccountLoading && Profile is null)
-                {
-                    <a class="mobileSignIn" href="auth/login?returnUrl=/">Sign in with Google <span>↗</span></a>
-                }
+                <AuthorizeView>
+                    <Authorized>
+                        <a href="/tracked-players">Tracked players <span>→</span></a>
+                        @if (!IsAccountLoading && Profile is null)
+                        {
+                            <a class="mobileSignIn" href="auth/login?returnUrl=/">Sign in again <span>↗</span></a>
+                        }
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="mobileSignIn" href="auth/login?returnUrl=/">Sign in with Google <span>↗</span></a>
+                    </NotAuthorized>
+                </AuthorizeView>
             </div>
         </details>
     </div>

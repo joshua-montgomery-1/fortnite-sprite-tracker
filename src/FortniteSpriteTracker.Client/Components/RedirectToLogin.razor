@@ -1,0 +1,8 @@
+@inject AuthenticationNavigation AuthenticationNavigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthenticationNavigation.SignIn();
+    }
+}

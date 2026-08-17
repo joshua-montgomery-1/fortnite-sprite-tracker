@@ -1,8 +1,11 @@
 using FortniteSpriteTracker.Shared.Profiles;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace FortniteSpriteTracker.Services;
 
-public sealed class AccountState(AccountClient accountClient)
+public sealed class AccountState(
+    AccountClient accountClient,
+    AuthenticationStateProvider authenticationStateProvider)
 {
     private Task? loadTask;
 
@@ -11,12 +14,36 @@ public sealed class AccountState(AccountClient accountClient)
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
+        if (!OperatingSystem.IsBrowser())
+        {
+            return;
+        }
+
         if (IsLoaded)
         {
             return;
         }
 
         loadTask ??= LoadCoreAsync(cancellationToken);
+        try
+        {
+            await loadTask;
+        }
+        catch
+        {
+            loadTask = null;
+            throw;
+        }
+    }
+
+    public async Task RefreshAsync(CancellationToken cancellationToken = default)
+    {
+        if (!OperatingSystem.IsBrowser())
+        {
+            return;
+        }
+
+        loadTask = LoadCoreAsync(cancellationToken);
         try
         {
             await loadTask;
@@ -36,7 +63,10 @@ public sealed class AccountState(AccountClient accountClient)
 
     private async Task LoadCoreAsync(CancellationToken cancellationToken)
     {
-        Profile = await accountClient.GetProfileAsync(cancellationToken);
+        var authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        Profile = authenticationState.User.Identity?.IsAuthenticated == true
+            ? await accountClient.GetProfileAsync(cancellationToken)
+            : null;
         IsLoaded = true;
     }
 }

@@ -10,6 +10,7 @@ public partial class Account
     [Inject] private AccountClient AccountApi { get; set; } = null!;
     [Inject] private AccountState AccountState { get; set; } = null!;
     [Inject] private CollectionClient CollectionApi { get; set; } = null!;
+    [Inject] private AuthenticationNavigation AuthenticationNavigation { get; set; } = null!;
     [Inject] private NavigationManager Navigation { get; set; } = null!;
     [Inject] private IJSRuntime JavaScript { get; set; } = null!;
 
@@ -35,11 +36,11 @@ public partial class Account
     {
         try
         {
-            await AccountState.LoadAsync();
+            await AccountState.RefreshAsync();
             profile = AccountState.Profile;
             if (profile is null)
             {
-                Navigation.NavigateTo($"auth/login?returnUrl={Uri.EscapeDataString("/account")}", true);
+                AuthenticationNavigation.SignIn("/account");
                 return;
             }
 

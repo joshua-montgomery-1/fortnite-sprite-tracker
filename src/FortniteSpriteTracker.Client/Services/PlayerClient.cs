@@ -34,7 +34,9 @@ public sealed class PlayerClient(HttpClient httpClient)
 
     public async Task<IReadOnlyList<TrackedPlayerDto>?> GetTrackedAsync(CancellationToken cancellationToken = default)
     {
-        using var response = await httpClient.GetAsync("api/me/tracked-players/", cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/me/tracked-players/");
+        request.Options.Set(SessionExpiredHandler.SuppressRedirect, true);
+        using var response = await httpClient.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized) return null;
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<TrackedPlayerDto[]>(cancellationToken) ?? [];
