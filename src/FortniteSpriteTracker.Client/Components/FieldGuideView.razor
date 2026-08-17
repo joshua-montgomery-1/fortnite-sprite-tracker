@@ -34,8 +34,8 @@
                             <span class="variantName"><i style="background:@spriteVariant.Style.Color"></i>@spriteVariant.Style.Name</span>
                             <small>@spriteVariant.Style.Bonus</small>
                             <div class="variantActions">
-                                <button class="ownButton" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓ Owned" : "+ Own")</button>
-                                <button class="masterButton" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★ Mastered" : "☆ Master")</button>
+                                <button class="ownButton" disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓ Owned" : "+ Own")</button>
+                                <button class="masterButton" disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★ Mastered" : "☆ Master")</button>
                             </div>
                         </div>
                     }
@@ -49,6 +49,8 @@
     [Parameter, EditorRequired] public IEnumerable<SpriteFamilyDto> Sprites { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlySet<int> Owned { get; set; } = new HashSet<int>();
     [Parameter, EditorRequired] public IReadOnlySet<int> Mastered { get; set; } = new HashSet<int>();
+    [Parameter] public bool IsReadOnly { get; set; }
     [Parameter] public EventCallback<int> OwnedToggled { get; set; }
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }
+    private string? ReadOnlyTitle => IsReadOnly ? "Collection tracking opens when this season starts." : null;
 }

@@ -39,8 +39,8 @@
                             <td class="@CellClass(isOwned, isMastered)">
                                 <img src="@spriteVariant.ImagePath" alt="@style.Name @sprite.Name" loading="eager" />
                                 <div>
-                                    <button @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓" : "○")<small>OWN</small></button>
-                                    <button @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★" : "☆")<small>MASTER</small></button>
+                                    <button disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓" : "○")<small>OWN</small></button>
+                                    <button disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★" : "☆")<small>MASTER</small></button>
                                 </div>
                             </td>
                         }
@@ -56,9 +56,11 @@
     [Parameter, EditorRequired] public IEnumerable<VariantStyleDto> Styles { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlySet<int> Owned { get; set; } = new HashSet<int>();
     [Parameter, EditorRequired] public IReadOnlySet<int> Mastered { get; set; } = new HashSet<int>();
+    [Parameter] public bool IsReadOnly { get; set; }
     [Parameter] public EventCallback<int> OwnedToggled { get; set; }
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }
 
     private static string CellClass(bool isOwned, bool isMastered) =>
         $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered" : "")}";
+    private string? ReadOnlyTitle => IsReadOnly ? "Collection tracking opens when this season starts." : null;
 }

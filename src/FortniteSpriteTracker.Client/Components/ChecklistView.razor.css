@@ -143,6 +143,13 @@
 .collectionMatrix td button:hover {
   background: #efede7;
 }
+.collectionMatrix td button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.collectionMatrix td button:disabled:hover {
+  background: transparent;
+}
 .collectionMatrix td button:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 2px #7557f6;

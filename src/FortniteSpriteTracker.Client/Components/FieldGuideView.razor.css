@@ -298,6 +298,13 @@
 .variantActions button:hover {
   border-color: #7557f6;
 }
+.variantActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.variantActions button:disabled:hover {
+  border-color: #d2cfc8;
+}
 .variantTile.owned .ownButton {
   background: #dff4ff;
   border-color: #6dc1ec;
