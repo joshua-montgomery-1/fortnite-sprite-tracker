@@ -1,5 +1,7 @@
 param location string
 param containerImage string
+param customDomainName string
+param wwwCustomDomainName string
 
 @secure()
 param databaseConnectionString string
@@ -35,6 +37,32 @@ resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
   }
 }
 
+resource apexManagedCertificate 'Microsoft.App/managedEnvironments/managedCertificates@2025-01-01' = {
+  parent: environment
+  name: 'cert-sprite-scout-apex'
+  location: location
+  properties: {
+    subjectName: customDomainName
+    domainControlValidation: 'HTTP'
+  }
+  dependsOn: [
+    application
+  ]
+}
+
+resource wwwManagedCertificate 'Microsoft.App/managedEnvironments/managedCertificates@2025-01-01' = {
+  parent: environment
+  name: 'cert-sprite-scout-www'
+  location: location
+  properties: {
+    subjectName: wwwCustomDomainName
+    domainControlValidation: 'CNAME'
+  }
+  dependsOn: [
+    application
+  ]
+}
+
 resource application 'Microsoft.App/containerApps@2025-01-01' = {
   name: applicationName
   location: location
@@ -51,6 +79,16 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
         allowInsecure: false
         targetPort: 8080
         transport: 'auto'
+        customDomains: [
+          {
+            name: customDomainName
+            bindingType: 'Auto'
+          }
+          {
+            name: wwwCustomDomainName
+            bindingType: 'Auto'
+          }
+        ]
       }
       maxInactiveRevisions: 1
       secrets: [
