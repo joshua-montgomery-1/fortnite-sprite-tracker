@@ -1,0 +1,101 @@
+@page "/terms"
+@inject AccountState AccountState
+
+<PageTitle>Terms of Service - Sprite Scout</PageTitle>
+
+<main>
+    <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
+
+    <section class="legalPage">
+        <header class="legalHero">
+            <span class="sectionKicker">LEGAL & POLICIES</span>
+            <h1>TERMS OF SERVICE</h1>
+            <p class="lastUpdated">Last updated: August 2026</p>
+        </header>
+
+        <div class="legalContent">
+            <div class="disclaimerBanner">
+                <h3>Epic Games Fan Content Policy Notice</h3>
+                <p>
+                    Portions of the materials used are trademarks and/or copyrighted works of Epic Games, Inc. All rights reserved by Epic. This material is not official and is not endorsed by Epic.
+                </p>
+            </div>
+
+            <section>
+                <h2>1. Acceptance of Terms</h2>
+                <p>
+                    By accessing or using Sprite Scout ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.
+                </p>
+            </section>
+
+            <section>
+                <h2>2. Unofficial Fan Project & Intellectual Property</h2>
+                <p>
+                    Sprite Scout is an independent, non-commercial, fan-made checklist and companion tool created for players of Fortnite.
+                </p>
+                <ul>
+                    <li>Fortnite, Sprites, character names, and associated game assets are trademarks or registered trademarks of Epic Games, Inc.</li>
+                    <li>Sprite Scout is operated in strict compliance with the <a href="https://www.epicgames.com/site/en-US/fan-art-policy" target="_blank" rel="noopener noreferrer">Epic Games Fan Content Policy</a>.</li>
+                    <li>Sprite Scout is not affiliated with, endorsed, sponsored, or specifically approved by Epic Games, Inc. or Google LLC.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>3. Use of the Service</h2>
+                <p>
+                    Sprite Scout is provided free of charge for personal, non-commercial entertainment and tracking purposes. You agree to use the Service in compliance with all applicable laws and adhere to the following rules:
+                </p>
+                <ul>
+                    <li><strong>Acceptable Conduct:</strong> You may not select display names or Epic usernames that are abusive, defamatory, sexually explicit, hateful, or violate the rights of others.</li>
+                    <li><strong>System Integrity:</strong> You agree not to attempt to disrupt, compromise, reverse engineer, or overload the Service or its underlying database and infrastructure with automated bots, excessive traffic, or vulnerability probes.</li>
+                    <li><strong>Accurate Tracking:</strong> You understand that public profile lookup relies on player-reported Epic Games usernames and public flags.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>4. Accounts and Data</h2>
+                <p>
+                    When you sign in using Google OAuth, you are responsible for maintaining the security of your Google account credentials.
+                </p>
+                <ul>
+                    <li>You may change your display name or toggle collection visibility at any time.</li>
+                    <li>You may permanently delete your account and all associated progress at any time directly through the <a href="/account">Account Settings</a> page.</li>
+                    <li>We reserve the right to remove offensive display names or terminate accounts that violate these terms.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>5. Disclaimer of Warranties ("As-Is")</h2>
+                <p>
+                    Sprite Scout is provided on an <strong>"AS IS"</strong> and <strong>"AS AVAILABLE"</strong> basis without warranties of any kind, either express or implied.
+                </p>
+                <p>
+                    We do not guarantee that the service will always be uninterrupted, timely, secure, or error-free. Because game content evolves across Fortnite seasons, catalog definitions and Sprite data may be updated, adjusted, or reconciled over time.
+                </p>
+            </section>
+
+            <section>
+                <h2>6. Limitation of Liability</h2>
+                <p>
+                    To the maximum extent permitted by applicable law, the creators and maintainers of Sprite Scout shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of data, progress, or access arising from your use of or inability to use the Service.
+                </p>
+            </section>
+
+            <section>
+                <h2>7. Changes to Terms</h2>
+                <p>
+                    We reserve the right to modify these Terms at any time. Any changes will be posted on this page with an updated revision date. Continued use of the Service following modifications constitutes your acceptance of the updated Terms.
+                </p>
+            </section>
+
+            <section>
+                <h2>8. Contact</h2>
+                <p>
+                    If you have questions regarding these Terms of Service, please open an issue on the project's GitHub repository or contact the maintainer.
+                </p>
+            </section>
+        </div>
+    </section>
+
+    <SiteFooter />
+</main>

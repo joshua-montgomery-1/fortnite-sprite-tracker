@@ -1,0 +1,132 @@
+.legalPage {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.legalHero {
+  margin-bottom: 40px;
+  border-bottom: 1px solid rgba(19, 23, 34, 0.12);
+  padding-bottom: 24px;
+}
+
+.legalHero h1 {
+  margin: 8px 0 6px;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.sectionKicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #7557f6;
+  text-transform: uppercase;
+}
+
+.lastUpdated {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.highlightBox {
+  background: #ffffff;
+  border: 1px solid rgba(19, 23, 34, 0.1);
+  border-left: 4px solid #7557f6;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 36px;
+  box-shadow: 0 4px 16px rgba(19, 23, 34, 0.04);
+}
+
+.highlightBox h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.highlightBox ul {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2d3139;
+}
+
+.legalContent section {
+  margin-bottom: 32px;
+}
+
+.legalContent h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.legalContent h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 16px 0 8px;
+  color: var(--ink);
+}
+
+.legalContent p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #383c45;
+  margin: 0 0 12px;
+}
+
+.legalContent ul {
+  margin: 0 0 16px;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #383c45;
+}
+
+.legalContent code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: #e8e6df;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #131722;
+}
+
+.noticeText {
+  background: #fdfae8;
+  border-left: 3px solid #e9be4f;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #4a4120;
+}
+
+.legalContent a {
+  color: #7557f6;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legalContent a:hover {
+  color: #5b3ce0;
+}
+
+@media (max-width: 640px) {
+  .legalPage {
+    padding: 32px 16px 60px;
+  }
+}
