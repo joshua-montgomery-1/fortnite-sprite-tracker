@@ -1,0 +1,140 @@
+@page "/privacy"
+@inject AccountState AccountState
+
+<PageTitle>Privacy Policy - Sprite Scout</PageTitle>
+
+<main>
+    <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
+
+    <section class="legalPage">
+        <header class="legalHero">
+            <span class="sectionKicker">LEGAL & DATA PROTECTION</span>
+            <h1>PRIVACY POLICY</h1>
+            <p class="lastUpdated">Last updated: August 2026</p>
+        </header>
+
+        <div class="legalContent">
+            <div class="highlightBox">
+                <h3>Our Privacy Promise in Brief</h3>
+                <ul>
+                    <li><strong>Minimal Data Collection:</strong> We do not store your email address, Google profile photo, or real name.</li>
+                    <li><strong>No Trackers or Ads:</strong> We do not use third-party analytics trackers, advertising networks, or data brokers.</li>
+                    <li><strong>Local by Default:</strong> Guest checklist progress is stored exclusively in your browser.</li>
+                    <li><strong>Immediate Account Deletion:</strong> You can permanently wipe your account and all associated progress at any time from your Account settings.</li>
+                </ul>
+            </div>
+
+            <section>
+                <h2>1. About Sprite Scout</h2>
+                <p>
+                    Sprite Scout ("we", "us", or "our") is an independent, fan-made web companion for tracking Fortnite Sprite collections.
+                    This Privacy Policy explains how we handle your personal data when you visit our website, track Sprites locally, or create an account via Google Sign-In.
+                </p>
+            </section>
+
+            <section>
+                <h2>2. Information We Collect</h2>
+                
+                <h3>A. Guest Users (No Sign-In)</h3>
+                <p>
+                    When using Sprite Scout without signing in, your Sprite ownership and mastery checklist progress is saved solely in your web browser's <code>localStorage</code>.
+                    This data is not transmitted to our servers or stored in our database.
+                </p>
+
+                <h3>B. Signed-In Users (Google Authentication)</h3>
+                <p>
+                    If you choose to sign in to synchronize your collection across devices or share your progress, we collect only the minimal data necessary to maintain your account:
+                </p>
+                <ul>
+                    <li><strong>Google Subject Identifier (<code>sub</code>):</strong> A pseudonymous unique identifier provided by Google OAuth to securely associate your sign-in with your account.</li>
+                    <li><strong>Display Name:</strong> A chosen public scout name (defaults to your Google display name, but fully editable by you).</li>
+                    <li><strong>Epic Games Display Name (Optional):</strong> If provided by you, used to enable other players to find and compare collections.</li>
+                    <li><strong>Sprite Collection Progress:</strong> The IDs of Sprites you have marked as Owned or Mastered.</li>
+                    <li><strong>Profile Preferences:</strong> Whether your collection is public or private.</li>
+                    <li><strong>Account Timestamps:</strong> Account creation and last-updated timestamps for database integrity.</li>
+                </ul>
+                <p class="noticeText">
+                    <strong>What we do NOT collect or store:</strong> We do not store your Google email address, Google avatar/profile picture, Google contacts, or passwords.
+                </p>
+            </section>
+
+            <section>
+                <h2>3. Cookies and Local Storage</h2>
+                <p>Sprite Scout uses only essential technical storage mechanisms:</p>
+                <ul>
+                    <li><strong><code>sprite-scout-auth</code> Cookie:</strong> An encrypted, HttpOnly, SameSite=Lax session cookie used solely to authenticate your requests when you sign in. It expires after 30 days of inactivity.</li>
+                    <li><strong>Browser <code>localStorage</code>:</strong> Used to preserve your offline checklist progress, theme preferences, and filter states on your device.</li>
+                </ul>
+                <p>We do not use tracking cookies, advertising cookies, or third-party behavioral profiling scripts.</p>
+            </section>
+
+            <section>
+                <h2>4. How We Use Your Data</h2>
+                <p>We process your data strictly to provide the core functionality of Sprite Scout:</p>
+                <ul>
+                    <li>To authenticate your session and maintain your account.</li>
+                    <li>To save and synchronize your Sprite collection across devices.</li>
+                    <li>To display your public profile and collection comparisons if you enable public sharing.</li>
+                    <li>To maintain service reliability, security, and prevent abusive requests.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>5. Third-Party Infrastructure & Processors</h2>
+                <p>We use reputable cloud infrastructure to host and operate the application:</p>
+                <ul>
+                    <li><strong>Google OAuth:</strong> For secure federated authentication. When you sign in, Google's Privacy Policy applies to the authentication interaction.</li>
+                    <li><strong>Microsoft Azure:</strong> Hosts the web application server and container runtime.</li>
+                    <li><strong>Supabase / PostgreSQL:</strong> Provides managed database hosting where authenticated account records and progress are stored.</li>
+                </ul>
+                <p>We do not sell, rent, trade, or monetize your personal information to any third parties.</p>
+            </section>
+
+            <section>
+                <h2>6. Data Retention and Account Deletion</h2>
+                <p>
+                    Your data is retained for as long as your account remains active.
+                </p>
+                <p>
+                    <strong>Immediate Account Deletion:</strong> You have complete control over your data. You can permanently delete your profile, Epic display name, and all associated Sprite collection progress at any time by visiting <a href="/account">Account Settings</a> and confirming deletion under the <strong>Danger Zone</strong>. Account deletion is instantaneous and irrevocable.
+                </p>
+            </section>
+
+            <section>
+                <h2>7. Your Privacy Rights (GDPR & CCPA/CPRA)</h2>
+                <p>
+                    Depending on your location, you may have the following rights regarding your personal data:
+                </p>
+                <ul>
+                    <li><strong>Right to Access:</strong> You can view all information associated with your account in your Account dashboard or export your checklist as a PDF.</li>
+                    <li><strong>Right to Rectification:</strong> You can edit your Display Name and Epic Display Name at any time.</li>
+                    <li><strong>Right to Erasure:</strong> You can self-delete your account and all stored records at any time.</li>
+                    <li><strong>Right to Restriction / Privacy:</strong> You can toggle your collection between Public and Private at will.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>8. Security</h2>
+                <p>
+                    We protect your data using industry-standard security measures, including HTTPS/TLS encryption in transit, ASP.NET Core Data Protection encryption for authentication keys, and restricted database connection pooling.
+                </p>
+            </section>
+
+            <section>
+                <h2>9. Changes to this Policy</h2>
+                <p>
+                    We may update this Privacy Policy periodically to reflect enhancements to our service or legal requirements. Updates will be posted on this page with a revised "Last updated" date.
+                </p>
+            </section>
+
+            <section>
+                <h2>10. Contact</h2>
+                <p>
+                    If you have any questions, feedback, or data privacy requests regarding Sprite Scout, please reach out via our GitHub repository issues page or contact the project maintainer.
+                </p>
+            </section>
+        </div>
+    </section>
+
+    <SiteFooter />
+</main>
