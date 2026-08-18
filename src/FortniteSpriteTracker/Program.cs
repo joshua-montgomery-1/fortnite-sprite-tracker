@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+builder.Services.AddMemoryCache();
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddAuthenticationStateSerialization();
@@ -133,6 +134,7 @@ app.MapProfileEndpoints();
 app.MapCatalogEndpoints();
 app.MapCollectionEndpoints();
 app.MapPlayerEndpoints();
+app.MapSitemapEndpoints();
 app.MapDefaultEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
