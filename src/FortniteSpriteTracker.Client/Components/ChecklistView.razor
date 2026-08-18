@@ -56,11 +56,12 @@
     [Parameter, EditorRequired] public IEnumerable<VariantStyleDto> Styles { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlySet<int> Owned { get; set; } = new HashSet<int>();
     [Parameter, EditorRequired] public IReadOnlySet<int> Mastered { get; set; } = new HashSet<int>();
+    [Parameter] public string Filter { get; set; } = "All";
     [Parameter] public bool IsReadOnly { get; set; }
     [Parameter] public EventCallback<int> OwnedToggled { get; set; }
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }
 
-    private static string CellClass(bool isOwned, bool isMastered) =>
-        $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered" : "")}";
+    private string CellClass(bool isOwned, bool isMastered) =>
+        $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered " : "")}{(Filter == "Missing" && isOwned ? "collected" : "")}".TrimEnd();
     private string? ReadOnlyTitle => IsReadOnly ? "Collection tracking opens when this season starts." : null;
 }
