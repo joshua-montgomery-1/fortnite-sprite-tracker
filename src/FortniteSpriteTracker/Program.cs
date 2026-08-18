@@ -65,6 +65,32 @@ var authentication = builder.Services
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
         options.LoginPath = "/auth/login";
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            }
+            else
+            {
+                context.Response.Redirect(context.RedirectUri);
+            }
+
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            }
+            else
+            {
+                context.Response.Redirect(context.RedirectUri);
+            }
+
+            return Task.CompletedTask;
+        };
     });
 
 if (googleAuthenticationConfigured)

@@ -21,6 +21,27 @@
   margin: 0;
   color: #686a71;
 }
+.playerState {
+  display: grid;
+  place-items: center;
+  gap: 7px;
+  min-height: 180px;
+  padding: 28px;
+  border: 1px dashed #cbc7bd;
+  border-radius: 12px;
+  color: #77797f;
+  text-align: center;
+}
+.playerState strong {
+  color: var(--ink);
+  font-size: 18px;
+}
+.playerState span {
+  font-size: 11px;
+}
+.playerState .primary {
+  margin-top: 10px;
+}
 .trackedTableWrap {
   overflow-x: auto;
   border: 1px solid #d5d1c8;
