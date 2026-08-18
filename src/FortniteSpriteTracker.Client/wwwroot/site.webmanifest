@@ -1,0 +1,22 @@
+{
+  "name": "Sprite Scout - Fortnite Sprite Tracker",
+  "short_name": "Sprite Scout",
+  "description": "Track, scout, and complete your Fortnite Sprite collections across chapters and seasons.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#131722",
+  "theme_color": "#131722",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
