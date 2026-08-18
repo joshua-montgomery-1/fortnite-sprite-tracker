@@ -3,7 +3,7 @@
     {
         var keys = sprite.Variants.Select(item => item.Id).ToArray();
 
-        <article class="card @(keys.All(Mastered.Contains) ? "done" : "")">
+        <article class="card @(keys.All(Mastered.Contains) ? "done" : "") @(Filter == "Missing" && keys.All(Owned.Contains) ? "collectedCard" : "")">
             <div class="cardTop">
                 <span class="rarity"><i style="background:@sprite.RarityColor"></i>@sprite.Rarity</span>
                 <span class="variantProgress">@keys.Count(Owned.Contains) OWNED · @keys.Count(Mastered.Contains) MASTERED</span>
@@ -27,7 +27,7 @@
                         var isOwned = Owned.Contains(spriteVariant.Id);
                         var isMastered = Mastered.Contains(spriteVariant.Id);
 
-                        <div class="variantTile @(isOwned ? "owned" : "") @(isMastered ? "mastered" : "")">
+                        <div class="variantTile @(isOwned ? "owned" : "") @(isMastered ? "mastered" : "") @(Filter == "Missing" && isOwned ? "collected" : "")">
                             <span class="variantArt">
                                 <img src="@spriteVariant.ImagePath" alt="@spriteVariant.Style.Name @sprite.Name Sprite" loading="eager" />
                             </span>
@@ -49,6 +49,7 @@
     [Parameter, EditorRequired] public IEnumerable<SpriteFamilyDto> Sprites { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlySet<int> Owned { get; set; } = new HashSet<int>();
     [Parameter, EditorRequired] public IReadOnlySet<int> Mastered { get; set; } = new HashSet<int>();
+    [Parameter] public string Filter { get; set; } = "All";
     [Parameter] public bool IsReadOnly { get; set; }
     [Parameter] public EventCallback<int> OwnedToggled { get; set; }
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }
