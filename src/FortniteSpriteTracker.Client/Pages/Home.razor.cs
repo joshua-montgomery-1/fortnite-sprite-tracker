@@ -262,11 +262,12 @@ public partial class Home : IAsyncDisposable
 
     private bool SpriteIsVisible(SpriteFamilyDto sprite)
     {
+        // When a specific variant style (Type) is selected, require the status to apply to that same variant.
         var matchesStatus = filter switch
         {
-            "Owned" => sprite.Variants.Any(item => owned.Contains(item.Id)),
-            "Missing" => sprite.Variants.Any(item => !owned.Contains(item.Id)),
-            "Mastered" => sprite.Variants.Any(item => mastered.Contains(item.Id)),
+            "Owned" => sprite.Variants.Any(item => owned.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
+            "Missing" => sprite.Variants.Any(item => !owned.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
+            "Mastered" => sprite.Variants.Any(item => mastered.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
             _ => true
         };
         var matchesRarity = rarity == "All" || sprite.Rarity == rarity;
