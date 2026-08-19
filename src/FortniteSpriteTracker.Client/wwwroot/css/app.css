@@ -992,15 +992,42 @@ footer p {
   .ability {
     min-height: 83px;
   }
+  .matrixWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-inline: -2px;
+    padding-bottom: 4px;
+  }
   .collectionMatrix .spriteColumn {
-    width: 155px;
+    width: 150px;
   }
   .collectionMatrix {
-    min-width: 940px;
+    min-width: 760px;
+    table-layout: fixed;
+  }
+  .collectionMatrix tbody .spriteColumn {
+    height: 76px;
+    padding: 6px 8px;
   }
   .collectionMatrix tbody .spriteColumn img {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
+  }
+  .collectionMatrix td {
+    height: 76px;
+    padding-bottom: 28px;
+  }
+  .collectionMatrix td > div {
+    height: 28px;
+  }
+  .collectionMatrix td button {
+    height: 28px;
+    min-height: 28px;
+    gap: 3px;
+    font-size: 10px;
+  }
+  .collectionMatrix td button small {
+    font-size: 5px;
   }
   .notes,
   .comparePreview {

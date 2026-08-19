@@ -1,4 +1,4 @@
-<div class="matrixWrap">
+<div class="matrixWrap desktopChecklist">
     <table class="collectionMatrix">
         <thead>
             <tr>
@@ -49,6 +49,53 @@
             }
         </tbody>
     </table>
+</div>
+
+<div class="mobileChecklist">
+    @foreach (var sprite in Sprites)
+    {
+        <article class="mobileSpriteCard">
+            <div class="mobileSpriteHeader">
+                <img src="@sprite.ImageUrl" alt="@sprite.Name" />
+                <div>
+                    <strong>@sprite.Name</strong>
+                    <small><i style="background:@sprite.RarityColor"></i>@sprite.Rarity</small>
+                </div>
+            </div>
+
+            <div class="mobileVariantList">
+                @foreach (var style in Styles)
+                {
+                    var spriteVariant = sprite.Variants.FirstOrDefault(item => item.Style.Id == style.Id);
+                    if (spriteVariant is null)
+                    {
+                        continue;
+                    }
+
+                    var isOwned = Owned.Contains(spriteVariant.Id);
+                    var isMastered = Mastered.Contains(spriteVariant.Id);
+
+                    <div class="mobileVariantRow @CellClass(isOwned, isMastered)">
+                        <div class="mobileVariantMeta">
+                            <img src="@spriteVariant.ImagePath" alt="@style.Name @sprite.Name" loading="eager" />
+                            <span>
+                                <strong>@style.Name</strong>
+                                <small>@style.Bonus</small>
+                            </span>
+                        </div>
+                        <div class="mobileActionGroup">
+                            <button class="@(isOwned ? "selected" : "")" disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">
+                                @(isOwned ? "Owned" : "Own")
+                            </button>
+                            <button class="@(isMastered ? "selected" : "")" disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">
+                                @(isMastered ? "Mastered" : "Master")
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </article>
+    }
 </div>
 
 @code {
