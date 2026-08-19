@@ -33,28 +33,230 @@
   padding: 3px;
   font-size: 11px;
 }
+.desktopChecklist {
+  display: block;
+}
+.mobileChecklist {
+  display: none;
+}
 @media (max-width: 720px) {
+  .desktopChecklist {
+    display: none;
+  }
+
+  .mobileChecklist {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mobileSpriteCard {
+    background: #fff;
+    border: 1px solid #d8d4cc;
+    border-radius: 12px;
+    box-shadow: 0 5px 0 #e7e2d9;
+    overflow: hidden;
+  }
+
+  .mobileSpriteHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: linear-gradient(180deg, #f9f7f3 0%, #f2f0eb 100%);
+    border-bottom: 1px solid #e3dfd7;
+  }
+
+  .mobileSpriteHeader img {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    flex: 0 0 46px;
+    filter: drop-shadow(0 4px 4px rgba(23, 23, 23, 0.12));
+  }
+
+  .mobileSpriteHeader div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .mobileSpriteHeader strong {
+    font-size: 15px;
+    line-height: 1.2;
+    letter-spacing: -0.2px;
+  }
+
+  .mobileSpriteHeader small {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 700 9px var(--font-mono);
+    letter-spacing: 0.7px;
+    color: #777b83;
+    text-transform: uppercase;
+  }
+
+  .mobileSpriteHeader small i {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .mobileVariantList {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .mobileVariantRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid #e1ddd6;
+    border-radius: 10px;
+    background: #faf9f6;
+  }
+
+  .mobileVariantRow.owned {
+    background: #f3fbff;
+    border-color: #94d4f3;
+  }
+
+  .mobileVariantRow.mastered {
+    background: #f8fce8;
+    border-color: #b9d55f;
+  }
+
+  .mobileVariantMeta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .mobileVariantMeta img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    flex: 0 0 34px;
+  }
+
+  .mobileVariantMeta span {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .mobileVariantMeta strong {
+    font-size: 12px;
+    letter-spacing: -0.15px;
+  }
+
+  .mobileVariantMeta small {
+    font: 700 8px var(--font-mono);
+    letter-spacing: 0.5px;
+    color: #747980;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .mobileActionGroup {
+    display: flex;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .mobileActionGroup button {
+    min-width: 70px;
+    min-height: 36px;
+    border: 1px solid #d7d2ca;
+    background: #fff;
+    border-radius: 8px;
+    color: #4a4e58;
+    font: 800 10px var(--font-geist);
+    cursor: pointer;
+    padding: 7px 10px;
+  }
+
+  .mobileActionGroup button.selected {
+    background: linear-gradient(180deg, #dff4ff 0%, #d8f0ff 100%);
+    border-color: #6bbde8;
+    color: #1b5979;
+  }
+
+  .mobileVariantRow.mastered .mobileActionGroup button:last-child {
+    background: linear-gradient(180deg, #ebff7a 0%, #dff35a 100%);
+    border-color: #a8c62d;
+    color: #212629;
+  }
+
+  .mobileActionGroup button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .matrixWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-inline: -2px;
+    padding-bottom: 4px;
+  }
+  .collectionMatrix {
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .collectionMatrix .spriteColumn {
+    width: auto;
+  }
+  .collectionMatrix tbody .spriteColumn,
+  .collectionMatrix td {
+    height: 76px;
+  }
   .collectionMatrix tbody .spriteColumn {
-    height: 88px;
-    padding: 7px 9px;
+    padding: 6px 8px;
     gap: 8px;
   }
   .collectionMatrix tbody .spriteColumn img {
-    width: 54px;
-    height: 54px;
-    flex-basis: 54px;
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
   }
   .collectionMatrix td {
-    height: 88px;
+    padding: 4px 4px 28px;
   }
   .collectionMatrix td > img {
-    width: 58px;
-    height: 52px;
+    width: 48px;
+    height: 42px;
   }
   .collectionMatrix td > div {
-    gap: 6px;
+    height: 28px;
+    gap: 4px;
+  }
+  .collectionMatrix td button {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 3px;
+    gap: 3px;
+    font-size: 10px;
+  }
+  .collectionMatrix td button small {
+    font-size: 5px;
   }
 }
+@media (max-width: 430px) {
+  .mobileActionGroup {
+    gap: 6px;
+  }
+  .mobileActionGroup button {
+    min-width: 62px;
+    padding: 7px 8px;
+  }
+}
+
 .collectionMatrix tbody .spriteColumn,
 .collectionMatrix td {
   box-sizing: border-box;
@@ -112,26 +314,6 @@
   z-index: 2;
   outline: 2px solid #7557f6;
   outline-offset: -2px;
-}
-@media (max-width: 720px) {
-  .collectionMatrix tbody .spriteColumn,
-  .collectionMatrix td {
-    height: 94px;
-  }
-  .collectionMatrix td {
-    padding-bottom: 36px;
-  }
-  .collectionMatrix td > img {
-    width: 62px;
-    height: 54px;
-  }
-  .collectionMatrix td > div,
-  .collectionMatrix td button {
-    height: 34px;
-  }
-  .collectionMatrix td button small {
-    font-size: 6px;
-  }
 }
 .collectionMatrix tbody tr:hover .spriteColumn,
 .collectionMatrix tbody tr:hover td:not(.unavailable) {

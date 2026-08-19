@@ -336,7 +336,7 @@
 }
 @media (max-width: 720px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
   .spriteVisual {
@@ -344,6 +344,10 @@
   }
   .ability {
     min-height: 83px;
+  }
+  .variantActions button {
+    min-height: 32px;
+    font-size: 8px;
   }
 }
 @media (max-width: 430px) {
@@ -353,6 +357,10 @@
   .cardBody p {
     height: auto;
     min-height: 36px;
+  }
+  .variantActions button {
+    min-height: 34px;
+    padding: 6px 4px;
   }
 }
 
