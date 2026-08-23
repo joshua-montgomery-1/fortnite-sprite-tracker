@@ -41,7 +41,7 @@
 
 <main class="@(printBlank ? "printBlank" : "")">
     <SiteHeader Profile="@profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
-    <HeroSection CubeHeroUrl="@CubeHeroUrl"
+    <HeroSection Hero="@HeroSprite"
                  TotalEntries="@(catalog?.TotalEntries ?? 0)"
                  FamilyCount="@(catalog?.Families.Count ?? 0)"
                  Chapter="@(selectedSeason?.Chapter ?? 0)"

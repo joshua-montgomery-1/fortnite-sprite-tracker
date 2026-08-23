@@ -50,9 +50,7 @@ public partial class Home : IAsyncDisposable
     private string? saveStatus;
     private UserProfileDto? profile => AccountState.Profile;
 
-    private string CubeHeroUrl => catalog?.Families
-        .SelectMany(item => item.Variants)
-        .FirstOrDefault(item => item.Style.Name == "Cube" && item.ImagePath.Contains("zeropoint"))?.ImagePath ?? "";
+    private HeroSpriteViewModel? HeroSprite => HeroSpriteSelector.Select(catalog);
     private bool SelectedSeasonIsActive
     {
         get

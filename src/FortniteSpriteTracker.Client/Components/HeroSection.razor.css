@@ -88,12 +88,10 @@
   font-size: 8px;
   color: var(--hero-label-muted);
 }
-.rareLabel:after {
-  content: "MYTHIC";
+.rarityBadge {
   position: absolute;
   right: -43px;
   top: 7px;
-  background: #ff5d7c;
   color: var(--on-strong);
   padding: 3px 5px;
   border-radius: 3px;
