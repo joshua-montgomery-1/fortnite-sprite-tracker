@@ -81,6 +81,9 @@
   font-size: 20px;
   font-weight: 900;
 }
+.trackedCards {
+  display: none;
+}
 .trackedActions {
   display: flex;
   justify-content: flex-end;
@@ -142,7 +145,57 @@
   .trackedPage {
     padding: 34px 18px 60px;
   }
-  .trackedTable {
-    min-width: 690px;
+  .trackedTableWrap {
+    display: none;
+  }
+  .trackedCards {
+    display: grid;
+    gap: 12px;
+  }
+  .trackedCard {
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 7px 0 var(--border);
+  }
+  .trackedStats {
+    display: grid;
+    gap: 12px;
+  }
+  .trackedStats > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 28px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .trackedStats span {
+    color: var(--text-subtle);
+    font: 800 8px var(--font-mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .trackedStats b {
+    font-size: 20px;
+  }
+  .trackedActions {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .trackedActions a {
+    flex: 1 1 100%;
+    min-width: 0;
+    text-align: center;
+  }
+  .trackedActions button {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 }

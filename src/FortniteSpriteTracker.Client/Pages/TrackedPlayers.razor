@@ -60,6 +60,30 @@
                     </tbody>
                 </table>
             </div>
+            <div class="trackedCards">
+                @foreach (var player in players)
+                {
+                    <article class="trackedCard">
+                        <strong>@PlayerName(player)</strong>
+                        <div class="trackedStats">
+                            <div><span>Total sprites</span><b>@player.TotalSprites</b></div>
+                            <div><span>Mastered</span><b>@player.MasteredSprites</b></div>
+                        </div>
+                        <div class="trackedActions">
+                            <a href="players/@player.PublicId">View collection</a>
+                            @if (confirming == player.PublicId)
+                            {
+                                <button class="cancelUntrack" disabled="@(removing == player.PublicId)" @onclick="() => confirming = null">Cancel</button>
+                                <button class="confirmUntrack" disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Yes, untrack")</button>
+                            }
+                            else
+                            {
+                                <button @onclick="() => confirming = player.PublicId">Untrack</button>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
         }
     </section>
     <SiteFooter />
