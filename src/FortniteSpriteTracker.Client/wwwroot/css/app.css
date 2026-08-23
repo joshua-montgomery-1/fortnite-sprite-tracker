@@ -1435,10 +1435,10 @@ footer p {
 }
 .trackButton {
   height: 42px;
-  border: 1px solid var(--surface-strong);
+  border: 1px solid var(--action-bg);
   border-radius: 7px;
-  background: var(--surface-strong);
-  color: var(--surface);
+  background: var(--action-bg);
+  color: var(--on-strong);
   padding: 0 16px;
   font-size: 10px;
   font-weight: 850;
@@ -1828,7 +1828,7 @@ footer p {
   border: 0;
   border-radius: 0 7px 7px 0;
   background: var(--surface-strong);
-  color: var(--surface);
+  color: var(--on-strong);
   padding: 0 14px;
   font-size: 10px;
   font-weight: 850;
