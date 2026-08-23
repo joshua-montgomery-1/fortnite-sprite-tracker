@@ -1,6 +1,8 @@
 @page "/tracked-players"
+@using FortniteSpriteTracker.Shared.Catalog
 @using FortniteSpriteTracker.Shared.Players
 @inject PlayerClient PlayerApi
+@inject CatalogClient CatalogApi
 @inject AccountState AccountState
 
 <PageTitle>Tracked players - Sprite Scout</PageTitle>
@@ -25,65 +27,80 @@
         {
             <div class="playerState"><strong>Sign in to track players</strong><span>Your tracked list is private to your account.</span><a class="primary" href="auth/login?returnUrl=/tracked-players">Sign in with Google</a></div>
         }
-        else if (players.Count == 0)
-        {
-            <div class="playerState"><strong>No tracked players yet</strong><span>Find a player and choose Track player on their profile.</span></div>
-        }
         else
         {
-            <div class="trackedTableWrap">
-                <table class="trackedTable">
-                    <thead><tr><th>PLAYER</th><th>TOTAL SPRITES</th><th>MASTERED</th><th><span class="srOnly">Actions</span></th></tr></thead>
-                    <tbody>
+            <div class="seasonFilter">
+                <div><span class="sectionKicker">SPRITE TOTALS</span><p>Owned and mastered counts for <strong>@SelectedSeasonLabel</strong>.</p></div>
+                <label for="tracked-season">SEASON
+                    <select id="tracked-season" @bind="selectedSeasonId" @bind:after="RefreshTrackedPlayersAsync" aria-label="Season for tracked player totals">
+                        <option value="">All</option>
+                        @foreach (var season in seasons)
+                        {
+                            <option value="@season.Id">@season.Name</option>
+                        }
+                    </select>
+                </label>
+            </div>
+            @if (players.Count == 0)
+            {
+                <div class="playerState"><strong>No tracked players yet</strong><span>Find a player and choose Track player on their profile.</span></div>
+            }
+            else
+            {
+                <div class="trackedTableWrap">
+                    <table class="trackedTable">
+                        <thead><tr><th>PLAYER</th><th>TOTAL SPRITES</th><th>MASTERED</th><th><span class="srOnly">Actions</span></th></tr></thead>
+                        <tbody>
+                        @foreach (var player in players)
+                        {
+                            <tr>
+                                <td><strong>@PlayerName(player)</strong></td>
+                                <td>@player.TotalSprites</td>
+                                <td>@player.MasteredSprites</td>
+                                <td>
+                                    <div class="trackedActions">
+                                        <a href="players/@player.PublicId">View collection</a>
+                                        @if (confirming == player.PublicId)
+                                        {
+                                            <button class="cancelUntrack" disabled="@(removing == player.PublicId)" @onclick="() => confirming = null">Cancel</button>
+                                            <button class="confirmUntrack" disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Yes, untrack")</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => confirming = player.PublicId">Untrack</button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="trackedCards">
                     @foreach (var player in players)
                     {
-                        <tr>
-                            <td><strong>@PlayerName(player)</strong></td>
-                            <td>@player.TotalSprites</td>
-                            <td>@player.MasteredSprites</td>
-                            <td>
-                                <div class="trackedActions">
-                                    <a href="players/@player.PublicId">View collection</a>
-                                    @if (confirming == player.PublicId)
-                                    {
-                                        <button class="cancelUntrack" disabled="@(removing == player.PublicId)" @onclick="() => confirming = null">Cancel</button>
-                                        <button class="confirmUntrack" disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Yes, untrack")</button>
-                                    }
-                                    else
-                                    {
-                                        <button @onclick="() => confirming = player.PublicId">Untrack</button>
-                                    }
-                                </div>
-                            </td>
-                        </tr>
+                        <article class="trackedCard">
+                            <strong>@PlayerName(player)</strong>
+                            <div class="trackedStats">
+                                <div><span>Total sprites</span><b>@player.TotalSprites</b></div>
+                                <div><span>Mastered</span><b>@player.MasteredSprites</b></div>
+                            </div>
+                            <div class="trackedActions">
+                                <a href="players/@player.PublicId">View collection</a>
+                                @if (confirming == player.PublicId)
+                                {
+                                    <button class="cancelUntrack" disabled="@(removing == player.PublicId)" @onclick="() => confirming = null">Cancel</button>
+                                    <button class="confirmUntrack" disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Yes, untrack")</button>
+                                }
+                                else
+                                {
+                                    <button @onclick="() => confirming = player.PublicId">Untrack</button>
+                                }
+                            </div>
+                        </article>
                     }
-                    </tbody>
-                </table>
-            </div>
-            <div class="trackedCards">
-                @foreach (var player in players)
-                {
-                    <article class="trackedCard">
-                        <strong>@PlayerName(player)</strong>
-                        <div class="trackedStats">
-                            <div><span>Total sprites</span><b>@player.TotalSprites</b></div>
-                            <div><span>Mastered</span><b>@player.MasteredSprites</b></div>
-                        </div>
-                        <div class="trackedActions">
-                            <a href="players/@player.PublicId">View collection</a>
-                            @if (confirming == player.PublicId)
-                            {
-                                <button class="cancelUntrack" disabled="@(removing == player.PublicId)" @onclick="() => confirming = null">Cancel</button>
-                                <button class="confirmUntrack" disabled="@(removing == player.PublicId)" @onclick="() => UntrackAsync(player)">@(removing == player.PublicId ? "Removing..." : "Yes, untrack")</button>
-                            }
-                            else
-                            {
-                                <button @onclick="() => confirming = player.PublicId">Untrack</button>
-                            }
-                        </div>
-                    </article>
-                }
-            </div>
+                </div>
+            }
         }
     </section>
     <SiteFooter />
@@ -91,6 +108,8 @@
 
 @code {
     private IReadOnlyList<TrackedPlayerDto> players = [];
+    private IReadOnlyList<SeasonDto> seasons = [];
+    private int? selectedSeasonId;
     private bool loading = true;
     private bool signedIn;
     private Guid? removing;
@@ -99,10 +118,26 @@
     protected override async Task OnInitializedAsync()
     {
         await AccountState.LoadAsync();
-        var result = await PlayerApi.GetTrackedAsync();
+        try
+        {
+            seasons = (await CatalogApi.GetSeasonsAsync()).Where(item => item.HasCatalog).ToArray();
+            selectedSeasonId = seasons.FirstOrDefault(item => item.IsActive)?.Id;
+        }
+        catch (HttpRequestException)
+        {
+            seasons = [];
+        }
+
+        await RefreshTrackedPlayersAsync();
+        loading = false;
+    }
+
+    private async Task RefreshTrackedPlayersAsync()
+    {
+        confirming = null;
+        var result = await PlayerApi.GetTrackedAsync(selectedSeasonId);
         signedIn = result is not null;
         players = result ?? [];
-        loading = false;
     }
 
     private async Task UntrackAsync(TrackedPlayerDto player)
@@ -117,4 +152,7 @@
     }
 
     private static string PlayerName(TrackedPlayerDto player) => $"{player.DisplayName} ({player.EpicDisplayName})";
+    private string SelectedSeasonLabel => selectedSeasonId is null
+        ? "all seasons"
+        : seasons.FirstOrDefault(item => item.Id == selectedSeasonId)?.Name ?? "the selected season";
 }

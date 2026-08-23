@@ -21,6 +21,41 @@
   margin: 0;
   color: var(--text-muted);
 }
+.seasonFilter {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+.seasonFilter p {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.seasonFilter p strong {
+  color: var(--ink);
+}
+.seasonFilter label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-subtle);
+  font: 800 8px var(--font-mono);
+  letter-spacing: 1px;
+}
+.seasonFilter select {
+  min-width: 190px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 9px 30px 9px 10px;
+  font: 800 11px var(--font-mono);
+}
 .playerState {
   display: grid;
   place-items: center;
@@ -140,10 +175,17 @@
     align-items: flex-start;
     flex-direction: column;
   }
+  .seasonFilter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 @media (max-width: 720px) {
   .trackedPage {
     padding: 34px 18px 60px;
+  }
+  .seasonFilter select {
+    width: min(100%, 280px);
   }
   .trackedTableWrap {
     display: none;
