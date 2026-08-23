@@ -20,9 +20,12 @@ public sealed class PlayerClient(HttpClient httpClient)
         return await response.Content.ReadFromJsonAsync<PlayerSummaryDto>(cancellationToken);
     }
 
-    public async Task<PlayerCollectionDto?> GetAsync(Guid publicId, CancellationToken cancellationToken = default)
+    public async Task<PlayerCollectionDto?> GetAsync(Guid publicId, int? seasonId = null, CancellationToken cancellationToken = default)
     {
-        using var response = await httpClient.GetAsync($"api/players/{publicId:D}", cancellationToken);
+        var url = seasonId is null
+            ? $"api/players/{publicId:D}"
+            : $"api/players/{publicId:D}?seasonId={seasonId.Value}";
+        using var response = await httpClient.GetAsync(url, cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;

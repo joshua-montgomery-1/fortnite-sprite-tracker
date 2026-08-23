@@ -40,6 +40,7 @@ public static class PlayerEndpoints
 
         group.MapGet("/{publicId:guid}", async (
             Guid publicId,
+            int? seasonId,
             HttpContext context,
             CurrentUserService currentUser,
             SpriteTrackerDbContext database,
@@ -54,7 +55,7 @@ public static class PlayerEndpoints
             }
 
             var collection = player.IsCollectionPublic
-                ? await GetCollectionAsync(database, player.Id, cancellationToken)
+                ? await GetCollectionAsync(database, player.Id, seasonId, cancellationToken)
                 : [];
 
             PlayerSummaryDto? viewerSummary = null;
@@ -71,7 +72,7 @@ public static class PlayerEndpoints
 
                 if (player.IsCollectionPublic && viewer.Id != player.Id)
                 {
-                    viewerCollection = await GetCollectionAsync(database, viewer.Id, cancellationToken);
+                    viewerCollection = await GetCollectionAsync(database, viewer.Id, seasonId, cancellationToken);
                 }
                 else if (player.IsCollectionPublic)
                 {
@@ -242,11 +243,21 @@ public static class PlayerEndpoints
     private static async Task<IReadOnlyList<SpriteProgressDto>> GetCollectionAsync(
         SpriteTrackerDbContext database,
         long userId,
+        int? seasonId,
         CancellationToken cancellationToken)
     {
-        var collection = await database.SpriteProgress
+        IQueryable<SpriteProgress> progress = database.SpriteProgress
             .AsNoTracking()
-            .Where(item => item.UserId == userId && item.IsOwned)
+            .Where(item => item.UserId == userId && item.IsOwned);
+
+        if (seasonId is not null)
+        {
+            progress = progress.Where(item => database.SeasonSpriteVariants.Any(seasonVariant =>
+                seasonVariant.SeasonId == seasonId.Value &&
+                seasonVariant.SpriteVariantId == item.SpriteVariantId));
+        }
+
+        var collection = await progress
             .OrderBy(item => item.SpriteVariantId)
             .Select(item => new SpriteProgressDto
             {
