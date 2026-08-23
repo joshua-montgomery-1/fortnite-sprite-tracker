@@ -10,10 +10,10 @@
   gap: 48px;
   align-items: end;
   padding: 30px;
-  border: 1px solid #d5d1c8;
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 8px 0 #dedad1;
+  background: var(--surface);
+  box-shadow: 0 8px 0 var(--border);
 }
 .playerSearchPanel h1 {
   font-size: clamp(34px, 5vw, 64px);
@@ -23,7 +23,7 @@
 }
 .playerSearchPanel p {
   margin: 0;
-  color: #686a71;
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.55;
   max-width: 620px;
@@ -36,7 +36,7 @@
 .shareBox label {
   font: 800 8px var(--font-mono);
   letter-spacing: 1px;
-  color: #73757b;
+  color: var(--text-subtle);
 }
 .playerSearchPanel form > div,
 .shareBox > div {
@@ -46,9 +46,9 @@
 .shareBox input {
   min-width: 0;
   flex: 1;
-  border: 1px solid #d3cfc6;
+  border: 1px solid var(--border);
   border-radius: 8px 0 0 8px;
-  background: #faf9f5;
+  background: var(--surface-input);
   padding: 13px;
   color: var(--ink);
 }
@@ -68,9 +68,9 @@
   gap: 5px;
   min-height: 180px;
   margin-top: 24px;
-  border: 1px dashed #cbc7bd;
+  border: 1px dashed var(--border-strong);
   border-radius: 12px;
-  color: #77797f;
+  color: var(--text-subtle);
 }
 .playerState strong {
   font-size: 18px;
@@ -93,7 +93,7 @@
 }
 .playerHero p {
   margin: 0;
-  color: #696b71;
+  color: var(--text-muted);
 }
 .shareBox {
   width: min(520px, 48%);
@@ -104,10 +104,10 @@
   font: 9px var(--font-mono);
 }
 .shareBox button {
-  border: 1px solid #171b25;
+  border: 1px solid var(--surface-strong);
   border-radius: 0 7px 7px 0;
-  background: #171b25;
-  color: #fff;
+  background: var(--surface-strong);
+  color: var(--surface);
   padding: 0 16px;
   font-size: 10px;
   font-weight: 850;
@@ -126,8 +126,8 @@
   font-size: 12px;
 }
 .compareNotice a {
-  color: #fff;
-  background: #171b25;
+  color: var(--surface);
+  background: var(--surface-strong);
   border-radius: 6px;
   padding: 8px 11px;
   text-decoration: none;
@@ -138,8 +138,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   margin: 25px 0;
-  background: #171b25;
-  color: #fff;
+  background: var(--surface-strong);
+  color: var(--surface);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -180,16 +180,16 @@
 }
 .publicSpriteCard {
   overflow: hidden;
-  border: 1px solid #d5d1c8;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
 }
 .publicSpriteArt {
   height: 190px;
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle, var(--sprite-color) 0, transparent 68%), #ece9e2;
+    radial-gradient(circle, var(--sprite-color) 0, transparent 68%), var(--surface-muted);
 }
 .publicSpriteArt img {
   width: 85%;
@@ -208,7 +208,7 @@
 .publicSpriteCard small {
   font: 7px var(--font-mono);
   letter-spacing: 0.7px;
-  color: #74767d;
+  color: var(--text-subtle);
 }
 .publicSpriteCard span i {
   display: inline-block;

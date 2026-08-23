@@ -6,18 +6,18 @@
   gap: 4vw;
   align-items: center;
   overflow: hidden;
-  border-bottom: 1px solid #d8d4cb;
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 76px;
   z-index: 0;
   isolation: isolate;
-  background: linear-gradient(115deg, #f4f2ec 0 58%, #ece8df 100%);
+  background: linear-gradient(115deg, var(--hero-start) 0 58%, var(--hero-end) 100%);
 }
 .parallaxGrid {
   position: absolute;
   inset: -100px;
   z-index: -1;
-  background-image: radial-gradient(#d8d4ca 1px, transparent 1px);
+  background-image: radial-gradient(var(--hero-grid) 1px, transparent 1px);
   background-size: 18px 18px;
   will-change: transform;
 }
@@ -33,7 +33,7 @@
 }
 .orbit {
   position: absolute;
-  border: 1px solid #c9c5ba;
+  border: 1px solid var(--hero-orbit);
   border-radius: 50%;
   transform: rotate(-18deg);
 }
@@ -69,8 +69,8 @@
   top: 8%;
   z-index: 3;
   display: grid;
-  background: #171b25;
-  color: #fff;
+  background: var(--hero-label);
+  color: var(--on-strong);
   border-radius: 7px;
   padding: 10px 13px;
   box-shadow: 4px 4px 0 var(--lime);
@@ -86,7 +86,7 @@
 }
 .rareLabel span {
   font-size: 8px;
-  color: #aaaeb8;
+  color: var(--hero-label-muted);
 }
 .rareLabel:after {
   content: "MYTHIC";
@@ -94,7 +94,7 @@
   right: -43px;
   top: 7px;
   background: #ff5d7c;
-  color: #fff;
+  color: var(--on-strong);
   padding: 3px 5px;
   border-radius: 3px;
   font: 6px var(--font-mono);
@@ -121,7 +121,7 @@
   position: absolute;
   inset: 20px;
   border-radius: 50%;
-  background: radial-gradient(circle at 45% 30%, #fff8 0 3%, transparent 30%);
+  background: radial-gradient(circle at 45% 30%, var(--hero-highlight) 0 3%, transparent 30%);
 }
 .ear {
   position: absolute;
@@ -152,11 +152,11 @@
   height: 34px;
   background: #171525;
   border-radius: 50%;
-  box-shadow: inset 7px 8px 0 #fff;
+  box-shadow: inset 7px 8px 0 var(--surface);
 }
 .spark {
   position: absolute;
-  color: #7958f5;
+  color: var(--purple);
   font-size: 30px;
 }
 .s1 {
@@ -177,17 +177,17 @@
   position: absolute;
   right: 0;
   bottom: 5%;
-  background: #fff;
-  border: 1px solid #d2cec6;
+  background: var(--hero-tag);
+  border: 1px solid var(--hero-tag-border);
   border-radius: 8px;
   padding: 13px 18px;
-  box-shadow: 8px 8px 0 #171b25;
+  box-shadow: 8px 8px 0 var(--surface-strong);
   display: grid;
 }
 .seasonTag small {
   font-family: var(--font-mono);
   font-size: 8px;
-  color: #777;
+  color: var(--text-subtle);
 }
 .seasonTag strong {
   font-size: 20px;

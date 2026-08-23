@@ -44,6 +44,14 @@
                             <input type="checkbox" @bind="isCollectionPublic" />
                             <span><strong>Public collection</strong><small>Allow other scouts to view your totals and Sprites and compare their collection with yours.</small></span>
                         </label>
+                        <label class="themeSetting">
+                            <span><strong>Theme</strong><small>System follows this device. Your selection is saved to your account.</small></span>
+                            <select @bind="themePreference" @bind:after="PreviewThemeAsync" aria-label="Theme preference">
+                                <option value="@ThemePreference.System">System</option>
+                                <option value="@ThemePreference.Light">Light</option>
+                                <option value="@ThemePreference.Dark">Dark</option>
+                            </select>
+                        </label>
                         <button class="primary" disabled="@saving">@(saving ? "Saving..." : "Save changes")</button>
                     </form>
                 </section>

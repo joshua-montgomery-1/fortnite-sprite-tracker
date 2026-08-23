@@ -55,6 +55,7 @@ public static class ProfileEndpoints
             user.EpicDisplayName = string.IsNullOrWhiteSpace(epicDisplayName) ? null : epicDisplayName;
             user.NormalizedEpicDisplayName = CurrentUserService.NormalizeEpicDisplayName(epicDisplayName);
             user.IsCollectionPublic = request.IsCollectionPublic;
+            user.ThemePreference = request.ThemePreference;
             user.UpdatedAtUtc = DateTimeOffset.UtcNow;
             await database.SaveChangesAsync(cancellationToken);
 
@@ -100,6 +101,7 @@ public static class ProfileEndpoints
             DisplayName = user.DisplayName,
             EpicDisplayName = user.EpicDisplayName,
             IsCollectionPublic = user.IsCollectionPublic,
+            ThemePreference = user.ThemePreference,
             IsProfileComplete = !string.IsNullOrWhiteSpace(user.EpicDisplayName)
         };
 }

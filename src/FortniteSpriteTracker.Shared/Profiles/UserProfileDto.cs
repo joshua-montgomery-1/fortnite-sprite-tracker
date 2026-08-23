@@ -6,5 +6,6 @@ public sealed class UserProfileDto
     public required string DisplayName { get; init; }
     public string? EpicDisplayName { get; init; }
     public bool IsCollectionPublic { get; init; }
+    public ThemePreference ThemePreference { get; init; }
     public bool IsProfileComplete { get; init; }
 }

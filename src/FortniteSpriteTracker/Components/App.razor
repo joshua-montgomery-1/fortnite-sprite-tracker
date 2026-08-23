@@ -41,6 +41,25 @@
     <link rel="manifest" href="site.webmanifest" />
 
     <ResourcePreloader />
+    <script>
+        (() => {
+            const key = "sprite-scout-theme-preference";
+            let preference = "system";
+
+            try {
+                const stored = localStorage.getItem(key);
+                if (stored) preference = JSON.parse(stored);
+            } catch {
+                // Storage can be unavailable in privacy-restricted browsing contexts.
+            }
+
+            if (!["system", "light", "dark"].includes(preference)) preference = "system";
+            document.documentElement.dataset.themePreference = preference;
+            document.documentElement.dataset.theme = preference === "system"
+                ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                : preference;
+        })();
+    </script>
     <link rel="stylesheet" href="@Assets["css/app.css"]" />
     <link rel="stylesheet" href="@Assets["FortniteSpriteTracker.styles.css"]" />
     <ImportMap />

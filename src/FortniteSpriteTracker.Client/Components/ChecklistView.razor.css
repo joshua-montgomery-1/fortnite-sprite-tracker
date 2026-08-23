@@ -50,10 +50,10 @@
   }
 
   .mobileSpriteCard {
-    background: #fff;
-    border: 1px solid #d8d4cc;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    box-shadow: 0 5px 0 #e7e2d9;
+    box-shadow: 0 5px 0 var(--border);
     overflow: hidden;
   }
 
@@ -62,8 +62,8 @@
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
-    background: linear-gradient(180deg, #f9f7f3 0%, #f2f0eb 100%);
-    border-bottom: 1px solid #e3dfd7;
+    background: linear-gradient(180deg, var(--surface-muted) 0%, var(--surface-muted) 100%);
+    border-bottom: 1px solid var(--border);
   }
 
   .mobileSpriteHeader img {
@@ -92,7 +92,7 @@
     gap: 5px;
     font: 700 9px var(--font-mono);
     letter-spacing: 0.7px;
-    color: #777b83;
+    color: var(--text-subtle);
     text-transform: uppercase;
   }
 
@@ -115,19 +115,19 @@
     align-items: center;
     gap: 10px;
     padding: 8px 10px;
-    border: 1px solid #e1ddd6;
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: #faf9f6;
+    background: var(--surface-input);
   }
 
   .mobileVariantRow.owned {
-    background: #f3fbff;
-    border-color: #94d4f3;
+    background: var(--owned-surface);
+    border-color: var(--owned-border);
   }
 
   .mobileVariantRow.mastered {
-    background: #f8fce8;
-    border-color: #b9d55f;
+    background: var(--mastered-surface);
+    border-color: var(--mastered-border);
   }
 
   .mobileVariantMeta {
@@ -159,7 +159,7 @@
   .mobileVariantMeta small {
     font: 700 8px var(--font-mono);
     letter-spacing: 0.5px;
-    color: #747980;
+    color: var(--text-subtle);
     text-transform: uppercase;
     white-space: nowrap;
   }
@@ -173,25 +173,25 @@
   .mobileActionGroup button {
     min-width: 70px;
     min-height: 36px;
-    border: 1px solid #d7d2ca;
-    background: #fff;
+    border: 1px solid var(--border);
+    background: var(--surface);
     border-radius: 8px;
-    color: #4a4e58;
+    color: var(--ink);
     font: 800 10px var(--font-geist);
     cursor: pointer;
     padding: 7px 10px;
   }
 
   .mobileActionGroup button.selected {
-    background: linear-gradient(180deg, #dff4ff 0%, #d8f0ff 100%);
-    border-color: #6bbde8;
-    color: #1b5979;
+    background: var(--owned-action);
+    border-color: var(--owned-border);
+    color: var(--owned-text);
   }
 
   .mobileVariantRow.mastered .mobileActionGroup button:last-child {
-    background: linear-gradient(180deg, #ebff7a 0%, #dff35a 100%);
-    border-color: #a8c62d;
-    color: #212629;
+    background: var(--mastered-action);
+    border-color: var(--mastered-border);
+    color: var(--mastered-text);
   }
 
   .mobileActionGroup button:disabled {
@@ -279,15 +279,15 @@
   height: 32px;
   display: flex;
   gap: 0;
-  border-top: 1px solid #ddd9d1;
-  background: #f8f7f3;
+  border-top: 1px solid var(--border);
+  background: var(--surface-muted);
 }
 .collectionMatrix td button {
   flex: 1;
   width: auto;
   height: 32px;
   border: 0;
-  border-right: 1px solid #ddd9d1;
+  border-right: 1px solid var(--border);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -304,15 +304,15 @@
   letter-spacing: 0.25px;
 }
 .collectionMatrix td.owned button:first-child {
-  box-shadow: inset 0 -3px 0 #62bde9;
+  box-shadow: inset 0 -3px 0 var(--owned-border);
 }
 .collectionMatrix td.mastered button:last-child {
-  box-shadow: inset 0 -3px 0 #8caf25;
+  box-shadow: inset 0 -3px 0 var(--mastered-border);
 }
 .collectionMatrix td button:focus-visible {
   position: relative;
   z-index: 2;
-  outline: 2px solid #7557f6;
+  outline: 2px solid var(--purple);
   outline-offset: -2px;
 }
 .collectionMatrix tbody tr:hover .spriteColumn,
@@ -323,7 +323,7 @@
   outline: none;
 }
 .collectionMatrix td button:hover {
-  background: #efede7;
+  background: var(--surface-muted);
 }
 .collectionMatrix td button:disabled {
   cursor: not-allowed;
@@ -334,7 +334,7 @@
 }
 .collectionMatrix td button:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px #7557f6;
+  box-shadow: inset 0 0 0 2px var(--purple);
 }
 .collectionMatrix td.owned button:first-child:focus-visible {
   box-shadow:
@@ -472,17 +472,17 @@
     font-size: 8pt;
     background: repeating-linear-gradient(
       135deg,
-      #f2f0eb,
-      #f2f0eb 4px,
+      var(--surface-muted),
+      var(--surface-muted) 4px,
       #ebe8e1 4px,
       #ebe8e1 8px
     ) !important;
   }
   .collectionMatrix tbody tr:nth-child(even) .spriteColumn {
-    background: #efede7;
+    background: var(--surface-muted);
   }
   .collectionMatrix th,
   .collectionMatrix td {
-    border-color: #c9c5bd;
+    border-color: var(--border-strong);
   }
 }

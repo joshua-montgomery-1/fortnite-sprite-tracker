@@ -1,10 +1,16 @@
 @inherits LayoutComponentBase
 @inject AccountState AccountState
+@inject ThemeService Theme
 @Body
 
 @code {
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender)
+        {
+            return;
+        }
+
         try
         {
             await AccountState.LoadAsync();
@@ -13,5 +19,7 @@
         {
             // Individual pages can retry and display their relevant connection error.
         }
+
+        await Theme.InitializeAsync(AccountState.Profile?.ThemePreference);
     }
 }

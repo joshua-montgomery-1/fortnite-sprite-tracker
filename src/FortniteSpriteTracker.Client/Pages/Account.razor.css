@@ -19,15 +19,15 @@
 }
 .accountHero p {
   margin: 0;
-  color: #686a71;
+  color: var(--text-muted);
 }
 .accountStats {
   display: grid;
   grid-template-columns: repeat(2, 130px);
   overflow: hidden;
   border-radius: 10px;
-  background: #171b25;
-  color: #fff;
+  background: var(--surface-strong);
+  color: var(--surface);
 }
 .accountStats div {
   display: grid;
@@ -56,8 +56,8 @@
   padding: 25px;
   border: 1px solid #d6d2c9;
   border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 6px 0 #dfdbd2;
+  background: var(--surface);
+  box-shadow: 0 6px 0 var(--border);
 }
 .accountCard h2 {
   font-size: 24px;
@@ -66,7 +66,7 @@
 .accountCard p {
   font-size: 12px;
   line-height: 1.55;
-  color: #686a71;
+  color: var(--text-muted);
 }
 .accountCardHead {
   display: flex;
@@ -86,13 +86,13 @@
   gap: 7px;
   font: 8px var(--font-mono);
   letter-spacing: 0.8px;
-  color: #73757b;
+  color: var(--text-subtle);
 }
 .accountCard input {
   min-width: 0;
-  border: 1px solid #d3cfc6;
+  border: 1px solid var(--border);
   border-radius: 7px;
-  background: #faf9f5;
+  background: var(--surface-input);
   padding: 11px;
   color: var(--ink);
 }
@@ -102,9 +102,9 @@
   align-items: start;
   gap: 12px;
   padding: 16px;
-  border: 1px solid #d8d4cc;
+  border: 1px solid var(--border);
   border-radius: 9px;
-  background: #f6f4ee;
+  background: var(--surface-muted);
   cursor: pointer;
 }
 .privacySetting > input {
@@ -125,7 +125,7 @@
 .privacySetting small {
   font: 11px/1.45 var(--font-geist);
   letter-spacing: 0;
-  color: #6b6d73;
+  color: var(--text-muted);
 }
 .accountCard form .primary {
   justify-self: start;
@@ -151,7 +151,7 @@
   margin-top: 23px;
   font: 800 8px var(--font-mono);
   letter-spacing: 1px;
-  color: #73757b;
+  color: var(--text-subtle);
 }
 .accountLink {
   display: flex;
@@ -165,8 +165,8 @@
 .accountLink button {
   border: 0;
   border-radius: 0 7px 7px 0;
-  background: #171b25;
-  color: #fff;
+  background: var(--surface-strong);
+  color: var(--surface);
   padding: 0 14px;
   font-size: 10px;
   font-weight: 850;
@@ -197,9 +197,9 @@
   margin: 0;
 }
 .accountAccess > button {
-  border: 1px solid #cfcac0;
+  border: 1px solid var(--border-strong);
   border-radius: 7px;
-  background: #f5f3ed;
+  background: var(--surface-muted);
   padding: 10px 16px;
   font-size: 11px;
   font-weight: 850;
@@ -207,7 +207,7 @@
 }
 .dangerZone {
   border-color: #e4aaa3;
-  background: #fff8f7;
+  background: var(--surface-danger);
   box-shadow: 0 6px 0 #ecd3cf;
 }
 .dangerZone .sectionKicker {
@@ -224,7 +224,7 @@
   border: 0;
   border-radius: 7px;
   background: #b83443;
-  color: #fff;
+  color: var(--surface);
   padding: 0 14px;
   font-size: 10px;
   font-weight: 850;

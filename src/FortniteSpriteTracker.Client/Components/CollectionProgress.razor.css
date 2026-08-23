@@ -1,6 +1,6 @@
 .progressPanel {
-  background: #171b25;
-  color: #fff;
+  background: var(--surface-strong);
+  color: var(--surface);
   border-radius: 10px;
   padding: 22px 26px;
   display: grid;

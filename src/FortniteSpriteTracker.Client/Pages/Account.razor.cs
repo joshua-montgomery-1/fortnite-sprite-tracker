@@ -9,6 +9,7 @@ public partial class Account
 {
     [Inject] private AccountClient AccountApi { get; set; } = null!;
     [Inject] private AccountState AccountState { get; set; } = null!;
+    [Inject] private ThemeService Theme { get; set; } = null!;
     [Inject] private CollectionClient CollectionApi { get; set; } = null!;
     [Inject] private AuthenticationNavigation AuthenticationNavigation { get; set; } = null!;
     [Inject] private NavigationManager Navigation { get; set; } = null!;
@@ -21,6 +22,7 @@ public partial class Account
     private string? saveMessage;
     private string? deleteError;
     private bool isCollectionPublic;
+    private ThemePreference themePreference;
     private bool loading = true;
     private bool saving;
     private bool deleting;
@@ -47,6 +49,7 @@ public partial class Account
             displayName = profile.DisplayName;
             epicDisplayName = profile.EpicDisplayName ?? "";
             isCollectionPublic = profile.IsCollectionPublic;
+            themePreference = profile.ThemePreference;
             var collection = await CollectionApi.GetAsync();
             ownedCount = collection.Count(item => item.IsOwned);
             masteredCount = collection.Count(item => item.IsMastered);
@@ -76,8 +79,13 @@ public partial class Account
         saveMessage = null;
         try
         {
-            profile = await AccountApi.UpdateProfileAsync(new(trimmedDisplayName, string.IsNullOrWhiteSpace(trimmedEpicName) ? null : trimmedEpicName, isCollectionPublic));
+            profile = await AccountApi.UpdateProfileAsync(new(
+                trimmedDisplayName,
+                string.IsNullOrWhiteSpace(trimmedEpicName) ? null : trimmedEpicName,
+                isCollectionPublic,
+                themePreference));
             AccountState.SetProfile(profile);
+            await Theme.SetPreferenceAsync(profile.ThemePreference);
             saveSucceeded = true;
             saveMessage = "Account settings saved.";
         }
@@ -91,6 +99,8 @@ public partial class Account
             saving = false;
         }
     }
+
+    private Task PreviewThemeAsync() => Theme.PreviewAsync(themePreference);
 
     private async Task CopyLinkAsync()
     {
