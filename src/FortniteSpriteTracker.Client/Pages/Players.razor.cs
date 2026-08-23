@@ -19,6 +19,8 @@ public partial class Players
 
     private PlayerCollectionDto? data;
     private SpriteCatalogDto? catalog;
+    private IReadOnlyList<SeasonDto> seasons = [];
+    private int? selectedSeasonId;
     private string epicUsername = "";
     private string collectionQuery = "";
     private string mode = "collection";
@@ -39,6 +41,9 @@ public partial class Players
     private int TargetOnlyCount => TargetKeys.Except(ViewerKeys).Count();
     private int ViewerOnlyCount => ViewerKeys.Except(TargetKeys).Count();
     private int SharedCount => TargetKeys.Intersect(ViewerKeys).Count();
+    private string SelectedSeasonLabel => selectedSeasonId is null
+        ? "all seasons"
+        : seasons.FirstOrDefault(item => item.Id == selectedSeasonId)?.Name ?? "the selected season";
 
     private IEnumerable<ViewEntry> VisibleEntries
     {
@@ -70,20 +75,21 @@ public partial class Players
     protected override async Task OnParametersSetAsync()
     {
         data = null;
+        catalog = null;
         mode = "collection";
         catalogError = null;
         try
         {
-            var seasons = await CatalogApi.GetSeasonsAsync();
-            var catalogSeason = seasons.FirstOrDefault(item => item.IsActive && item.HasCatalog)
-                ?? seasons.FirstOrDefault(item => item.HasCatalog);
-            if (catalogSeason is null)
+            seasons = (await CatalogApi.GetSeasonsAsync()).Where(item => item.HasCatalog).ToArray();
+            selectedSeasonId = seasons.FirstOrDefault(item => item.IsActive)?.Id
+                ?? seasons.FirstOrDefault()?.Id;
+            if (selectedSeasonId is null)
             {
                 catalogError = "No seasonal Sprite guide is available yet.";
                 return;
             }
 
-            catalog ??= await CatalogApi.GetAsync(catalogSeason.Id);
+            await LoadSelectedCatalogAsync();
             await AccountState.LoadAsync();
         }
         catch (HttpRequestException)
@@ -100,16 +106,81 @@ public partial class Players
         loading = true;
         try
         {
-            data = await PlayerApi.GetAsync(PublicId.Value);
-            if (data?.Viewer is not null && !IsOwnProfile)
-            {
-                mode = "target";
-            }
+            await LoadProfileAsync();
         }
         finally
         {
             loading = false;
         }
+    }
+
+    private async Task SeasonChangedAsync(ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString();
+        int? seasonId = int.TryParse(value, out var parsedSeasonId) ? parsedSeasonId : null;
+        if ((seasonId is not null && !seasons.Any(item => item.Id == seasonId)) ||
+            PublicId is null)
+        {
+            return;
+        }
+
+        selectedSeasonId = seasonId;
+        collectionQuery = "";
+        mode = "collection";
+        catalogError = null;
+        loading = true;
+        try
+        {
+            await LoadSelectedCatalogAsync();
+            await LoadProfileAsync();
+        }
+        catch (HttpRequestException)
+        {
+            catalogError = "This Sprite guide is temporarily unavailable. Please try again later.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        if (PublicId is null)
+        {
+            return;
+        }
+
+        data = await PlayerApi.GetAsync(PublicId.Value, selectedSeasonId);
+        if (data?.Viewer is not null && !IsOwnProfile)
+        {
+            mode = "target";
+        }
+    }
+
+    private async Task LoadSelectedCatalogAsync()
+    {
+        if (selectedSeasonId is not null)
+        {
+            catalog = await CatalogApi.GetAsync(selectedSeasonId.Value);
+            return;
+        }
+
+        var catalogs = await Task.WhenAll(seasons.Select(item => CatalogApi.GetAsync(item.Id)));
+        var primaryCatalog = catalogs.FirstOrDefault()
+            ?? throw new InvalidOperationException("No Sprite catalogs are available.");
+        catalog = new SpriteCatalogDto
+        {
+            Season = primaryCatalog.Season,
+            VariantStyles = catalogs
+                .SelectMany(item => item.VariantStyles)
+                .GroupBy(item => item.Id)
+                .Select(item => item.First())
+                .OrderBy(item => item.DisplayOrder)
+                .ToArray(),
+            Families = catalogs.SelectMany(item => item.Families).ToArray(),
+            TotalEntries = catalogs.Sum(item => item.TotalEntries)
+        };
     }
 
     private async Task SearchAsync()

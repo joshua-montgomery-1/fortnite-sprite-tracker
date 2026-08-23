@@ -134,6 +134,41 @@
   font-weight: 800;
   white-space: nowrap;
 }
+.seasonFilter {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+.seasonFilter p {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.seasonFilter p strong {
+  color: var(--ink);
+}
+.seasonFilter label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-subtle);
+  font: 800 8px var(--font-mono);
+  letter-spacing: 1px;
+}
+.seasonFilter select {
+  min-width: 190px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 9px 30px 9px 10px;
+  font: 800 11px var(--font-mono);
+}
 .comparisonSummary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -228,6 +263,10 @@
   .shareBox {
     width: 100%;
   }
+  .seasonFilter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
   .publicCollectionGrid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -255,6 +294,9 @@
   }
   .playerHero h2 {
     font-size: 38px;
+  }
+  .seasonFilter select {
+    width: min(100%, 280px);
   }
   .comparisonSummary {
     grid-template-columns: 1fr;

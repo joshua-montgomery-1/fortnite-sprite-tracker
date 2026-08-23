@@ -147,6 +147,18 @@
 
             @if (data.Player.IsCollectionPublic)
             {
+            <div class="seasonFilter">
+                <div><span class="sectionKicker">SPRITE TOTALS</span><p>Owned and mastered counts for <strong>@SelectedSeasonLabel</strong>.</p></div>
+                <label for="profile-season">SEASON
+                    <select id="profile-season" value="@selectedSeasonId" @onchange="SeasonChangedAsync" aria-label="Season for public player collection">
+                        <option value="">All</option>
+                        @foreach (var season in seasons)
+                        {
+                            <option value="@season.Id">@season.Name</option>
+                        }
+                    </select>
+                </label>
+            </div>
             <div class="playerToolbar">
                 <div class="segmented">
                     <button class="@(mode == "collection" ? "selected" : "")" @onclick='() => mode = "collection"'>Their collection</button>
