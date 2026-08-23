@@ -32,9 +32,12 @@ public sealed class PlayerClient(HttpClient httpClient)
         return await response.Content.ReadFromJsonAsync<PlayerCollectionDto>(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<TrackedPlayerDto>?> GetTrackedAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TrackedPlayerDto>?> GetTrackedAsync(int? seasonId = null, CancellationToken cancellationToken = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "api/me/tracked-players/");
+        var url = seasonId is null
+            ? "api/me/tracked-players/"
+            : $"api/me/tracked-players/?seasonId={seasonId.Value}";
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Options.Set(SessionExpiredHandler.SuppressRedirect, true);
         using var response = await httpClient.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized) return null;

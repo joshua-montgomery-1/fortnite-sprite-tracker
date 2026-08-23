@@ -103,6 +103,7 @@ public static class PlayerEndpoints
         var tracked = endpoints.MapGroup("/api/me/tracked-players").RequireAuthorization();
 
         tracked.MapGet("/", async (
+            int? seasonId,
             HttpContext context,
             CurrentUserService currentUser,
             SpriteTrackerDbContext database,
@@ -110,12 +111,19 @@ public static class PlayerEndpoints
         {
             context.Response.Headers.CacheControl = "no-store";
             var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
+            IQueryable<SpriteProgress> progress = database.SpriteProgress.AsNoTracking();
+            if (seasonId is not null)
+            {
+                progress = progress.Where(item => database.SeasonSpriteVariants.Any(seasonVariant =>
+                    seasonVariant.SeasonId == seasonId.Value &&
+                    seasonVariant.SpriteVariantId == item.SpriteVariantId));
+            }
 
             var trackedPlayerStats = database.TrackedPlayers
                 .AsNoTracking()
                 .Where(trackedPlayer => trackedPlayer.UserId == user.Id)
                 .GroupJoin(
-                    database.SpriteProgress.AsNoTracking(),
+                    progress,
                     trackedPlayer => trackedPlayer.PlayerId,
                     progress => progress.UserId,
                     (trackedPlayer, progress) => new
