@@ -39,13 +39,17 @@
         <div class="orbit orbitOne"></div>
         <div class="orbit orbitTwo"></div>
         <div class="rareSpriteGlow"></div>
-        @if (!string.IsNullOrWhiteSpace(CubeHeroUrl))
+        @if (Hero is not null)
         {
-            <img class="rareSprite" src="@CubeHeroUrl" alt="Rare Cube Zero Point Sprite" />
+            <img class="rareSprite" src="@Hero.ImageUrl" alt="@($"{Hero.Rarity} {Hero.Name} Sprite")" />
             <div class="rareLabel">
-                <small>RARE FIND</small>
-                <strong>CUBE ZERO POINT</strong>
-                <span>Storm Overdrive variant</span>
+                <small>SEASON FIND</small>
+                <strong>@Hero.Name</strong>
+                @if (!string.IsNullOrWhiteSpace(Hero.Ability))
+                {
+                    <span>@Hero.Ability</span>
+                }
+                <span class="rarityBadge" style="background-color: @Hero.RarityColor">@Hero.Rarity</span>
             </div>
         }
         <div class="seasonTag">
@@ -65,7 +69,7 @@
 </section>
 
 @code {
-    [Parameter, EditorRequired] public string CubeHeroUrl { get; set; } = "";
+    [Parameter] public HeroSpriteViewModel? Hero { get; set; }
     [Parameter] public int TotalEntries { get; set; }
     [Parameter] public int FamilyCount { get; set; }
     [Parameter] public int Chapter { get; set; }
