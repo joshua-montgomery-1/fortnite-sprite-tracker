@@ -1,4 +1,5 @@
 using FortniteSpriteTracker.DataAccess.Entities;
+using FortniteSpriteTracker.Shared.Profiles;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,6 +30,12 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         users.Property(user => user.DisplayName).HasMaxLength(80);
         users.Property(user => user.EpicDisplayName).HasMaxLength(16);
         users.Property(user => user.NormalizedEpicDisplayName).HasMaxLength(16);
+        users.Property(user => user.ThemePreference)
+            .HasConversion(
+                preference => preference.ToStorageValue(),
+                value => ThemePreferenceExtensions.Parse(value))
+            .HasMaxLength(20)
+            .HasDefaultValue(ThemePreference.System);
 
         var seasons = modelBuilder.Entity<Season>();
         seasons.HasIndex(season => new { season.Chapter, season.Number }).IsUnique();

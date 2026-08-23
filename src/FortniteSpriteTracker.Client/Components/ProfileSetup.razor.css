@@ -5,10 +5,10 @@
   gap: 16px;
   margin: 0 0 28px;
   padding: 20px;
-  background: #fff;
-  border: 1px solid #d8d4cc;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 5px 0 #dedad1;
+  box-shadow: 0 5px 0 var(--border);
 }
 .profileSetup h2 {
   font-size: 24px;
@@ -16,7 +16,7 @@
 }
 .profileSetup p {
   font-size: 11px;
-  color: #666a72;
+  color: var(--text-muted);
   margin: 0;
   max-width: 430px;
 }
@@ -25,11 +25,11 @@
   gap: 6px;
   font: 8px var(--font-mono);
   letter-spacing: 0.8px;
-  color: #74767c;
+  color: var(--text-subtle);
 }
 .profileSetup input {
   min-width: 0;
-  border: 1px solid #d8d4cc;
+  border: 1px solid var(--border);
   border-radius: 7px;
   padding: 10px;
   font-family: var(--font-geist);

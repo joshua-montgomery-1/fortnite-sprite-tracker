@@ -22,7 +22,7 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #7557f6;
+  color: var(--purple);
   text-transform: uppercase;
 }
 
@@ -33,9 +33,9 @@
 }
 
 .highlightBox {
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid rgba(19, 23, 34, 0.1);
-  border-left: 4px solid #7557f6;
+  border-left: 4px solid var(--purple);
   border-radius: 8px;
   padding: 20px 24px;
   margin-bottom: 36px;
@@ -57,7 +57,7 @@
   gap: 8px;
   font-size: 14px;
   line-height: 1.5;
-  color: #2d3139;
+  color: var(--ink);
 }
 
 .legalContent section {
@@ -82,7 +82,7 @@
 .legalContent p {
   font-size: 15px;
   line-height: 1.65;
-  color: #383c45;
+  color: var(--ink);
   margin: 0 0 12px;
 }
 
@@ -94,35 +94,35 @@
   gap: 8px;
   font-size: 14.5px;
   line-height: 1.6;
-  color: #383c45;
+  color: var(--ink);
 }
 
 .legalContent code {
   font-family: var(--font-mono);
   font-size: 13px;
-  background: #e8e6df;
+  background: var(--surface-muted);
   padding: 2px 6px;
   border-radius: 4px;
-  color: #131722;
+  color: var(--surface-strong);
 }
 
 .noticeText {
-  background: #fdfae8;
+  background: var(--surface-warning);
   border-left: 3px solid #e9be4f;
   padding: 10px 14px;
   border-radius: 4px;
   font-size: 14px;
-  color: #4a4120;
+  color: var(--ink);
 }
 
 .legalContent a {
-  color: #7557f6;
+  color: var(--purple);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .legalContent a:hover {
-  color: #5b3ce0;
+  color: var(--purple);
 }
 
 @media (max-width: 640px) {

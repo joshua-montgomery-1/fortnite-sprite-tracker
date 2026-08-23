@@ -19,7 +19,7 @@
 }
 .trackedHero p {
   margin: 0;
-  color: #686a71;
+  color: var(--text-muted);
 }
 .playerState {
   display: grid;
@@ -27,9 +27,9 @@
   gap: 7px;
   min-height: 180px;
   padding: 28px;
-  border: 1px dashed #cbc7bd;
+  border: 1px dashed var(--border-strong);
   border-radius: 12px;
-  color: #77797f;
+  color: var(--text-subtle);
   text-align: center;
 }
 .playerState strong {
@@ -44,10 +44,10 @@
 }
 .trackedTableWrap {
   overflow-x: auto;
-  border: 1px solid #d5d1c8;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 7px 0 #dedad1;
+  background: var(--surface);
+  box-shadow: 0 7px 0 var(--border);
 }
 .trackedTable {
   width: 100%;
@@ -56,11 +56,11 @@
 .trackedTable th {
   text-align: left;
   padding: 13px 18px;
-  border-bottom: 1px solid #d5d1c8;
-  background: #efede7;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
   font: 800 8px var(--font-mono);
   letter-spacing: 1px;
-  color: #73757b;
+  color: var(--text-subtle);
 }
 .trackedTable td {
   padding: 17px 18px;
@@ -88,9 +88,9 @@
 }
 .trackedActions a,
 .trackedActions button {
-  border: 1px solid #cbc6bc;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
-  background: #f5f3ed;
+  background: var(--surface-muted);
   padding: 8px 10px;
   color: var(--ink);
   font-size: 9px;
@@ -110,13 +110,13 @@
   align-items: center;
   gap: 6px;
   padding: 6px;
-  border: 1px solid #e1b8b2;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  background: #fff8f7;
+  background: var(--surface-danger);
 }
 .untrackConfirm button {
   height: 29px;
-  border: 1px solid #d0c9c0;
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   padding: 0 9px;
   font-size: 9px;
@@ -124,13 +124,13 @@
   cursor: pointer;
 }
 .cancelUntrack {
-  background: #fff !important;
-  color: #555860 !important;
+  background: var(--surface) !important;
+  color: var(--text-muted) !important;
 }
 .confirmUntrack {
   border-color: #b83443 !important;
   background: #b83443 !important;
-  color: #fff !important;
+  color: var(--surface) !important;
 }
 @media (max-width: 900px) {
   .trackedHero {

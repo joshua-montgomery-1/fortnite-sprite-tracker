@@ -1,6 +1,6 @@
 footer {
   padding: 32px 5vw;
-  background: #171b25;
+  background: var(--surface-strong);
   color: #a6a8af;
   font-size: 11px;
   letter-spacing: 0.3px;
@@ -20,7 +20,7 @@ footer {
 }
 
 footer .brand {
-  color: #fff;
+  color: var(--on-strong);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -39,7 +39,7 @@ footer .brandmark {
   height: 26px;
   font-size: 12px;
   background: #dfff45;
-  color: #131722;
+  color: var(--surface-strong);
   border-radius: 4px;
   display: inline-flex;
   align-items: center;
@@ -63,7 +63,7 @@ footer .brandmark {
 }
 
 .footerNav a:hover {
-  color: #ffffff;
+  color: var(--surface);
 }
 
 .footerBottom {

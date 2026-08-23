@@ -15,6 +15,7 @@ builder.Services.AddScoped(sp =>
     return new HttpClient(handler) { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) };
 });
 builder.Services.AddScoped<BrowserStorage>();
+builder.Services.AddThemeServices();
 builder.Services.AddScoped<BrowserPrintService>();
 builder.Services.AddScoped<AccountClient>();
 builder.Services.AddScoped<AccountState>();

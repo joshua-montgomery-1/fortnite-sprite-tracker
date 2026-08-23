@@ -1,3 +1,5 @@
+using FortniteSpriteTracker.Shared.Profiles;
+
 namespace FortniteSpriteTracker.DataAccess.Entities;
 
 public sealed class UserAccount
@@ -9,6 +11,7 @@ public sealed class UserAccount
     public string? EpicDisplayName { get; set; }
     public string? NormalizedEpicDisplayName { get; set; }
     public bool IsCollectionPublic { get; set; } = true;
+    public ThemePreference ThemePreference { get; set; } = ThemePreference.System;
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public List<SpriteProgress> SpriteProgress { get; set; } = [];
