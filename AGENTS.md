@@ -27,4 +27,4 @@ The repository currently uses these labels:
 | `dependabot` | Pull requests created by Dependabot |
 | `tech_debt` | Refactoring, cleanup, or maintainability work without a user-facing feature |
 
-The pull-request labeling workflow applies the category label from the branch prefix. Add any additional applicable labels manually; for example, a `feature/` branch that changes an Action should also receive `github_actions`.
+When opening or updating a pull request, determine which labels apply from the change itself and add them to the pull request. Apply every relevant label, not only the label suggested by the branch prefix. For example, a `feature/` branch that changes an Action should receive both `enhancement` and `github_actions`; a documentation-only change should receive `documentation`.
