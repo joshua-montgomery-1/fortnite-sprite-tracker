@@ -26,7 +26,8 @@ public static class CatalogEndpoints
                     StartAt = item.StartAt,
                     EndAt = item.EndAt,
                     IsActive = item.StartAt <= now && (item.EndAt == null || now < item.EndAt),
-                    HasCatalog = item.SpriteFamilies.Any() && item.SpriteVariants.Any()
+                    HasCatalog = item.SpriteFamilies.Any() && item.SpriteVariants.Any(),
+                    HasCheatCodes = item.CheatCodes.Any()
                 })
                 .ToArrayAsync(cancellationToken);
             return Results.Ok(seasons);
@@ -62,6 +63,8 @@ public static class CatalogEndpoints
                 .Where(item => item.SeasonId == season.Id)
                 .Select(item => item.SpriteVariantId)
                 .ToHashSetAsync(cancellationToken);
+            var hasCheatCodes = await database.CheatCodes
+                .AnyAsync(item => item.SeasonId == season.Id, cancellationToken);
 
             var stylesById = new Dictionary<int, VariantStyleDto>();
             var families = memberships.Select(item =>
@@ -120,7 +123,8 @@ public static class CatalogEndpoints
                     StartAt = season.StartAt,
                     EndAt = season.EndAt,
                     IsActive = season.StartAt <= now && (season.EndAt == null || now < season.EndAt),
-                    HasCatalog = true
+                    HasCatalog = true,
+                    HasCheatCodes = hasCheatCodes
                 },
                 VariantStyles = stylesById.Values.OrderBy(item => item.DisplayOrder).ToArray(),
                 Families = families,

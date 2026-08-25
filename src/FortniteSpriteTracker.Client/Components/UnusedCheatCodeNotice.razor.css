@@ -1,0 +1,25 @@
+.unusedCheatNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid #7e65e855;
+  border-radius: 10px;
+  background: color-mix(in srgb, #8064ef 10%, var(--surface));
+}
+.unusedCheatNotice div { display: grid; gap: 3px; }
+.unusedCheatNotice strong { font-size: 13px; }
+.unusedCheatNotice span { color: var(--text-muted); font-size: 12px; }
+.unusedCheatNotice a {
+  flex: 0 0 auto;
+  color: var(--purple);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.unusedCheatNotice a span { color: inherit; }
+@media (max-width: 620px) {
+  .unusedCheatNotice { align-items: flex-start; flex-direction: column; }
+}

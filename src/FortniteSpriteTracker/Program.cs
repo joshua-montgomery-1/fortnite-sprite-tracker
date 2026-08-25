@@ -33,6 +33,7 @@ builder.Services.AddScoped<AuthenticationNavigation>();
 builder.Services.AddScoped<CollectionClient>();
 builder.Services.AddScoped<PlayerClient>();
 builder.Services.AddScoped<CatalogClient>();
+builder.Services.AddScoped<CheatCodeClient>();
 
 var databaseConnectionString = builder.Configuration.GetConnectionString("sprite-tracker")
     ?? throw new InvalidOperationException(
@@ -160,6 +161,7 @@ app.MapAuthenticationEndpoints(googleAuthenticationConfigured);
 app.MapProfileEndpoints();
 app.MapCatalogEndpoints();
 app.MapCollectionEndpoints();
+app.MapCheatCodeEndpoints();
 app.MapPlayerEndpoints();
 app.MapSitemapEndpoints();
 app.MapDefaultEndpoints();

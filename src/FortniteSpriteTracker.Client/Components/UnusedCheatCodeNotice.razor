@@ -1,0 +1,72 @@
+@using FortniteSpriteTracker.Shared.CheatCodes
+
+@if (remainingCount > 0)
+{
+    <aside class="unusedCheatNotice" role="status">
+        <div>
+            <strong>@remainingCount Lobby Hack@(remainingCount == 1 ? "" : "s") waiting</strong>
+            <span>Claim your remaining one-time Season 4 rewards from Fortnite's Admin Panel.</span>
+        </div>
+        <a href="/cheat-codes">View cheat codes <span>→</span></a>
+    </aside>
+}
+
+@code {
+    private const string BrowserProgressKey = "sprite-scout-cheat-code-progress";
+    private int remainingCount;
+    private CheatCodeCatalogDto? catalog;
+
+    [Inject] private CheatCodeClient CheatCodesApi { get; set; } = null!;
+    [Inject] private BrowserStorage Storage { get; set; } = null!;
+    [Inject] private AccountState AccountState { get; set; } = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        try
+        {
+            catalog = await CheatCodesApi.GetCatalogAsync();
+            if (catalog?.Season.IsActive != true)
+            {
+                return;
+            }
+
+            var trackableIds = catalog.Categories.SelectMany(item => item.Codes)
+                .Where(item => item.IsTrackable)
+                .Select(item => item.Id)
+                .ToHashSet();
+            var usedIds = (await Storage.GetAsync(BrowserProgressKey, new HashSet<int>()))
+                .Where(trackableIds.Contains)
+                .ToHashSet();
+
+            await AccountState.LoadAsync();
+            if (AccountState.Profile is not null)
+            {
+                var serverIds = (await CheatCodesApi.GetProgressAsync()).Select(item => item.CheatCodeId).ToHashSet();
+                foreach (var id in usedIds.Except(serverIds))
+                {
+                    await CheatCodesApi.UpdateAsync(new FortniteSpriteTracker.Shared.CheatCodes.UpdateCheatCodeProgressRequest
+                    {
+                        CheatCodeId = id,
+                        IsUsed = true
+                    });
+                    serverIds.Add(id);
+                }
+
+                usedIds = serverIds;
+                await Storage.RemoveAsync(BrowserProgressKey);
+            }
+
+            remainingCount = trackableIds.Count - usedIds.Count;
+            StateHasChanged();
+        }
+        catch (HttpRequestException)
+        {
+            remainingCount = 0;
+        }
+    }
+}
