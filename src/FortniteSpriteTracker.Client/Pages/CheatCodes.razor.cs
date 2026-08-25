@@ -19,6 +19,7 @@ public partial class CheatCodes
 
     private CheatCodeCatalogDto? catalog;
     private bool catalogLoading = true;
+    private bool progressInitialized;
     private int? selectedCategoryId;
     private string usageFilter = "All";
     private UserProfileDto? profile => AccountState.Profile;
@@ -45,10 +46,12 @@ public partial class CheatCodes
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || catalog is null)
+        if (progressInitialized || catalog is null)
         {
             return;
         }
+
+        progressInitialized = true;
 
         localUsedIds.UnionWith(await Storage.GetAsync(BrowserProgressKey, new HashSet<int>()));
         FilterToTrackable(localUsedIds);
