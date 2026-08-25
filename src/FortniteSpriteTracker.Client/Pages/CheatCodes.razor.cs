@@ -101,19 +101,19 @@ public partial class CheatCodes
         if (isUsed) usedIds.Add(code.Id); else usedIds.Remove(code.Id);
         try
         {
-            if (profile is null)
-            {
-                if (isUsed) localUsedIds.Add(code.Id); else localUsedIds.Remove(code.Id);
-                await Storage.SetAsync(BrowserProgressKey, localUsedIds);
-            }
-            else
+            // Keep a device copy for every user. It makes an in-flight account save survive a refresh
+            // and is reconciled with the account the next time the tracker loads.
+            if (isUsed) localUsedIds.Add(code.Id); else localUsedIds.Remove(code.Id);
+            await Storage.SetAsync(BrowserProgressKey, localUsedIds);
+
+            if (profile is not null)
             {
                 await CheatCodesApi.UpdateAsync(new UpdateCheatCodeProgressRequest { CheatCodeId = code.Id, IsUsed = isUsed });
             }
         }
         catch (HttpRequestException)
         {
-            if (isUsed) usedIds.Remove(code.Id); else usedIds.Add(code.Id);
+            // The local copy is retained and will be merged when a connection is available.
         }
         finally
         {
