@@ -1,0 +1,48 @@
+.cheatCodePage { min-height: 100vh; background: var(--paper); }
+.cheatCodeContent { width: min(1120px, 90vw); margin: 0 auto; padding: 72px 0 64px; }
+.cheatCodeHero { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 35px; }
+.cheatCodeHero h1 { margin: 7px 0 10px; font-size: clamp(32px, 5vw, 54px); letter-spacing: -2px; }
+.cheatCodeHero p { max-width: 610px; margin: 0; color: var(--text-muted); }
+.cheatSummary { display: grid; min-width: 138px; gap: 4px; padding: 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.cheatSummary strong { font: 800 22px var(--font-mono); color: var(--purple); }
+.cheatSummary span { color: var(--text-muted); font: 800 9px var(--font-mono); }
+.codeFilters { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 22px; padding: 13px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.codeFilters .segmented { display: flex; flex-wrap: wrap; gap: 5px; }
+.codeFilters button { border: 0; border-radius: 6px; padding: 8px 10px; color: var(--text-muted); background: transparent; font-size: 11px; font-weight: 800; cursor: pointer; }
+.codeFilters button.selected { color: white; background: var(--purple); }
+.categorySelect { display: grid; gap: 3px; color: var(--text-muted); font: 800 9px var(--font-mono); letter-spacing: .5px; }
+.categorySelect select { min-width: 172px; padding: 7px 28px 7px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--ink); background: var(--surface); font: 700 12px var(--font-sans); }
+.codeTableWrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.codeTable { width: 100%; border-collapse: collapse; text-align: left; }
+.codeTable th { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text-muted); background: var(--surface-muted); font: 800 9px var(--font-mono); letter-spacing: .5px; }
+.codeTable td { padding: 13px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 12px; line-height: 1.4; }
+.codeTable tr:last-child td { border-bottom: 0; }
+.codeTable tr.used { background: color-mix(in srgb, #45a978 7%, var(--surface)); }
+.codeTable td:nth-child(1) { width: 16%; }
+.codeTable td:nth-child(2) { width: 20%; }
+.codeTable td:nth-child(4) { width: 112px; text-align: right; }
+.categoryName { color: var(--text-muted); font-size: 11px; font-weight: 800; }
+.cheatCodeValue { color: var(--purple); font: 800 14px var(--font-mono); white-space: nowrap; word-break: normal; }
+.repeatable, .usedBadge { flex: 0 0 auto; padding: 4px 6px; border-radius: 4px; font: 800 9px var(--font-mono); }
+.repeatable { background: var(--surface-muted); color: var(--text-muted); }
+.usedBadge { color: #267552; background: #45a9781f; }
+.rewardDetails { display: grid; gap: 5px; }
+.requirement { display: flex; align-items: flex-start; gap: 6px; color: var(--text-muted); font-size: 11px; line-height: 1.35; }
+.requirement b { flex: 0 0 auto; color: var(--purple); font: 800 9px var(--font-mono); letter-spacing: .3px; text-transform: uppercase; }
+.useToggle { width: max-content; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; color: var(--ink); background: var(--surface); font-size: 11px; font-weight: 800; cursor: pointer; }
+.useToggle:hover { border-color: var(--purple); color: var(--purple); }
+@media (max-width: 720px) {
+  .cheatCodeContent { padding-top: 42px; }
+  .cheatCodeHero, .codeFilters { align-items: stretch; flex-direction: column; }
+  .categorySelect select { width: 100%; }
+  .codeTableWrap { border: 0; background: transparent; overflow: visible; }
+  .codeTable, .codeTable tbody, .codeTable tr, .codeTable td { display: block; width: 100%; }
+  .codeTable td:nth-child(1), .codeTable td:nth-child(2), .codeTable td:nth-child(4) { width: 100%; }
+  .codeTable thead { display: none; }
+  .codeTable tr { margin-bottom: 10px; padding: 13px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+  .codeTable tr.used { border-color: #45a97866; }
+  .codeTable td { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 9px; padding: 5px 0; border: 0; text-align: left !important; }
+  .codeTable td::before { content: attr(data-label); color: var(--text-muted); font: 800 9px var(--font-mono); letter-spacing: .4px; }
+  .codeTable .codeStatus { align-items: center; }
+  .codeTable .useToggle { width: 100%; }
+}

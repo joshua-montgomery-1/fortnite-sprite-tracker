@@ -173,6 +173,53 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
             }
         }
 
+        var categories = await database.CheatCodeCategories.ToDictionaryAsync(item => item.Id, cancellationToken);
+        foreach (var definition in CheatCodeSeedData.Categories)
+        {
+            if (!categories.TryGetValue(definition.Id, out var category))
+            {
+                database.CheatCodeCategories.Add(new CheatCodeCategory
+                {
+                    Id = definition.Id,
+                    Name = definition.Name,
+                    DisplayOrder = definition.DisplayOrder
+                });
+                inserted++;
+            }
+            else if (category.Name != definition.Name || category.DisplayOrder != definition.DisplayOrder)
+            {
+                category.Name = definition.Name;
+                category.DisplayOrder = definition.DisplayOrder;
+                updated++;
+            }
+        }
+
+        var cheatCodes = await database.CheatCodes
+            .Where(item => item.SeasonId == CheatCodeSeedData.SeasonId)
+            .ToDictionaryAsync(item => item.Id, cancellationToken);
+        foreach (var definition in CheatCodeSeedData.Codes)
+        {
+            if (!cheatCodes.TryGetValue(definition.Id, out var code))
+            {
+                database.CheatCodes.Add(new CheatCode
+                {
+                    Id = definition.Id,
+                    SeasonId = CheatCodeSeedData.SeasonId,
+                    CheatCodeCategoryId = definition.CategoryId,
+                    Code = definition.Code,
+                    Description = definition.Description,
+                    Requirement = definition.Requirement,
+                    IsTrackable = definition.IsTrackable,
+                    DisplayOrder = definition.DisplayOrder
+                });
+                inserted++;
+            }
+            else if (ApplyCheatCode(code, definition))
+            {
+                updated++;
+            }
+        }
+
         await database.SaveChangesAsync(cancellationToken);
         await database.Database.ExecuteSqlRawAsync(
             """
@@ -185,6 +232,12 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
             SELECT setval(
                 pg_get_serial_sequence('"SpriteVariants"', 'Id'),
                 GREATEST((SELECT MAX("Id") FROM "SpriteVariants"), 1));
+            SELECT setval(
+                pg_get_serial_sequence('"CheatCodeCategories"', 'Id'),
+                GREATEST((SELECT MAX("Id") FROM "CheatCodeCategories"), 1));
+            SELECT setval(
+                pg_get_serial_sequence('"CheatCodes"', 'Id'),
+                GREATEST((SELECT MAX("Id") FROM "CheatCodes"), 1));
             """,
             cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -200,6 +253,14 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
         if (CatalogSeedData.Families.Count != 25 || CatalogSeedData.Families.Sum(item => item.Variants.Count) != 117)
         {
             throw new InvalidOperationException("The committed catalog must contain 25 families and 117 variants.");
+        }
+
+        if (CheatCodeSeedData.Categories.Count != 6 || CheatCodeSeedData.Codes.Count != 22 ||
+            CheatCodeSeedData.Codes.Count(item => !item.IsTrackable) != 2 ||
+            CheatCodeSeedData.Codes.Select(item => item.Code).Distinct(StringComparer.Ordinal).Count() != CheatCodeSeedData.Codes.Count ||
+            CheatCodeSeedData.Codes.Any(item => item.Code != item.Code.ToUpperInvariant()))
+        {
+            throw new InvalidOperationException("The Season 4 Lobby Hack catalog must contain 22 uniquely-cased codes, including two reference-only effects.");
         }
 
         var styleIds = CatalogSeedData.VariantStyles.Select(item => item.Id).ToArray();
@@ -286,6 +347,20 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
         variant.SpriteFamilyId = familyId;
         variant.VariantStyleId = definition.VariantStyleId;
         variant.ImagePath = definition.ImagePath;
+        return changed;
+    }
+
+    private static bool ApplyCheatCode(CheatCode code, CheatCodeSeed definition)
+    {
+        var changed = code.CheatCodeCategoryId != definition.CategoryId || code.Code != definition.Code ||
+            code.Description != definition.Description || code.Requirement != definition.Requirement ||
+            code.IsTrackable != definition.IsTrackable || code.DisplayOrder != definition.DisplayOrder;
+        code.CheatCodeCategoryId = definition.CategoryId;
+        code.Code = definition.Code;
+        code.Description = definition.Description;
+        code.Requirement = definition.Requirement;
+        code.IsTrackable = definition.IsTrackable;
+        code.DisplayOrder = definition.DisplayOrder;
         return changed;
     }
 }

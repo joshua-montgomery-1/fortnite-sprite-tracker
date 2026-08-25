@@ -18,6 +18,7 @@ public sealed class SeasonDto
     public DateTimeOffset? EndAt { get; init; }
     public bool IsActive { get; init; }
     public bool HasCatalog { get; init; }
+    public bool HasCheatCodes { get; init; }
 }
 
 public sealed class VariantStyleDto

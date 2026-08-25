@@ -17,6 +17,9 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
     public DbSet<SeasonSpriteVariant> SeasonSpriteVariants => Set<SeasonSpriteVariant>();
     public DbSet<SpriteProgress> SpriteProgress => Set<SpriteProgress>();
     public DbSet<TrackedPlayer> TrackedPlayers => Set<TrackedPlayer>();
+    public DbSet<CheatCodeCategory> CheatCodeCategories => Set<CheatCodeCategory>();
+    public DbSet<CheatCode> CheatCodes => Set<CheatCode>();
+    public DbSet<CheatCodeProgress> CheatCodeProgress => Set<CheatCodeProgress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -95,5 +98,37 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
             .HasForeignKey(item => item.PlayerId)
             .OnDelete(DeleteBehavior.Cascade);
         trackedPlayers.HasIndex(item => item.PlayerId);
+
+        var cheatCodeCategories = modelBuilder.Entity<CheatCodeCategory>();
+        cheatCodeCategories.Property(item => item.Id).ValueGeneratedOnAdd();
+        cheatCodeCategories.Property(item => item.Name).HasMaxLength(80);
+        cheatCodeCategories.HasIndex(item => item.Name).IsUnique();
+
+        var cheatCodes = modelBuilder.Entity<CheatCode>();
+        cheatCodes.Property(item => item.Id).ValueGeneratedOnAdd();
+        cheatCodes.Property(item => item.Code).HasMaxLength(80);
+        cheatCodes.Property(item => item.Description).HasMaxLength(500);
+        cheatCodes.Property(item => item.Requirement).HasMaxLength(500);
+        cheatCodes.HasIndex(item => new { item.SeasonId, item.Code }).IsUnique();
+        cheatCodes.HasIndex(item => new { item.SeasonId, item.CheatCodeCategoryId, item.DisplayOrder });
+        cheatCodes.HasOne(item => item.Season)
+            .WithMany(item => item.CheatCodes)
+            .HasForeignKey(item => item.SeasonId)
+            .OnDelete(DeleteBehavior.Cascade);
+        cheatCodes.HasOne(item => item.Category)
+            .WithMany(item => item.CheatCodes)
+            .HasForeignKey(item => item.CheatCodeCategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var cheatCodeProgress = modelBuilder.Entity<CheatCodeProgress>();
+        cheatCodeProgress.HasKey(item => new { item.UserId, item.CheatCodeId });
+        cheatCodeProgress.HasOne(item => item.User)
+            .WithMany(item => item.CheatCodeProgress)
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        cheatCodeProgress.HasOne(item => item.CheatCode)
+            .WithMany(item => item.Progress)
+            .HasForeignKey(item => item.CheatCodeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

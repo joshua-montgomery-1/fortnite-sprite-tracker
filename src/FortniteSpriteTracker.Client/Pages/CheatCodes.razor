@@ -1,0 +1,99 @@
+@page "/cheat-codes"
+@using FortniteSpriteTracker.Shared.CheatCodes
+
+<PageTitle>Fortnite Season 4 Lobby Hack Codes | Sprite Scout</PageTitle>
+
+<HeadContent>
+    <link rel="canonical" href="https://spritescout.com/cheat-codes" />
+    <meta name="description" content="Every Fortnite Chapter 7 Season 4 Lobby Hack code and reward. Track one-time Sprite, Sprite Dust, cosmetic, Gizmo, and XP codes." />
+</HeadContent>
+
+<main class="cheatCodePage">
+    <SiteHeader Profile="@profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
+    <section class="cheatCodeContent">
+        <div class="cheatCodeHero">
+            <div>
+                <span class="sectionKicker">CHAPTER 7 · SEASON 4</span>
+                <h1>LOBBY HACK CODES</h1>
+                <p>Open the Admin Panel in the Battle Royale lobby, enter a code, and claim its reward.</p>
+            </div>
+            @if (catalog is not null)
+            {
+                <div class="cheatSummary"><strong>@UsedCount / @catalog.TrackableCodeCount</strong><span>ONE-TIME CODES USED</span></div>
+            }
+        </div>
+
+        @if (catalogLoading)
+        {
+            <div class="playerState">Loading Lobby Hack codes...</div>
+        }
+        else if (catalog is null)
+        {
+            <div class="playerState"><strong>Lobby Hack archive unavailable</strong><span>Please try again later.</span></div>
+        }
+        else
+        {
+            <div class="codeFilters">
+                <label class="categorySelect">
+                    <span>CATEGORY</span>
+                    <select @bind="selectedCategoryId" aria-label="Filter by reward category">
+                        <option value="">All categories</option>
+                    @foreach (var category in catalog.Categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                    </select>
+                </label>
+                <div class="segmented" aria-label="Filter by usage">
+                    @foreach (var item in UsageFilters)
+                    {
+                        <button class="@(usageFilter == item ? "selected" : "")" @onclick="() => usageFilter = item">@item</button>
+                    }
+                </div>
+            </div>
+
+            <div class="codeTableWrap">
+                <table class="codeTable">
+                    <thead>
+                        <tr><th>Category</th><th>Code</th><th>Reward</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var category in catalog.Categories.Where(item => selectedCategoryId is null || item.Id == selectedCategoryId))
+                        {
+                            @foreach (var cheat in category.Codes.Where(IsVisible))
+                            {
+                                var isUsed = usedIds.Contains(cheat.Id);
+                                <tr class="@(isUsed ? "used" : "")">
+                                    <td data-label="Category"><span class="categoryName">@category.Name</span></td>
+                                    <td data-label="Code"><span class="cheatCodeValue">@cheat.Code</span></td>
+                                    <td data-label="Reward">
+                                        <div class="rewardDetails">
+                                            <span>@cheat.Description</span>
+                                            @if (!string.IsNullOrWhiteSpace(cheat.Requirement))
+                                            {
+                                                <small class="requirement"><b>Requirement</b>@cheat.Requirement</small>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td data-label="Status" class="codeStatus">
+                                        @if (!cheat.IsTrackable)
+                                        {
+                                            <span class="repeatable">Repeatable</span>
+                                        }
+                                        else
+                                        {
+                                            <button class="useToggle" disabled="@savingIds.Contains(cheat.Id)" @onclick="() => ToggleUsedAsync(cheat)">
+                                                @(isUsed ? "Used" : "Mark used")
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <SiteFooter />
+</main>

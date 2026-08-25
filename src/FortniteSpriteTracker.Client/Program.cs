@@ -22,5 +22,6 @@ builder.Services.AddScoped<AccountState>();
 builder.Services.AddScoped<CollectionClient>();
 builder.Services.AddScoped<PlayerClient>();
 builder.Services.AddScoped<CatalogClient>();
+builder.Services.AddScoped<CheatCodeClient>();
 
 await builder.Build().RunAsync();
