@@ -19,6 +19,7 @@ public partial class CheatCodes
 
     private CheatCodeCatalogDto? catalog;
     private bool catalogLoading = true;
+    private bool progressInitialized;
     private int? selectedCategoryId;
     private string usageFilter = "All";
     private UserProfileDto? profile => AccountState.Profile;
@@ -45,13 +46,16 @@ public partial class CheatCodes
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || catalog is null)
+        if (progressInitialized || catalog is null)
         {
             return;
         }
 
+        progressInitialized = true;
+
         localUsedIds.UnionWith(await Storage.GetAsync(BrowserProgressKey, new HashSet<int>()));
         FilterToTrackable(localUsedIds);
+        usedIds.UnionWith(localUsedIds);
         try
         {
             await AccountState.LoadAsync();
@@ -66,13 +70,15 @@ public partial class CheatCodes
                     serverIds.Add(id);
                 }
 
-                localUsedIds.Clear();
-                await Storage.RemoveAsync(BrowserProgressKey);
-                usedIds.UnionWith(serverIds);
-            }
-            else
-            {
-                usedIds.UnionWith(localUsedIds);
+                var confirmedIds = (await CheatCodesApi.GetProgressAsync()).Select(item => item.CheatCodeId).ToHashSet();
+                FilterToTrackable(confirmedIds);
+                if (localUsedIds.All(confirmedIds.Contains))
+                {
+                    localUsedIds.Clear();
+                    await Storage.RemoveAsync(BrowserProgressKey);
+                }
+
+                usedIds.UnionWith(confirmedIds);
             }
         }
         catch (HttpRequestException)
@@ -101,19 +107,19 @@ public partial class CheatCodes
         if (isUsed) usedIds.Add(code.Id); else usedIds.Remove(code.Id);
         try
         {
-            if (profile is null)
-            {
-                if (isUsed) localUsedIds.Add(code.Id); else localUsedIds.Remove(code.Id);
-                await Storage.SetAsync(BrowserProgressKey, localUsedIds);
-            }
-            else
+            // Keep a device copy for every user. It makes an in-flight account save survive a refresh
+            // and is reconciled with the account the next time the tracker loads.
+            if (isUsed) localUsedIds.Add(code.Id); else localUsedIds.Remove(code.Id);
+            await Storage.SetAsync(BrowserProgressKey, localUsedIds);
+
+            if (profile is not null)
             {
                 await CheatCodesApi.UpdateAsync(new UpdateCheatCodeProgressRequest { CheatCodeId = code.Id, IsUsed = isUsed });
             }
         }
         catch (HttpRequestException)
         {
-            if (isUsed) usedIds.Remove(code.Id); else usedIds.Add(code.Id);
+            // The local copy is retained and will be merged when a connection is available.
         }
         finally
         {
