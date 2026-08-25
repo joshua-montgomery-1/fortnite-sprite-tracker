@@ -64,6 +64,11 @@ public static class SitemapEndpoints
                     new XElement(ns + "loc", $"{BaseUrl}/players"),
                     new XElement(ns + "changefreq", "daily"),
                     new XElement(ns + "priority", "0.8")
+                ),
+                new XElement(ns + "url",
+                    new XElement(ns + "loc", $"{BaseUrl}/cheat-codes"),
+                    new XElement(ns + "changefreq", "daily"),
+                    new XElement(ns + "priority", "0.8")
                 )
             );
 
