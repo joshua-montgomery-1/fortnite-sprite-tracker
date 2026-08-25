@@ -52,6 +52,7 @@ public partial class CheatCodes
 
         localUsedIds.UnionWith(await Storage.GetAsync(BrowserProgressKey, new HashSet<int>()));
         FilterToTrackable(localUsedIds);
+        usedIds.UnionWith(localUsedIds);
         try
         {
             await AccountState.LoadAsync();
@@ -66,13 +67,15 @@ public partial class CheatCodes
                     serverIds.Add(id);
                 }
 
-                localUsedIds.Clear();
-                await Storage.RemoveAsync(BrowserProgressKey);
-                usedIds.UnionWith(serverIds);
-            }
-            else
-            {
-                usedIds.UnionWith(localUsedIds);
+                var confirmedIds = (await CheatCodesApi.GetProgressAsync()).Select(item => item.CheatCodeId).ToHashSet();
+                FilterToTrackable(confirmedIds);
+                if (localUsedIds.All(confirmedIds.Contains))
+                {
+                    localUsedIds.Clear();
+                    await Storage.RemoveAsync(BrowserProgressKey);
+                }
+
+                usedIds.UnionWith(confirmedIds);
             }
         }
         catch (HttpRequestException)
