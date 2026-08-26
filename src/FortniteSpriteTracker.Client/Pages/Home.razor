@@ -1,42 +1,14 @@
 @page "/"
 
 <PageTitle>Sprite Scout - Fortnite Sprite Tracker</PageTitle>
-
 <HeadContent>
-    <link rel="canonical" href="https://spritescout.com/" />
-    <meta name="description" content="Track, scout, and complete your Fortnite Sprite collections across chapters and seasons. Compare collections with friends and track sprite progress in real time on Sprite Scout." />
-    <script type="application/ld+json">
-    {
-      "@@context": "https://schema.org",
-      "@@graph": [
-        {
-          "@@type": "WebApplication",
-          "@@id": "https://spritescout.com/#webapp",
-          "name": "Sprite Scout",
-          "url": "https://spritescout.com/",
-          "description": "Interactive Fortnite Sprite companion tracker and field guide. Track sprite variants, view rare locations, and share collection progress with squadmates.",
-          "applicationCategory": "GameApplication",
-          "operatingSystem": "All",
-          "offers": {
-            "@@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-          }
-        },
-        {
-          "@@type": "WebSite",
-          "@@id": "https://spritescout.com/#website",
-          "name": "Sprite Scout",
-          "url": "https://spritescout.com/",
-          "potentialAction": {
-            "@@type": "SearchAction",
-            "target": "https://spritescout.com/players",
-            "query-input": "required name=search_term_string"
-          }
-        }
-      ]
-    }
-    </script>
+    <PageMetadata Title="Sprite Scout - Fortnite Sprite Tracker"
+                  Description="Track, scout, and complete your Fortnite Sprite collections across chapters and seasons. Compare collections with friends and track sprite progress in real time on Sprite Scout."
+                  Path="/">
+        <OpenGraphMetadata />
+        <TwitterCardMetadata />
+        <JsonLd Value="@HomeStructuredData" />
+    </PageMetadata>
 </HeadContent>
 
 <main class="@(printBlank ? "printBlank" : "")">

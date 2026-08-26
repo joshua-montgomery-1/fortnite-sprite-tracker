@@ -1,4 +1,5 @@
 using FortniteSpriteTracker.Services;
+using FortniteSpriteTracker.Components;
 using FortniteSpriteTracker.Shared.CheatCodes;
 using FortniteSpriteTracker.Shared.Profiles;
 using Microsoft.AspNetCore.Components;
@@ -24,6 +25,57 @@ public partial class CheatCodes
     private string usageFilter = "All";
     private UserProfileDto? profile => AccountState.Profile;
     private int UsedCount => usedIds.Count;
+    private string SeasonName => catalog?.Season.Name ?? "Current Season";
+    private string MetadataTitle => $"Fortnite {SeasonName} Lobby Hack Codes | Sprite Scout";
+    private string MetadataDescription => catalog is null
+        ? "Find current Fortnite Lobby Hack codes, rewards, and redemption instructions. Track the one-time codes you have already used."
+        : $"Every Fortnite {SeasonName} Lobby Hack code and reward. Track {catalog.TrackableCodeCount} one-time Sprite, Sprite Dust, cosmetic, Gizmo, supply, and XP codes.";
+    private SchemaGraph CheatCodeStructuredData => new()
+    {
+        Nodes =
+        [
+            new WebPageSchema
+            {
+                Id = "/cheat-codes#webpage",
+                Name = MetadataTitle,
+                Path = "/cheat-codes",
+                Description = MetadataDescription,
+                IsPartOf = new WebSiteSchema
+                {
+                    Name = "Sprite Scout",
+                    Path = "/"
+                }
+            },
+            new BreadcrumbListSchema
+            {
+                Items =
+                [
+                    new BreadcrumbSchema
+                    {
+                        Name = "Sprite Scout",
+                        Path = "/"
+                    },
+                    new BreadcrumbSchema
+                    {
+                        Name = "Lobby Hack Codes",
+                        Path = "/cheat-codes"
+                    }
+                ]
+            },
+            new ItemListSchema
+            {
+                Name = $"Fortnite {SeasonName} Lobby Hack Codes",
+                Items = catalog!.Categories
+                    .SelectMany(category => category.Codes.Select(code => new { Category = category.Name, Code = code }))
+                    .Select(item => new SchemaItem
+                    {
+                        Name = item.Code.Code,
+                        Description = $"{item.Category}: {item.Code.Description}"
+                    })
+                    .ToArray()
+            }
+        ]
+    };
     private IEnumerable<CheatCodeCategoryDto> VisibleCategories => (catalog?.Categories ?? [])
         .Where(item => selectedCategoryId is null || item.Id == selectedCategoryId)
         .Where(item => item.Codes.Any(IsVisible));

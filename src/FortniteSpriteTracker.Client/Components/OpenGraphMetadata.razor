@@ -1,0 +1,20 @@
+@if (Metadata.ImageUrl is not null)
+{
+    <meta property="og:type" content="@Type" />
+    <meta property="og:site_name" content="@Metadata.SiteName" />
+    <meta property="og:url" content="@Metadata.CanonicalUrl" />
+    <meta property="og:title" content="@Metadata.Title" />
+    <meta property="og:description" content="@Metadata.Description" />
+    <meta property="og:image" content="@Metadata.ImageUrl" />
+    <meta property="og:image:width" content="@Metadata.ImageWidth" />
+    <meta property="og:image:height" content="@Metadata.ImageHeight" />
+    <meta property="og:image:alt" content="@Metadata.ImageAlt" />
+}
+
+@code {
+    [CascadingParameter] private PageMetadataContext? MetadataContext { get; set; }
+    [Parameter] public string Type { get; set; } = "website";
+
+    private PageMetadataContext Metadata => MetadataContext
+        ?? throw new InvalidOperationException($"{nameof(OpenGraphMetadata)} must be nested inside {nameof(PageMetadata)}.");
+}

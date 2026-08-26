@@ -1,0 +1,45 @@
+<meta name="description" content="@Description" />
+<meta name="robots" content="@RobotsContent" />
+<link rel="canonical" href="@CanonicalUrl" />
+
+<CascadingValue Value="@Metadata">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private const string Origin = "https://spritescout.com/";
+    private const string DefaultSiteName = "Sprite Scout";
+    private const string DefaultImage = "/images/og-image.png";
+
+    [Parameter, EditorRequired] public required string Title { get; set; }
+    [Parameter, EditorRequired] public required string Description { get; set; }
+    [Parameter, EditorRequired] public required string Path { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+    [Parameter] public RobotsDirective Robots { get; set; } = RobotsDirective.IndexFollow;
+    [Parameter] public string? Image { get; set; } = DefaultImage;
+    [Parameter] public string? ImageAlt { get; set; }
+    [Parameter] public int ImageWidth { get; set; } = 1200;
+    [Parameter] public int ImageHeight { get; set; } = 630;
+    [Parameter] public string SiteName { get; set; } = DefaultSiteName;
+
+    private string CanonicalUrl => AbsoluteUrl(Path);
+    private PageMetadataContext Metadata => new()
+    {
+        Title = Title,
+        Description = Description,
+        CanonicalUrl = CanonicalUrl,
+        SiteName = SiteName,
+        ImageUrl = Image is null ? null : AbsoluteUrl(Image),
+        ImageAlt = ImageAlt ?? Title,
+        ImageWidth = ImageWidth,
+        ImageHeight = ImageHeight
+    };
+    private string RobotsContent => Robots switch
+    {
+        RobotsDirective.NoIndexFollow => "noindex, follow",
+        RobotsDirective.NoIndexNoFollow => "noindex, nofollow",
+        _ => "index, follow"
+    };
+
+    private static string AbsoluteUrl(string path) => $"{Origin}{path.TrimStart('/')}";
+}

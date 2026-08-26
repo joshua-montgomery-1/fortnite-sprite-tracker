@@ -5,10 +5,15 @@
 @inject CatalogClient CatalogApi
 @inject AccountState AccountState
 
-<PageTitle>Tracked players - Sprite Scout</PageTitle>
-
+<PageTitle>Tracked Players - Sprite Scout</PageTitle>
 <HeadContent>
-    <meta name="robots" content="noindex, nofollow" />
+    <PageMetadata Title="Tracked Players - Sprite Scout"
+                  Description="View the Fortnite Sprite players you privately track on Sprite Scout."
+                  Path="/tracked-players"
+                  Robots="RobotsDirective.NoIndexNoFollow">
+        <OpenGraphMetadata />
+        <TwitterCardMetadata />
+    </PageMetadata>
 </HeadContent>
 
 <main>

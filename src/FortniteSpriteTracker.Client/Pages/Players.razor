@@ -1,44 +1,15 @@
 @page "/players"
 @page "/players/{PublicId:guid}"
 
-<PageTitle>@(data is null ? "Find a player" : $"{data.Player.DisplayName} ({data.Player.EpicDisplayName})") - Sprite Scout</PageTitle>
-
+<PageTitle>@MetadataTitle</PageTitle>
 <HeadContent>
-    @if (data is not null && PublicId is not null)
-    {
-        var playerCanonical = $"https://spritescout.com/players/{data.Player.PublicId:D}";
-        var pageTitle = $"{data.Player.DisplayName} ({data.Player.EpicDisplayName}) - Sprite Scout";
-        var pageDesc = data.Player.IsCollectionPublic
-            ? $"View {data.Player.DisplayName}'s Fortnite Sprite collection on Sprite Scout. {data.Collection.Count} sprites collected."
-            : $"Player profile for {data.Player.DisplayName} on Sprite Scout.";
-
-        <link rel="canonical" href="@playerCanonical" />
-        <meta name="description" content="@pageDesc" />
-        <meta property="og:title" content="@pageTitle" />
-        <meta property="og:description" content="@pageDesc" />
-        <meta property="og:url" content="@playerCanonical" />
-        <meta name="twitter:title" content="@pageTitle" />
-        <meta name="twitter:description" content="@pageDesc" />
-
-        @if (!data.Player.IsCollectionPublic)
-        {
-            <meta name="robots" content="noindex, follow" />
-        }
-        else
-        {
-            <meta name="robots" content="index, follow" />
-        }
-    }
-    else
-    {
-        <link rel="canonical" href="https://spritescout.com/players" />
-        <meta name="description" content="Search for Fortnite Sprite Scouts by Epic display name. Compare sprite collections and discover player field guides on Sprite Scout." />
-        <meta property="og:title" content="Find a Player - Sprite Scout" />
-        <meta property="og:description" content="Search for Fortnite Sprite Scouts by Epic display name. Compare sprite collections and discover player field guides on Sprite Scout." />
-        <meta property="og:url" content="https://spritescout.com/players" />
-        <meta name="twitter:title" content="Find a Player - Sprite Scout" />
-        <meta name="twitter:description" content="Search for Fortnite Sprite Scouts by Epic display name. Compare sprite collections and discover player field guides on Sprite Scout." />
-    }
+    <PageMetadata Title="@MetadataTitle"
+                  Description="@MetadataDescription"
+                  Path="@MetadataPath"
+                  Robots="@MetadataRobots">
+        <OpenGraphMetadata />
+        <TwitterCardMetadata />
+    </PageMetadata>
 </HeadContent>
 
 <main>

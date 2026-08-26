@@ -1,4 +1,5 @@
 using FortniteSpriteTracker.Services;
+using FortniteSpriteTracker.Components;
 using FortniteSpriteTracker.Shared.Catalog;
 using FortniteSpriteTracker.Shared.Collections;
 using FortniteSpriteTracker.Shared.Players;
@@ -32,6 +33,28 @@ public partial class Players
     private bool copied;
     private bool changingTracking;
     private bool confirmingUntrack;
+
+    private string MetadataTitle => data is not null
+        ? $"{data.Player.DisplayName} ({data.Player.EpicDisplayName}) Fortnite Sprite Collection | Sprite Scout"
+        : PublicId is null
+            ? "Find a Fortnite Sprite Player | Sprite Scout"
+            : "Player Not Found | Sprite Scout";
+    private string MetadataDescription => data switch
+    {
+        { Player.IsCollectionPublic: true } =>
+            $"View {data.Player.DisplayName} ({data.Player.EpicDisplayName})'s Fortnite Sprite collection on Sprite Scout: {data.Player.OwnedCount} collected and {data.Player.MasteredCount} mastered.",
+        not null => $"View the Sprite Scout profile for {data.Player.DisplayName} ({data.Player.EpicDisplayName}). This player's Fortnite Sprite collection is private.",
+        _ when PublicId is null => "Search for Fortnite Sprite Scouts by Epic display name. Compare sprite collections and discover player field guides on Sprite Scout.",
+        _ => "This Sprite Scout player profile could not be found."
+    };
+    private string MetadataPath => data is not null
+        ? $"/players/{data.Player.PublicId:D}"
+        : PublicId is null
+            ? "/players"
+            : $"/players/{PublicId.Value:D}";
+    private RobotsDirective MetadataRobots => data?.Player.IsCollectionPublic == true || PublicId is null
+        ? RobotsDirective.IndexFollow
+        : RobotsDirective.NoIndexFollow;
 
     private bool IsOwnProfile => data?.Viewer?.PublicId == data?.Player.PublicId;
     private string CanonicalUrl => new Uri(new Uri(Navigation.BaseUri), $"players/{data!.Player.PublicId:D}").AbsoluteUri;
