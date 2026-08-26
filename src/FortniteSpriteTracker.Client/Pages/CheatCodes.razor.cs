@@ -36,44 +36,31 @@ public partial class CheatCodes
         [
             new WebPageSchema
             {
-                Id = "/cheat-codes#webpage",
+                Id = SchemaBuilder.Url("/cheat-codes#webpage"),
                 Name = MetadataTitle,
-                Path = "/cheat-codes",
+                Url = SchemaBuilder.Url("/cheat-codes"),
                 Description = MetadataDescription,
                 IsPartOf = new WebSiteSchema
                 {
                     Name = "Sprite Scout",
-                    Path = "/"
+                    Url = SchemaBuilder.Url("/")
                 }
             },
-            new BreadcrumbListSchema
-            {
-                Items =
-                [
-                    new BreadcrumbSchema
-                    {
-                        Name = "Sprite Scout",
-                        Path = "/"
-                    },
-                    new BreadcrumbSchema
-                    {
-                        Name = "Lobby Hack Codes",
-                        Path = "/cheat-codes"
-                    }
-                ]
-            },
-            new ItemListSchema
-            {
-                Name = $"Fortnite {SeasonName} Lobby Hack Codes",
-                Items = catalog!.Categories
+            SchemaBuilder.Breadcrumbs(
+            [
+                ("Sprite Scout", "/"),
+                ("Lobby Hack Codes", "/cheat-codes")
+            ]),
+            SchemaBuilder.ItemList(
+                $"Fortnite {SeasonName} Lobby Hack Codes",
+                catalog!.Categories
                     .SelectMany(category => category.Codes.Select(code => new { Category = category.Name, Code = code }))
                     .Select(item => new SchemaItem
                     {
                         Name = item.Code.Code,
                         Description = $"{item.Category}: {item.Code.Description}"
                     })
-                    .ToArray()
-            }
+                    .ToArray())
         ]
     };
     private IEnumerable<CheatCodeCategoryDto> VisibleCategories => (catalog?.Categories ?? [])

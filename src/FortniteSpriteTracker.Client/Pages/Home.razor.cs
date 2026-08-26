@@ -17,9 +17,9 @@ public partial class Home : IAsyncDisposable
         [
             new WebApplicationSchema
             {
-                Id = "#webapp",
+                Id = SchemaBuilder.Url("#webapp"),
                 Name = "Sprite Scout",
-                Path = "/",
+                Url = SchemaBuilder.Url("/"),
                 Description = "Interactive Fortnite Sprite companion tracker and field guide. Track sprite variants, view rare locations, and share collection progress with squadmates.",
                 Offer = new OfferSchema
                 {
@@ -29,9 +29,9 @@ public partial class Home : IAsyncDisposable
             },
             new WebSiteSchema
             {
-                Id = "#website",
+                Id = SchemaBuilder.Url("#website"),
                 Name = "Sprite Scout",
-                Path = "/"
+                Url = SchemaBuilder.Url("/")
             }
         ]
     };

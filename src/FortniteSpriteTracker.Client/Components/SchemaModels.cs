@@ -14,23 +14,17 @@ public sealed class SchemaGraph
 public sealed class WebApplicationSchema
 {
     [JsonPropertyName("@type")]
-    public string Type => "WebApplication";
-
-    [JsonIgnore]
-    public string? Id { get; init; }
+    public string Type { get; init; } = "WebApplication";
 
     [JsonPropertyName("@id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? CanonicalId => Id is null ? null : SchemaUrl.Absolute(Id);
+    public string? Id { get; init; }
 
     [JsonPropertyName("name")]
     public required string Name { get; init; }
 
-    [JsonIgnore]
-    public required string Path { get; init; }
-
     [JsonPropertyName("url")]
-    public string Url => SchemaUrl.Absolute(Path);
+    public required string Url { get; init; }
 
     [JsonPropertyName("description")]
     public required string Description { get; init; }
@@ -42,13 +36,14 @@ public sealed class WebApplicationSchema
     public string OperatingSystem { get; init; } = "All";
 
     [JsonPropertyName("offers")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public OfferSchema? Offer { get; init; }
 }
 
 public sealed class OfferSchema
 {
     [JsonPropertyName("@type")]
-    public string Type => "Offer";
+    public string Type { get; init; } = "Offer";
 
     [JsonPropertyName("price")]
     public required string Price { get; init; }
@@ -60,46 +55,33 @@ public sealed class OfferSchema
 public sealed class WebSiteSchema
 {
     [JsonPropertyName("@type")]
-    public string Type => "WebSite";
-
-    [JsonIgnore]
-    public string? Id { get; init; }
+    public string Type { get; init; } = "WebSite";
 
     [JsonPropertyName("@id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? CanonicalId => Id is null ? null : SchemaUrl.Absolute(Id);
+    public string? Id { get; init; }
 
     [JsonPropertyName("name")]
     public required string Name { get; init; }
 
-    [JsonIgnore]
-    public required string Path { get; init; }
-
     [JsonPropertyName("url")]
-    public string Url => SchemaUrl.Absolute(Path);
-
+    public required string Url { get; init; }
 }
 
 public sealed class WebPageSchema
 {
     [JsonPropertyName("@type")]
-    public string Type => "WebPage";
-
-    [JsonIgnore]
-    public string? Id { get; init; }
+    public string Type { get; init; } = "WebPage";
 
     [JsonPropertyName("@id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? CanonicalId => Id is null ? null : SchemaUrl.Absolute(Id);
+    public string? Id { get; init; }
 
     [JsonPropertyName("name")]
     public required string Name { get; init; }
 
-    [JsonIgnore]
-    public required string Path { get; init; }
-
     [JsonPropertyName("url")]
-    public string Url => SchemaUrl.Absolute(Path);
+    public required string Url { get; init; }
 
     [JsonPropertyName("description")]
     public required string Description { get; init; }
@@ -111,68 +93,16 @@ public sealed class WebPageSchema
 public sealed class BreadcrumbListSchema
 {
     [JsonPropertyName("@type")]
-    public string Type => "BreadcrumbList";
-
-    [JsonIgnore]
-    public required IReadOnlyList<BreadcrumbSchema> Items { get; init; }
+    public string Type { get; init; } = "BreadcrumbList";
 
     [JsonPropertyName("itemListElement")]
-    public IReadOnlyList<object> ItemListElement => Items
-        .Select((item, index) => (object)new BreadcrumbListItemSchema
-        {
-            Position = index + 1,
-            Name = item.Name,
-            Path = item.Path
-        })
-        .ToArray();
+    public required IReadOnlyList<BreadcrumbListItemSchema> Items { get; init; }
 }
 
-public sealed class BreadcrumbSchema
-{
-    public required string Name { get; init; }
-    public required string Path { get; init; }
-}
-
-public sealed class ItemListSchema
+public sealed class BreadcrumbListItemSchema
 {
     [JsonPropertyName("@type")]
-    public string Type => "ItemList";
-
-    [JsonPropertyName("name")]
-    public required string Name { get; init; }
-
-    [JsonIgnore]
-    public required IReadOnlyList<SchemaItem> Items { get; init; }
-
-    [JsonPropertyName("numberOfItems")]
-    public int NumberOfItems => Items.Count;
-
-    [JsonPropertyName("itemListElement")]
-    public IReadOnlyList<object> ItemListElement => Items
-        .Select((item, index) => (object)new ItemListEntrySchema
-        {
-            Position = index + 1,
-            Item = item
-        })
-        .ToArray();
-}
-
-public sealed class SchemaItem
-{
-    [JsonPropertyName("@type")]
-    public string Type => "Thing";
-
-    [JsonPropertyName("name")]
-    public required string Name { get; init; }
-
-    [JsonPropertyName("description")]
-    public required string Description { get; init; }
-}
-
-internal sealed class BreadcrumbListItemSchema
-{
-    [JsonPropertyName("@type")]
-    public string Type => "ListItem";
+    public string Type { get; init; } = "ListItem";
 
     [JsonPropertyName("position")]
     public required int Position { get; init; }
@@ -180,17 +110,29 @@ internal sealed class BreadcrumbListItemSchema
     [JsonPropertyName("name")]
     public required string Name { get; init; }
 
-    [JsonIgnore]
-    public required string Path { get; init; }
-
     [JsonPropertyName("item")]
-    public string Item => SchemaUrl.Absolute(Path);
+    public required string Item { get; init; }
 }
 
-internal sealed class ItemListEntrySchema
+public sealed class ItemListSchema
 {
     [JsonPropertyName("@type")]
-    public string Type => "ListItem";
+    public string Type { get; init; } = "ItemList";
+
+    [JsonPropertyName("name")]
+    public required string Name { get; init; }
+
+    [JsonPropertyName("numberOfItems")]
+    public required int NumberOfItems { get; init; }
+
+    [JsonPropertyName("itemListElement")]
+    public required IReadOnlyList<ItemListEntrySchema> Items { get; init; }
+}
+
+public sealed class ItemListEntrySchema
+{
+    [JsonPropertyName("@type")]
+    public string Type { get; init; } = "ListItem";
 
     [JsonPropertyName("position")]
     public required int Position { get; init; }
@@ -199,9 +141,14 @@ internal sealed class ItemListEntrySchema
     public required SchemaItem Item { get; init; }
 }
 
-internal static class SchemaUrl
+public sealed class SchemaItem
 {
-    private const string Origin = "https://spritescout.com/";
+    [JsonPropertyName("@type")]
+    public string Type { get; init; } = "Thing";
 
-    public static string Absolute(string path) => $"{Origin}{path.TrimStart('/')}";
+    [JsonPropertyName("name")]
+    public required string Name { get; init; }
+
+    [JsonPropertyName("description")]
+    public required string Description { get; init; }
 }
