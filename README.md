@@ -2,14 +2,21 @@
 
 A Fortnite Sprite collection tracker built as a .NET 10 Blazor Web App with server prerendering and WebAssembly interactivity.
 
-## Features
+Detailed guides:
 
-- Tracks 25 Sprite families and 117 valid variants.
-- Separate Owned and Mastered status for every variant.
-- Compact checklist and collectible Field Guide views.
-- Local browser persistence with a Google-account persistence backend in development.
-- Populated and blank landscape PDF checklist exports.
-- Responsive layout and locally hosted community artwork.
+- [Catalog maintenance](docs/catalog-maintenance.md)
+- [Deployment](docs/deployment.md)
+
+## What it does
+
+- Tracks Sprite families and variants across multiple Fortnite seasons.
+- Records separate `Owned` and `Mastered` progress for every Sprite variant, with season filters and styles such as Normal, Gold, Gummy, Galaxy, Holofoil, Gem, Cube, and Quack.
+- Provides checklist and collectible Field Guide views, including season-aware progress totals.
+- Includes a Lobby Hack cheat-code tracker organized around rewards such as Cosmetics, Sprites, Sprite Dust, Gizmos & Supplies, XP, and Lobby Effects.
+- Lets users mark one-time codes as used while identifying repeatable codes and their rewards, which can include Sprites, Sprite Dust, cosmetics, XP, supplies, and temporary lobby effects.
+- Keeps unauthenticated progress in browser storage and syncs signed-in Sprite and cheat-code progress to PostgreSQL.
+- Provides public player profiles, collection comparisons, permanent profile links, private tracked-player lists, and season-filtered player totals.
+- Supports profile privacy, Epic display names, light/dark/system theme preferences, responsive layouts, and populated or blank landscape PDF checklist exports.
 
 ## Run locally
 
@@ -30,7 +37,9 @@ The Sprite catalog is intentionally not populated during normal startup. Seed or
 dotnet run --project src/FortniteSpriteTracker -- --seed-catalog
 ```
 
-The command applies pending migrations, reconciles the fixed-ID Chapter 7 Season 3 catalog, reports its changes, and exits without starting the web server. Running it repeatedly is safe.
+The command applies pending migrations, reconciles the committed multi-season catalog, variant styles, and Lobby Hack code definitions, reports inserted and updated records, and exits without starting the web server. Running it repeatedly is safe.
+
+The committed seed establishes Chapter 7 Season 3 and Chapter 7 Season 4 metadata. Sprite families and variants are associated with individual seasons, so new seasons can be added without changing the meaning of earlier collection progress. The season cheat-code catalog includes both trackable one-time rewards and repeatable effects and can grow as new codes are introduced.
 
 This catalog revision establishes a clean-slate database schema and replaces the earlier migration history. Its initial migration removes the known legacy application tables before recreating them, so existing accounts, authentication keys, and collection progress are intentionally discarded.
 
@@ -163,9 +172,11 @@ Container Apps retains live log streaming even though historical platform logs a
 - `FortniteSpriteTracker.slnx` - root solution
 - `src/FortniteSpriteTracker` - ASP.NET Core Blazor Web App host, prerendering, authentication, and persistence API
 - `src/FortniteSpriteTracker.Client` - components and services compiled for WebAssembly interactivity
+- `src/FortniteSpriteTracker.DataAccess` - EF Core entities, migrations, and catalog seeding
 - `src/FortniteSpriteTracker.Shared` - client/server API contracts
 - `src/FortniteSpriteTracker.AppHost` - Aspire orchestration for the server and PostgreSQL
 - `src/FortniteSpriteTracker.ServiceDefaults` - shared health checks, telemetry, and service discovery
+- `docs` - catalog maintenance and deployment guides
 
 ## Notes
 
