@@ -149,7 +149,7 @@ public sealed class ItemListSchema
 
     [JsonPropertyName("itemListElement")]
     public IReadOnlyList<object> ItemListElement => Items
-        .Select((item, index) => (object)new ThingListItemSchema
+        .Select((item, index) => (object)new ItemListEntrySchema
         {
             Position = index + 1,
             Item = item
@@ -187,7 +187,7 @@ internal sealed class BreadcrumbListItemSchema
     public string Item => SchemaUrl.Absolute(Path);
 }
 
-internal sealed class ThingListItemSchema
+internal sealed class ItemListEntrySchema
 {
     [JsonPropertyName("@type")]
     public string Type => "ListItem";
