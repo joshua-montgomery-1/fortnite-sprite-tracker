@@ -2,6 +2,11 @@
 
 A Fortnite Sprite collection tracker built as a .NET 10 Blazor Web App with server prerendering and WebAssembly interactivity.
 
+Detailed guides:
+
+- [Catalog maintenance](docs/catalog-maintenance.md)
+- [Deployment](docs/deployment.md)
+
 ## What it does
 
 - Tracks Sprite families and variants across multiple Fortnite seasons.
@@ -167,9 +172,11 @@ Container Apps retains live log streaming even though historical platform logs a
 - `FortniteSpriteTracker.slnx` - root solution
 - `src/FortniteSpriteTracker` - ASP.NET Core Blazor Web App host, prerendering, authentication, and persistence API
 - `src/FortniteSpriteTracker.Client` - components and services compiled for WebAssembly interactivity
+- `src/FortniteSpriteTracker.DataAccess` - EF Core entities, migrations, and catalog seeding
 - `src/FortniteSpriteTracker.Shared` - client/server API contracts
 - `src/FortniteSpriteTracker.AppHost` - Aspire orchestration for the server and PostgreSQL
 - `src/FortniteSpriteTracker.ServiceDefaults` - shared health checks, telemetry, and service discovery
+- `docs` - catalog maintenance and deployment guides
 
 ## Notes
 
