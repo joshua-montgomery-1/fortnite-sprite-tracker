@@ -169,4 +169,4 @@ Container Apps retains live log streaming even though historical platform logs a
 
 ## Notes
 
-This is an unofficial fan-made companion. Sprite artwork is checked into `src/FortniteSpriteTracker.Client/wwwroot/images/sprites`, and its original source attribution is retained in `src/FortniteSpriteTracker.Client/wwwroot/images/sprites/manifest.json`.
+This is an unofficial fan-made companion. Sprite artwork is served from the CDN, and its original source attribution is retained in `src/FortniteSpriteTracker.Client/wwwroot/images/sprites/manifest.json`.
