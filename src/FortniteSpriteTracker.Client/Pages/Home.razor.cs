@@ -1,4 +1,5 @@
 using FortniteSpriteTracker.Services;
+using FortniteSpriteTracker.Components;
 using FortniteSpriteTracker.Shared.Catalog;
 using FortniteSpriteTracker.Shared.Collections;
 using FortniteSpriteTracker.Shared.Profiles;
@@ -10,6 +11,30 @@ public partial class Home : IAsyncDisposable
 {
     private const string BrowserProgressKey = "sprite-scout-progress";
     private static readonly string[] CollectionFilters = ["All", "Owned", "Missing", "Mastered"];
+    private static readonly SchemaGraph HomeStructuredData = new()
+    {
+        Nodes =
+        [
+            new WebApplicationSchema
+            {
+                Id = "#webapp",
+                Name = "Sprite Scout",
+                Path = "/",
+                Description = "Interactive Fortnite Sprite companion tracker and field guide. Track sprite variants, view rare locations, and share collection progress with squadmates.",
+                Offer = new OfferSchema
+                {
+                    Price = "0",
+                    Currency = "USD"
+                }
+            },
+            new WebSiteSchema
+            {
+                Id = "#website",
+                Name = "Sprite Scout",
+                Path = "/"
+            }
+        ]
+    };
     private readonly HashSet<int> owned = [];
     private readonly HashSet<int> mastered = [];
     private readonly Dictionary<int, LocalProgress> localProgress = [];

@@ -69,6 +69,16 @@ public static class SitemapEndpoints
                     new XElement(ns + "loc", $"{BaseUrl}/cheat-codes"),
                     new XElement(ns + "changefreq", "daily"),
                     new XElement(ns + "priority", "0.8")
+                ),
+                new XElement(ns + "url",
+                    new XElement(ns + "loc", $"{BaseUrl}/privacy"),
+                    new XElement(ns + "changefreq", "yearly"),
+                    new XElement(ns + "priority", "0.2")
+                ),
+                new XElement(ns + "url",
+                    new XElement(ns + "loc", $"{BaseUrl}/terms"),
+                    new XElement(ns + "changefreq", "yearly"),
+                    new XElement(ns + "priority", "0.2")
                 )
             );
 

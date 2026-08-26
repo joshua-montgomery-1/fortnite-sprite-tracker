@@ -1,11 +1,18 @@
 @page "/cheat-codes"
 @using FortniteSpriteTracker.Shared.CheatCodes
 
-<PageTitle>Fortnite Season 4 Lobby Hack Codes | Sprite Scout</PageTitle>
-
+<PageTitle>@MetadataTitle</PageTitle>
 <HeadContent>
-    <link rel="canonical" href="https://spritescout.com/cheat-codes" />
-    <meta name="description" content="Every Fortnite Chapter 7 Season 4 Lobby Hack code and reward. Track one-time Sprite, Sprite Dust, cosmetic, Gizmo, and XP codes." />
+    <PageMetadata Title="@MetadataTitle"
+                  Description="@MetadataDescription"
+                  Path="/cheat-codes">
+        <OpenGraphMetadata />
+        <TwitterCardMetadata />
+        @if (catalog is not null)
+        {
+            <JsonLd Value="@CheatCodeStructuredData" />
+        }
+    </PageMetadata>
 </HeadContent>
 
 <main class="cheatCodePage">
@@ -13,15 +20,27 @@
     <section class="cheatCodeContent">
         <div class="cheatCodeHero">
             <div>
-                <span class="sectionKicker">CHAPTER 7 · SEASON 4</span>
+                <span class="sectionKicker">@(catalog?.Season.Name.ToUpperInvariant() ?? "CURRENT FORTNITE SEASON")</span>
                 <h1>LOBBY HACK CODES</h1>
-                <p>Open the Admin Panel in the Battle Royale lobby, enter a code, and claim its reward.</p>
+                <p>Find every current Fortnite Lobby Hack code and reward, then track the one-time codes you have already claimed.</p>
             </div>
             @if (catalog is not null)
             {
                 <div class="cheatSummary"><strong>@UsedCount / @catalog.TrackableCodeCount</strong><span>ONE-TIME CODES USED</span></div>
             }
         </div>
+
+        <section class="cheatGuide" aria-labelledby="redeem-codes-title">
+            <div>
+                <span class="sectionKicker">HOW TO REDEEM</span>
+                <h2 id="redeem-codes-title">How to use Fortnite Lobby Hack codes</h2>
+            </div>
+            <ol>
+                <li>Open Fortnite and enter the Battle Royale lobby.</li>
+                <li>Open the Admin Panel and choose the option to enter a Lobby Hack code.</li>
+                <li>Type a code exactly as shown below, submit it, and claim the displayed reward.</li>
+            </ol>
+        </section>
 
         @if (catalogLoading)
         {
@@ -94,6 +113,26 @@
                 </table>
             </div>
         }
+
+        <section class="cheatFaq" aria-labelledby="cheat-faq-title">
+            <span class="sectionKicker">QUICK ANSWERS</span>
+            <h2 id="cheat-faq-title">Fortnite Lobby Hack code FAQ</h2>
+            <div class="cheatFaqGrid">
+                <article>
+                    <h3>What do Lobby Hack codes unlock?</h3>
+                    <p>Rewards can include Sprites, Sprite Dust, cosmetics, XP, Gizmos, supplies, and temporary lobby effects. The table above identifies each reward.</p>
+                </article>
+                <article>
+                    <h3>Can every code be used more than once?</h3>
+                    <p>No. Most rewards are one-time claims. Codes marked Repeatable can be entered again for their temporary effect.</p>
+                </article>
+                <article>
+                    <h3>Does Sprite Scout redeem the codes?</h3>
+                    <p>No. Redeem codes inside Fortnite. Sprite Scout only helps you find and track them alongside your <a href="/#collection">Sprite collection</a>.</p>
+                </article>
+            </div>
+            <p class="cheatExplore">Want to compare progress? <a href="/players">Find another Sprite Scout player</a>.</p>
+        </section>
     </section>
     <SiteFooter />
 </main>

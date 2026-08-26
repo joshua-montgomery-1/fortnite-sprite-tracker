@@ -2,6 +2,14 @@
 @inject AccountState AccountState
 
 <PageTitle>Privacy Policy - Sprite Scout</PageTitle>
+<HeadContent>
+    <PageMetadata Title="Privacy Policy - Sprite Scout"
+                  Description="Learn how Sprite Scout handles account details, collection progress, cookies, local storage, and public Fortnite Sprite profiles."
+                  Path="/privacy">
+        <OpenGraphMetadata />
+        <TwitterCardMetadata />
+    </PageMetadata>
+</HeadContent>
 
 <main>
     <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />

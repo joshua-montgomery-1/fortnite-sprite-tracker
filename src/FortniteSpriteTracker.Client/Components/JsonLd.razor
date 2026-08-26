@@ -1,0 +1,7 @@
+@using System.Text.Json
+
+<script type="application/ld+json">@((MarkupString)JsonSerializer.Serialize(Value))</script>
+
+@code {
+    [Parameter, EditorRequired] public required object Value { get; set; }
+}

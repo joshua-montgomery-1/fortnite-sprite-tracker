@@ -2,6 +2,14 @@
 @inject AccountState AccountState
 
 <PageTitle>Terms of Service - Sprite Scout</PageTitle>
+<HeadContent>
+    <PageMetadata Title="Terms of Service - Sprite Scout"
+                  Description="Read the terms governing use of Sprite Scout, the unofficial fan-made Fortnite Sprite collection tracker."
+                  Path="/terms">
+        <OpenGraphMetadata />
+        <TwitterCardMetadata />
+    </PageMetadata>
+</HeadContent>
 
 <main>
     <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
