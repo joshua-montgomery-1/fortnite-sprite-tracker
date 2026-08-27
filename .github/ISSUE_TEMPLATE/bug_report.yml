@@ -1,0 +1,70 @@
+name: Bug report
+description: Report something that is not working in Sprite Scout.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Sprite Scout. Please include enough detail for us to reproduce the issue.
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you saw.
+      placeholder: The collection page did not save my mastered Sprite...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: What did you expect to happen?
+      placeholder: I expected the Sprite to stay marked as mastered after refreshing.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps someone can follow to see the issue.
+      placeholder: |
+        1. Go to...
+        2. Click...
+        3. See...
+    validations:
+      required: true
+  - type: dropdown
+    id: sign-in-state
+    attributes:
+      label: Sign-in state
+      description: Tell us whether this happened while signed in.
+      options:
+        - Signed in with Google
+        - Not signed in
+        - Both signed in and signed out
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: browser-device
+    attributes:
+      label: Browser and device
+      description: Include browser, operating system, and device if you know them.
+      placeholder: Chrome on Windows 11, Safari on iPhone, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or screen recordings
+      description: Drag and drop screenshots or recordings here if they help explain the issue.
+    validations:
+      required: false
+  - type: textarea
+    id: extra-context
+    attributes:
+      label: Additional context
+      description: Add any other details that may help.
+    validations:
+      required: false
