@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest an improvement or new capability for Sprite Scout.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea. Please describe the user problem first so we can evaluate the request clearly.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Tell us what is hard, missing, confusing, or repetitive today.
+      placeholder: I want to compare my progress with friends more quickly...
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: What would you like to happen?
+      description: Describe the behavior or experience you want.
+      placeholder: Add a shareable comparison link that...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Share any workarounds or different approaches you have tried or considered.
+    validations:
+      required: false
+  - type: textarea
+    id: user-value
+    attributes:
+      label: Who would this help?
+      description: Explain who benefits and why it matters.
+      placeholder: This would help players who track collections across multiple devices because...
+    validations:
+      required: true
+  - type: textarea
+    id: extra-context
+    attributes:
+      label: Additional context
+      description: Add screenshots, examples, links, or other details if useful.
+    validations:
+      required: false

@@ -66,6 +66,27 @@ footer .brandmark {
   color: var(--surface);
 }
 
+.footerNav .issueLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.issueLink span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  color: var(--surface-strong);
+  background: #dfff45;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
 .footerBottom {
   display: flex;
   justify-content: space-between;
