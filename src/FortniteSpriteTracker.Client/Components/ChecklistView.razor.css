@@ -391,6 +391,19 @@
 .collectionMatrix td.collected:hover > div {
   opacity: 0.8;
 }
+@media (max-width: 720px) {
+  .mobileVariantRow.collected {
+    filter: grayscale(1);
+    opacity: 0.45;
+    transition: filter 0.2s, opacity 0.2s;
+  }
+
+  .mobileVariantRow.collected:hover,
+  .mobileVariantRow.collected:focus-within {
+    filter: grayscale(0.2);
+    opacity: 0.8;
+  }
+}
 
 /* Print rules live here after the normal isolated rules so their cascade remains intact. */
 @media print {
