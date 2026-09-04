@@ -57,7 +57,7 @@ For anonymous Azure pulls, make the GHCR package public after its first push. Pr
 
 ## Azure Container Apps
 
-The `infra` Bicep templates deploy a free-first Container App with scale-to-zero, one maximum replica, 0.5 vCPU, and 1 GiB memory. Log Analytics and Application Insights are intentionally omitted. An optional budget sends alerts but does not enforce a spending limit.
+The `infra` Bicep templates deploy a free-first Container App with scale-to-zero, one maximum replica, 0.25 vCPU, and 0.5 GiB memory. Log Analytics and Application Insights are intentionally omitted. An optional budget sends alerts but does not enforce a spending limit.
 
 Deploy at subscription scope after signing in with Azure CLI:
 
