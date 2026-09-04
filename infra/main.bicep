@@ -34,8 +34,8 @@ param monthlyBudgetAmount int = 5
 @description('Changes on every deployment so Container Apps creates a revision and re-pulls mutable image tags.')
 param deploymentVersion string = utcNow('yyyyMMddHHmmss')
 
-@description('Immutable start date for the optional Azure budget. Reuse the existing budget start date on updates.')
-param budgetStartDate string = utcNow('yyyy-MM-01T00:00:00Z')
+@description('Pinned start date for the existing production budget. Azure does not allow this date to change.')
+param budgetStartDate string = '2026-08-01T00:00:00Z'
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName

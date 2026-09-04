@@ -138,7 +138,7 @@ az deployment sub create `
     budgetContactEmail="YOUR_EMAIL"
 ```
 
-When updating an existing budget, also pass its original `budgetStartDate`; Azure does not allow that date to change. Retrieve it with `az resource show --resource-group rg-sprite-scout-prod --resource-type Microsoft.Consumption/budgets --name sprite-scout-monthly-budget --api-version 2024-08-01 --query properties.timePeriod.startDate -o tsv`.
+The production budget start date is pinned to its existing `2026-08-01` value because Azure does not allow that date to change. If the budget is ever deleted and recreated, update `budgetStartDate` in the Bicep templates to the first day of the new budget month.
 
 Choose an Azure region close to the Supabase project. Use the Supabase session pooler on port 5432 unless the selected Azure environment can reach the direct IPv6 endpoint. Update Google OAuth with the deployed `/signin-google` callback URL.
 

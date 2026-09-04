@@ -15,7 +15,7 @@ param googleClientSecret string
 param budgetContactEmail string
 param monthlyBudgetAmount int
 param deploymentVersion string
-param budgetStartDate string = utcNow('yyyy-MM-01T00:00:00Z')
+param budgetStartDate string = '2026-08-01T00:00:00Z'
 
 var suffix = uniqueString(resourceGroup().id)
 var environmentName = 'cae-sprite-scout-${suffix}'
