@@ -58,6 +58,26 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Resolve budget start date
+        id: budget
+        shell: bash
+        env:
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-sprite-scout-prod' }}
+        run: |
+          start_date="$(az resource show \
+            --resource-group "$RESOURCE_GROUP" \
+            --resource-type Microsoft.Consumption/budgets \
+            --name sprite-scout-monthly-budget \
+            --api-version 2024-08-01 \
+            --query properties.timePeriod.startDate \
+            --output tsv 2>/dev/null || true)"
+
+          if [ -z "$start_date" ]; then
+            start_date="$(date -u +%Y-%m-01T00:00:00Z)"
+          fi
+
+          echo "startDate=$start_date" >> "$GITHUB_OUTPUT"
+
       - name: Deploy Azure Container App
         uses: azure/arm-deploy@v2
         with:
@@ -73,4 +93,5 @@ jobs:
             googleClientId="${{ secrets.GOOGLE_CLIENT_ID }}"
             googleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
             budgetContactEmail="${{ vars.BUDGET_CONTACT_EMAIL }}"
+            budgetStartDate="${{ steps.budget.outputs.startDate }}"
           failOnStdErr: false

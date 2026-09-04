@@ -75,6 +75,8 @@ az deployment sub create `
     budgetContactEmail="YOUR_EMAIL"
 ```
 
+When updating an existing budget, also pass its original `budgetStartDate`; Azure does not allow that date to change. Retrieve it with `az resource show --resource-group rg-sprite-scout-prod --resource-type Microsoft.Consumption/budgets --name sprite-scout-monthly-budget --api-version 2024-08-01 --query properties.timePeriod.startDate -o tsv`.
+
 Use an Azure region close to Supabase and update Google OAuth with the deployed `/signin-google` callback URL. Container App deployments create a new revision so mutable tags are re-pulled, but immutable tags or digests are preferred.
 
 ## GitHub Actions release
