@@ -75,6 +75,8 @@ az deployment sub create `
     budgetContactEmail="YOUR_EMAIL"
 ```
 
+The production budget start date is pinned to its existing `2026-08-01` value because Azure does not allow that date to change. If the budget is ever deleted and recreated, update `budgetStartDate` in the Bicep templates to the first day of the new budget month.
+
 Use an Azure region close to Supabase and update Google OAuth with the deployed `/signin-google` callback URL. Container App deployments create a new revision so mutable tags are re-pulled, but immutable tags or digests are preferred.
 
 ## GitHub Actions release
