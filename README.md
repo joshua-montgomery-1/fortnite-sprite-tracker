@@ -81,7 +81,7 @@ The `infra` Bicep templates deploy one Azure Container App with conservative cos
 
 - Consumption workload profile only.
 - Scale to zero with a maximum of one replica.
-- 0.5 vCPU and 1 GiB memory.
+- 0.25 vCPU and 0.5 GiB memory.
 - No Log Analytics workspace, Application Insights, or persisted Azure platform logs.
 - An optional $5 resource-group budget with alerts at 50%, forecasted 100%, and actual 100%.
 - Secrets stored in the Container App configuration.
