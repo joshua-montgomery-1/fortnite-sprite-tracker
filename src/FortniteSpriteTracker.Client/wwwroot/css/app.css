@@ -772,7 +772,7 @@ footer p {
 .collectionMatrix thead th {
   height: 58px;
   background: var(--surface-strong);
-  color: var(--surface);
+  color: var(--on-strong);
   position: sticky;
   top: 0;
   z-index: 4;
