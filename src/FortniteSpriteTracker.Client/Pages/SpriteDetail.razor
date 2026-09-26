@@ -90,7 +90,7 @@ else if (notFound)
                         {
                             <div>
                                 <dt>Released</dt>
-                                <dd>@releasedAt.ToString("MMMM d, yyyy")</dd>
+                                <dd>@(releasedAt <= DateTimeOffset.UtcNow ? releasedAt.ToString("MMMM d, yyyy") : "Unreleased")</dd>
                             </div>
                         }
                     </dl>
