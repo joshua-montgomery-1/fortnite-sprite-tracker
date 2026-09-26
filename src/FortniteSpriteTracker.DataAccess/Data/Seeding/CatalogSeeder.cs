@@ -79,7 +79,7 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
                     Name = definition.Name,
                     Color = definition.Color,
                     Bonus = definition.Bonus,
-                    ImageSuffix = definition.ImageSuffix,
+                    Slug = definition.Slug,
                     DisplayOrder = definition.DisplayOrder
                 };
                 database.VariantStyles.Add(style);
@@ -304,12 +304,12 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
     private static bool ApplyStyle(VariantStyle style, VariantStyleSeed definition)
     {
         var changed = style.Name != definition.Name || style.Color != definition.Color ||
-            style.Bonus != definition.Bonus || style.ImageSuffix != definition.ImageSuffix ||
+            style.Bonus != definition.Bonus || style.Slug != definition.Slug ||
             style.DisplayOrder != definition.DisplayOrder;
         style.Name = definition.Name;
         style.Color = definition.Color;
         style.Bonus = definition.Bonus;
-        style.ImageSuffix = definition.ImageSuffix;
+        style.Slug = definition.Slug;
         style.DisplayOrder = definition.DisplayOrder;
         return changed;
     }
