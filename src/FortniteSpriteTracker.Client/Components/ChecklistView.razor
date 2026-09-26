@@ -79,6 +79,11 @@
                     var isMastered = Mastered.Contains(spriteVariant.Id);
                     var isReleased = IsReleased(spriteVariant);
 
+                    if (Filter == "Unmastered" && isMastered)
+                    {
+                        continue;
+                    }
+
                     <div class="mobileVariantRow @CellClass(isOwned, isMastered)">
                         <div class="mobileVariantMeta">
                             <a class="variantImageLink" href="@SpriteCatalogRoutes.VariantPath(sprite, spriteVariant)" aria-label="@($"{style.Name} {sprite.Name} details")">
