@@ -124,7 +124,15 @@
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }
 
     private string CellClass(bool isOwned, bool isMastered) =>
-        $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered " : "")}{(Filter == "Missing" && isOwned ? "collected " : "")}{(Filter == "Unmastered" && isMastered ? "filteredOut" : "")}".TrimEnd();
+        $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered " : "")}{(Filter == "Missing" && isOwned ? "collected " : "")}{(IsFilteredOut(isOwned, isMastered) ? "filteredOut" : "")}".TrimEnd();
+    private bool IsFilteredOut(bool isOwned, bool isMastered) => Filter switch
+    {
+        "Owned" => !isOwned,
+        "Missing" => isOwned,
+        "Mastered" => !isMastered,
+        "Unmastered" => isMastered,
+        _ => false
+    };
     private string? ReadOnlyTitle => IsReadOnly ? "Collection tracking opens when this season starts." : null;
     private static bool IsReleased(SpriteVariantDto variant) =>
         variant.ReleasedAt is null || variant.ReleasedAt <= DateTimeOffset.UtcNow;
