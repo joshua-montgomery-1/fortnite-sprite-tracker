@@ -50,5 +50,6 @@ public sealed class SpriteVariantDto
 {
     public required int Id { get; init; }
     public required string ImagePath { get; init; }
+    public DateTimeOffset? ReleasedAt { get; init; }
     public required VariantStyleDto Style { get; init; }
 }
