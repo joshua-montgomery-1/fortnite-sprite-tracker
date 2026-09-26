@@ -107,8 +107,17 @@ public partial class Home : IAsyncDisposable
                 : "PREVIOUS";
         }
     }
-    private int OwnedPercent => Percent(owned.Count);
-    private int MasteredPercent => Percent(mastered.Count);
+    private int ReleasedEntryCount => catalog?.Families
+        .SelectMany(item => item.Variants)
+        .Count(IsReleased) ?? 0;
+    private int OwnedReleasedCount => catalog?.Families
+        .SelectMany(item => item.Variants)
+        .Count(item => IsReleased(item) && owned.Contains(item.Id)) ?? 0;
+    private int MasteredReleasedCount => catalog?.Families
+        .SelectMany(item => item.Variants)
+        .Count(item => IsReleased(item) && mastered.Contains(item.Id)) ?? 0;
+    private int OwnedPercent => Percent(OwnedReleasedCount);
+    private int MasteredPercent => Percent(MasteredReleasedCount);
     private IEnumerable<VariantStyleDto> ActiveStyles => variant == "All"
         ? catalog?.VariantStyles ?? []
         : catalog?.VariantStyles.Where(item => item.Name == variant) ?? [];
@@ -279,9 +288,12 @@ public partial class Home : IAsyncDisposable
         }
     }
 
-    private int Percent(int count) => catalog?.TotalEntries > 0
-        ? (int)Math.Round(count * 100d / catalog.TotalEntries)
+    private int Percent(int count) => ReleasedEntryCount > 0
+        ? (int)Math.Round(count * 100d / ReleasedEntryCount)
         : 0;
+
+    private static bool IsReleased(SpriteVariantDto variant) =>
+        variant.ReleasedAt is null || variant.ReleasedAt <= DateTimeOffset.UtcNow;
 
     private bool SpriteIsVisible(SpriteFamilyDto sprite)
     {
