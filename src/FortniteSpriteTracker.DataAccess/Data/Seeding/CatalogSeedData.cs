@@ -12,7 +12,7 @@ public static class CatalogSeedData
             Name = "Normal",
             Color = "#a7a9ae",
             Bonus = "Core power",
-            ImageSuffix = "basic",
+            Slug = "normal",
             DisplayOrder = 1
         },
         new VariantStyleSeed
@@ -21,7 +21,7 @@ public static class CatalogSeedData
             Name = "Gold",
             Color = "#f1bd38",
             Bonus = "Bonus Sprite XP",
-            ImageSuffix = "gold",
+            Slug = "gold",
             DisplayOrder = 2
         },
         new VariantStyleSeed
@@ -30,7 +30,7 @@ public static class CatalogSeedData
             Name = "Gummy",
             Color = "#ff6da9",
             Bonus = "+20% Sprite Dust",
-            ImageSuffix = "gummy",
+            Slug = "gummy",
             DisplayOrder = 3
         },
         new VariantStyleSeed
@@ -39,7 +39,7 @@ public static class CatalogSeedData
             Name = "Galaxy",
             Color = "#7858ed",
             Bonus = "+30% ammunition",
-            ImageSuffix = "galaxy",
+            Slug = "galaxy",
             DisplayOrder = 4
         },
         new VariantStyleSeed
@@ -48,7 +48,7 @@ public static class CatalogSeedData
             Name = "Holofoil",
             Color = "#67dff1",
             Bonus = "+5% rare finds",
-            ImageSuffix = "holofoil",
+            Slug = "holofoil",
             DisplayOrder = 5
         },
         new VariantStyleSeed
@@ -57,7 +57,7 @@ public static class CatalogSeedData
             Name = "Gem",
             Color = "#60dca5",
             Bonus = "-30% fall damage",
-            ImageSuffix = "gem",
+            Slug = "gem",
             DisplayOrder = 6
         },
         new VariantStyleSeed
@@ -66,7 +66,7 @@ public static class CatalogSeedData
             Name = "Cube",
             Color = "#a955de",
             Bonus = "Storm Overdrive",
-            ImageSuffix = "cube",
+            Slug = "cube",
             DisplayOrder = 7
         },
         new VariantStyleSeed
@@ -75,7 +75,7 @@ public static class CatalogSeedData
             Name = "Quack",
             Color = "#ffd93f",
             Bonus = "Shared progress",
-            ImageSuffix = "quack",
+            Slug = "quack",
             DisplayOrder = 8
         },
     ];
@@ -537,7 +537,7 @@ public static class CatalogSeedData
             Id = 10,
             Name = "Aura",
             ImagePath = "images/sprites/drifter_basic.webp",
-            Slug = "drifter",
+            Slug = "aura",
             Rarity = "Epic",
             RarityColor = "#c780ff",
             Ability = "Grants a Shock Rock charge after enough damage.",
@@ -583,7 +583,7 @@ public static class CatalogSeedData
             Id = 11,
             Name = "Striker",
             ImagePath = "images/sprites/soccer_basic.webp",
-            Slug = "soccer",
+            Slug = "striker",
             Rarity = "Epic",
             RarityColor = "#c780ff",
             Ability = "Traversal actions trigger speed, reload, and fire-rate Overdrive.",
@@ -905,7 +905,7 @@ public static class CatalogSeedData
             Id = 18,
             Name = "Grim Reaper",
             ImagePath = "images/sprites/grimreaper_basic.webp",
-            Slug = "grimreaper",
+            Slug = "grim-reaper",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
             Ability = "Marks players who damage you and reveals their location.",
@@ -963,7 +963,7 @@ public static class CatalogSeedData
             Id = 19,
             Name = "Zero Point",
             ImagePath = "images/sprites/zeropoint_basic.webp",
-            Slug = "zeropoint",
+            Slug = "zero-point",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
             Ability = "Creates a Shield Bubble Jr. whenever you heal.",
@@ -1027,7 +1027,7 @@ public static class CatalogSeedData
             Id = 20,
             Name = "Burnt Peanut",
             ImagePath = "images/sprites/theburntpeanut_basic.webp",
-            Slug = "theburntpeanut",
+            Slug = "burnt-peanut",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
             Ability = "May award extra or Mythic loot after eliminations.",
@@ -1123,7 +1123,7 @@ public static class CatalogSeedData
             Id = 23,
             Name = "Vini Jr.",
             ImagePath = "images/sprites/vinijr_basic.webp",
-            Slug = "vinijr",
+            Slug = "vini-jr",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
             Ability = "Empowers destructive slides and boosts combat after slide-kicks.",
@@ -1145,7 +1145,7 @@ public static class CatalogSeedData
             Id = 24,
             Name = "John Wick",
             ImagePath = "images/sprites/johnwick_basic.webp",
-            Slug = "johnwick",
+            Slug = "john-wick",
             Rarity = "Mythic",
             RarityColor = "#ff5d7c",
             Ability = "Knocks and eliminations briefly reveal nearby enemies.",

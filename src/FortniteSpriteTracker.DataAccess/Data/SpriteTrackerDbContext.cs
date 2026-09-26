@@ -56,7 +56,7 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         styles.Property(style => style.Name).HasMaxLength(40);
         styles.Property(style => style.Color).HasMaxLength(20);
         styles.Property(style => style.Bonus).HasMaxLength(120);
-        styles.Property(style => style.ImageSuffix).HasMaxLength(40);
+        styles.Property(style => style.Slug).HasMaxLength(40);
 
         var variants = modelBuilder.Entity<SpriteVariant>();
         variants.Property(variant => variant.Id).ValueGeneratedOnAdd();

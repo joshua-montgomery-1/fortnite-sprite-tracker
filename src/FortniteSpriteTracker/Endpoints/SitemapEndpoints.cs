@@ -55,7 +55,7 @@ public static class SitemapEndpoints
             var spriteUrls = await database.SpriteFamilies.AsNoTracking()
                 .SelectMany(
                     family => family.Variants,
-                    (family, variant) => new { FamilySlug = family.Slug, VariantSlug = variant.VariantStyle.ImageSuffix })
+                    (family, variant) => new { FamilySlug = family.Slug, VariantSlug = variant.VariantStyle.Slug })
                 .OrderBy(item => item.FamilySlug)
                 .ThenBy(item => item.VariantSlug)
                 .ToListAsync(cancellationToken);

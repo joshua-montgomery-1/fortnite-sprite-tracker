@@ -6,7 +6,7 @@ public sealed class VariantStyleSeed
     public required string Name { get; init; }
     public required string Color { get; init; }
     public required string Bonus { get; init; }
-    public required string ImageSuffix { get; init; }
+    public required string Slug { get; init; }
     public required int DisplayOrder { get; init; }
 }
 
