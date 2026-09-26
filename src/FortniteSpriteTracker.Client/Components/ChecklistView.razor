@@ -87,6 +87,10 @@
                             <span>
                                 <strong>@style.Name</strong>
                                 <small>@style.Bonus</small>
+                                @if (!isReleased && spriteVariant.ReleasedAt is { } releaseAt)
+                                {
+                                    <small class="releaseStatus">Unreleased · @releaseAt.ToString("MMM d")</small>
+                                }
                             </span>
                         </div>
                         <div class="mobileActionGroup">
