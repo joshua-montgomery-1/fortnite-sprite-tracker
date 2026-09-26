@@ -58,11 +58,11 @@ public static class CatalogEndpoints
                         .ThenInclude(variant => variant.VariantStyle)
                 .OrderBy(item => item.DisplayOrder)
                 .ToArrayAsync(cancellationToken);
-            var availableVariantIds = await database.SeasonSpriteVariants
+            var releaseDatesByVariantId = await database.SeasonSpriteVariants
                 .AsNoTracking()
                 .Where(item => item.SeasonId == season.Id)
-                .Select(item => item.SpriteVariantId)
-                .ToHashSetAsync(cancellationToken);
+                .ToDictionaryAsync(item => item.SpriteVariantId, item => item.ReleasedAt, cancellationToken);
+            var availableVariantIds = releaseDatesByVariantId.Keys.ToHashSet();
             var hasCheatCodes = await database.CheatCodes
                 .AnyAsync(item => item.SeasonId == season.Id, cancellationToken);
 
@@ -92,6 +92,7 @@ public static class CatalogEndpoints
                         {
                             Id = variant.Id,
                             ImagePath = variant.ImagePath,
+                            ReleasedAt = releaseDatesByVariantId.GetValueOrDefault(variant.Id),
                             Style = style
                         };
                     })

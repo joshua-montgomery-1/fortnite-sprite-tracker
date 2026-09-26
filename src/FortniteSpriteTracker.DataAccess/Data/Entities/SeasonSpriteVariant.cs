@@ -4,6 +4,7 @@ public sealed class SeasonSpriteVariant
 {
     public int SeasonId { get; set; }
     public int SpriteVariantId { get; set; }
+    public DateTimeOffset? ReleasedAt { get; set; }
     public Season Season { get; set; } = null!;
     public SpriteVariant SpriteVariant { get; set; } = null!;
 }

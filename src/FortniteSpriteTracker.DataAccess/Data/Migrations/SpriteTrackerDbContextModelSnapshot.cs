@@ -201,6 +201,9 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
                     b.Property<int>("SpriteVariantId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("ReleasedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("SeasonId", "SpriteVariantId");
 
                     b.HasIndex("SpriteVariantId");

@@ -86,6 +86,13 @@ else if (notFound)
                             <dt>Variant Type</dt>
                             <dd><i style="background:@Detail.Variant.Style.Color"></i>@Detail.Variant.Style.Name <small>@Detail.Variant.Style.Bonus</small></dd>
                         </div>
+                        @if (Detail.Variant.ReleasedAt is { } releasedAt)
+                        {
+                            <div>
+                                <dt>Released</dt>
+                                <dd>@releasedAt.ToString("MMMM d, yyyy")</dd>
+                            </div>
+                        }
                     </dl>
                 </div>
             </div>

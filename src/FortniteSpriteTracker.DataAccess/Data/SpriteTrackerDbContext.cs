@@ -75,6 +75,7 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
 
         var seasonVariants = modelBuilder.Entity<SeasonSpriteVariant>();
         seasonVariants.HasKey(item => new { item.SeasonId, item.SpriteVariantId });
+        seasonVariants.Property(item => item.ReleasedAt);
 
         var progress = modelBuilder.Entity<SpriteProgress>();
         progress.HasKey(item => new { item.UserId, item.SpriteVariantId });
