@@ -79,6 +79,11 @@
                     var isMastered = Mastered.Contains(spriteVariant.Id);
                     var isReleased = IsReleased(spriteVariant);
 
+                    if (IsFilteredOut(isOwned, isMastered))
+                    {
+                        continue;
+                    }
+
                     <div class="mobileVariantRow @CellClass(isOwned, isMastered)">
                         <div class="mobileVariantMeta">
                             <a class="variantImageLink" href="@SpriteCatalogRoutes.VariantPath(sprite, spriteVariant)" aria-label="@($"{style.Name} {sprite.Name} details")">
@@ -119,7 +124,15 @@
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }
 
     private string CellClass(bool isOwned, bool isMastered) =>
-        $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered " : "")}{(Filter == "Missing" && isOwned ? "collected" : "")}".TrimEnd();
+        $"{(isOwned ? "owned " : "")}{(isMastered ? "mastered " : "")}{(Filter == "Missing" && isOwned ? "collected " : "")}{(IsFilteredOut(isOwned, isMastered) ? "filteredOut" : "")}".TrimEnd();
+    private bool IsFilteredOut(bool isOwned, bool isMastered) => Filter switch
+    {
+        "Owned" => !isOwned,
+        "Missing" => isOwned,
+        "Mastered" => !isMastered,
+        "Unmastered" => isMastered,
+        _ => false
+    };
     private string? ReadOnlyTitle => IsReadOnly ? "Collection tracking opens when this season starts." : null;
     private static bool IsReleased(SpriteVariantDto variant) =>
         variant.ReleasedAt is null || variant.ReleasedAt <= DateTimeOffset.UtcNow;

@@ -419,7 +419,37 @@
 .collectionMatrix td.collected:hover > div {
   opacity: 0.8;
 }
+.collectionMatrix td.filteredOut > img,
+.collectionMatrix td.filteredOut > .variantImageLink {
+  filter: grayscale(1);
+  opacity: 0.3;
+  transition: filter 0.2s, opacity 0.2s;
+}
+.collectionMatrix td.filteredOut > div {
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+.collectionMatrix td.filteredOut:hover > img,
+.collectionMatrix td.filteredOut:hover > .variantImageLink {
+  filter: grayscale(0.2);
+  opacity: 0.7;
+}
+.collectionMatrix td.filteredOut:hover > div {
+  opacity: 0.8;
+}
 @media (max-width: 720px) {
+  .mobileVariantRow.filteredOut {
+    filter: grayscale(1);
+    opacity: 0.45;
+    transition: filter 0.2s, opacity 0.2s;
+  }
+
+  .mobileVariantRow.filteredOut:hover,
+  .mobileVariantRow.filteredOut:focus-within {
+    filter: grayscale(0.2);
+    opacity: 0.8;
+  }
+
   .mobileVariantRow.collected {
     filter: grayscale(1);
     opacity: 0.45;

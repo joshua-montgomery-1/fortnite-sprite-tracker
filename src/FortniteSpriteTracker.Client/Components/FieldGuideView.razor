@@ -28,6 +28,11 @@
                         var isMastered = Mastered.Contains(spriteVariant.Id);
                         var isReleased = IsReleased(spriteVariant);
 
+                        if (Filter == "Unmastered" && isMastered)
+                        {
+                            continue;
+                        }
+
                         <div class="variantTile @(isOwned ? "owned" : "") @(isMastered ? "mastered" : "") @(Filter == "Missing" && isOwned ? "collected" : "")">
                             <span class="variantArt">
                                 <img src="@spriteVariant.ImagePath" alt="@spriteVariant.Style.Name @sprite.Name Sprite" loading="eager" />
