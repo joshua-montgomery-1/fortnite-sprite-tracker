@@ -1,6 +1,7 @@
 using System.Text;
 using System.Xml.Linq;
 using FortniteSpriteTracker.DataAccess;
+using FortniteSpriteTracker.Shared.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -51,6 +52,13 @@ public static class SitemapEndpoints
                 .Take(10000)
                 .Select(u => new { u.PublicId, u.UpdatedAtUtc })
                 .ToListAsync(cancellationToken);
+            var spriteUrls = await database.SpriteFamilies.AsNoTracking()
+                .SelectMany(
+                    family => family.Variants,
+                    (family, variant) => new { FamilySlug = family.Slug, VariantSlug = variant.VariantStyle.ImageSuffix })
+                .OrderBy(item => item.FamilySlug)
+                .ThenBy(item => item.VariantSlug)
+                .ToListAsync(cancellationToken);
 
             XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
 
@@ -89,6 +97,15 @@ public static class SitemapEndpoints
                     new XElement(ns + "lastmod", player.UpdatedAtUtc.ToString("yyyy-MM-ddTHH:mm:ssZ")),
                     new XElement(ns + "changefreq", "weekly"),
                     new XElement(ns + "priority", "0.6")
+                ));
+            }
+
+            foreach (var sprite in spriteUrls)
+            {
+                root.Add(new XElement(ns + "url",
+                    new XElement(ns + "loc", $"{BaseUrl}/sprites/{sprite.FamilySlug}/{sprite.VariantSlug}"),
+                    new XElement(ns + "changefreq", "weekly"),
+                    new XElement(ns + "priority", "0.7")
                 ));
             }
 

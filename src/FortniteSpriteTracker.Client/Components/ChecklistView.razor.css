@@ -14,11 +14,17 @@
   padding: 7px 5px;
   vertical-align: middle;
 }
-.collectionMatrix td > img {
+.collectionMatrix td > img,
+.collectionMatrix td > .variantImageLink {
   display: block;
   width: 64px;
   height: 56px;
   margin: 0 auto 5px;
+}
+.collectionMatrix td > .variantImageLink img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   object-position: center;
 }
 .collectionMatrix td > div {
@@ -145,6 +151,18 @@
     flex: 0 0 34px;
   }
 
+  .mobileVariantMeta .variantImageLink {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: block;
+  }
+
+  .mobileVariantMeta .variantImageLink img {
+    width: 100%;
+    height: 100%;
+  }
+
   .mobileVariantMeta span {
     display: grid;
     gap: 2px;
@@ -228,7 +246,8 @@
   .collectionMatrix td {
     padding: 4px 4px 28px;
   }
-  .collectionMatrix td > img {
+  .collectionMatrix td > img,
+  .collectionMatrix td > .variantImageLink {
     width: 48px;
     height: 42px;
   }
@@ -266,7 +285,8 @@
   padding: 4px 4px 34px;
   overflow: hidden;
 }
-.collectionMatrix td > img {
+.collectionMatrix td > img,
+.collectionMatrix td > .variantImageLink {
   width: 68px;
   height: 60px;
   margin: 0 auto;
@@ -375,7 +395,8 @@
 }
 
 /* Missing filter — dim collected variant cells so truly-missing ones stand out */
-.collectionMatrix td.collected > img {
+.collectionMatrix td.collected > img,
+.collectionMatrix td.collected > .variantImageLink {
   filter: grayscale(1);
   opacity: 0.3;
   transition: filter 0.2s, opacity 0.2s;
@@ -384,7 +405,8 @@
   opacity: 0.45;
   transition: opacity 0.2s;
 }
-.collectionMatrix td.collected:hover > img {
+.collectionMatrix td.collected:hover > img,
+.collectionMatrix td.collected:hover > .variantImageLink {
   filter: grayscale(0.2);
   opacity: 0.7;
 }
@@ -465,7 +487,8 @@
     padding: 1px 2px 16px;
     overflow: hidden;
   }
-  .collectionMatrix td > img {
+  .collectionMatrix td > img,
+  .collectionMatrix td > .variantImageLink {
     width: 31px;
     height: 25px;
     margin: 0 auto;

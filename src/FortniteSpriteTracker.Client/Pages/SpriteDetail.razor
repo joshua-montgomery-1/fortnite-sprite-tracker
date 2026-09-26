@@ -1,0 +1,130 @@
+@page "/sprites/{FamilySlug}/{VariantSlug}"
+@using FortniteSpriteTracker.Shared.Catalog
+
+@if (Detail is not null)
+{
+    <PageTitle>@Detail.Variant.Style.Name @Detail.Family.Name Sprite - Sprite Scout</PageTitle>
+    <HeadContent>
+        <PageMetadata Title="@($"{Detail.Variant.Style.Name} {Detail.Family.Name} Sprite - Sprite Scout")"
+                      Description="@($"{Detail.Family.Ability} Find the {Detail.Variant.Style.Name} {Detail.Family.Name} Sprite from {catalog!.Season.Name} and browse related variants.")"
+                      Path="@SpriteCatalogRoutes.VariantPath(Detail.Family, Detail.Variant)"
+                      Image="@Detail.Variant.ImagePath">
+            <OpenGraphMetadata />
+            <TwitterCardMetadata />
+        </PageMetadata>
+    </HeadContent>
+}
+else if (notFound)
+{
+    <PageTitle>Sprite Not Found - Sprite Scout</PageTitle>
+    <HeadContent>
+        <PageMetadata Title="Sprite Not Found - Sprite Scout"
+                      Description="The requested Sprite variant could not be found."
+                      Path="@CurrentPath"
+                      Robots="RobotsDirective.NoIndexNoFollow"
+                      Image="@null">
+            <OpenGraphMetadata />
+            <TwitterCardMetadata />
+        </PageMetadata>
+    </HeadContent>
+}
+
+<main>
+    <SiteHeader />
+
+    @if (loading)
+    {
+        <div class="spriteDetailState">Loading Sprite details...</div>
+    }
+    else if (Detail is not null)
+    {
+        <section class="spriteDetailHero" style="--c1:@Detail.Family.PrimaryColor; --c2:@Detail.Family.SecondaryColor">
+            <nav aria-label="Breadcrumb">
+                <a href="/#collection">Sprite collection</a>
+                <span>/</span>
+                <span>@Detail.Family.Name</span>
+            </nav>
+
+            <div class="spriteDetailLayout">
+                <div class="spriteDetailArt">
+                    <img src="@Detail.Variant.ImagePath" alt="@Detail.Variant.Style.Name @Detail.Family.Name Sprite" />
+                </div>
+
+                <div class="spriteDetailCopy">
+                    <span class="rarity"><i style="background:@Detail.Family.RarityColor"></i>@Detail.Family.Rarity</span>
+                    <h1>@Detail.Variant.Style.Name @Detail.Family.Name <small>Sprite</small></h1>
+                    <dl class="spriteDetailFacts">
+                        <div>
+                            <dt>@(appearances.Count > 1 ? "Appears In" : "Season")</dt>
+                            <dd>
+                                @if (appearances.Count == 1)
+                                {
+                                    @catalog!.Season.Name
+                                }
+                                else
+                                {
+                                    <span class="seasonChoices" aria-label="Sprite season appearances">
+                                        @foreach (var appearance in appearances)
+                                        {
+                                            var isSelected = appearance.Catalog.Season.Id == catalog!.Season.Id;
+                                            <button class="@(isSelected ? "selected" : null)"
+                                                    type="button"
+                                                    aria-pressed="@isSelected"
+                                                    @onclick="() => SelectAppearance(appearance.Catalog.Season.Id)">
+                                                @appearance.Catalog.Season.Name
+                                            </button>
+                                        }
+                                    </span>
+                                }
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Ability</dt>
+                            <dd>@Detail.Family.Ability</dd>
+                        </div>
+                        <div>
+                            <dt>Variant Type</dt>
+                            <dd><i style="background:@Detail.Variant.Style.Color"></i>@Detail.Variant.Style.Name <small>@Detail.Variant.Style.Bonus</small></dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </section>
+
+        <section class="relatedVariants" aria-labelledby="relatedVariantsTitle">
+            <div class="relatedVariantsHead">
+                <div>
+                    <div class="sectionKicker">SAME SPRITE FAMILY</div>
+                    <h2 id="relatedVariantsTitle">@Detail.Family.Name Variants</h2>
+                </div>
+                <a href="/#collection">Back to tracker</a>
+            </div>
+
+            <div class="relatedVariantGrid">
+                @foreach (var variant in Detail.RelatedVariants)
+                {
+                    var selected = variant.Id == Detail.Variant.Id;
+                    <a class="relatedVariantCard @(selected ? "selected" : "")"
+                       aria-current="@(selected ? "page" : null)"
+                       href="@SpriteCatalogRoutes.VariantPath(Detail.Family, variant)">
+                        <span class="variantArt">
+                            <img src="@variant.ImagePath" alt="@variant.Style.Name @Detail.Family.Name Sprite" loading="eager" />
+                        </span>
+                        <span class="variantName"><i style="background:@variant.Style.Color"></i>@variant.Style.Name</span>
+                        <small>@variant.Style.Bonus</small>
+                    </a>
+                }
+            </div>
+        </section>
+
+        <SiteFooter />
+    }
+    else
+    {
+        <section class="spriteDetailState notFound">
+            <h1>Sprite Not Found</h1>
+            <p>That Sprite variant is not in the current guide.</p>
+            <a href="/#collection">Return to the Sprite collection</a>
+        </section>
+    }
+</main>

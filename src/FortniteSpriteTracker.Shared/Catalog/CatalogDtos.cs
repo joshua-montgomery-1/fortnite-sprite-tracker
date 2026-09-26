@@ -25,6 +25,7 @@ public sealed class VariantStyleDto
 {
     public required int Id { get; init; }
     public required string Name { get; init; }
+    public required string Slug { get; init; }
     public required string Color { get; init; }
     public required string Bonus { get; init; }
     public int DisplayOrder { get; init; }
