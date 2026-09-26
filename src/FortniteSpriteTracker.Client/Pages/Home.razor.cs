@@ -10,7 +10,7 @@ namespace FortniteSpriteTracker.Pages;
 public partial class Home : IAsyncDisposable
 {
     private const string BrowserProgressKey = "sprite-scout-progress";
-    private static readonly string[] CollectionFilters = ["All", "Owned", "Missing", "Mastered"];
+    private static readonly string[] CollectionFilters = ["All", "Owned", "Missing", "Mastered", "Unmastered"];
     private static readonly SchemaGraph HomeStructuredData = new()
     {
         Nodes =
@@ -303,6 +303,7 @@ public partial class Home : IAsyncDisposable
             "Owned" => sprite.Variants.Any(item => owned.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
             "Missing" => sprite.Variants.Any(item => !owned.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
             "Mastered" => sprite.Variants.Any(item => mastered.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
+            "Unmastered" => sprite.Variants.Any(item => IsReleased(item) && !mastered.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
             _ => true
         };
         var matchesRarity = rarity == "All" || sprite.Rarity == rarity;
