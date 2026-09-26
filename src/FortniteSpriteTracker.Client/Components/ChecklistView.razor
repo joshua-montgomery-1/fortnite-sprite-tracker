@@ -79,7 +79,7 @@
                     var isMastered = Mastered.Contains(spriteVariant.Id);
                     var isReleased = IsReleased(spriteVariant);
 
-                    if (Filter == "Unmastered" && isMastered)
+                    if (IsFilteredOut(isOwned, isMastered))
                     {
                         continue;
                     }
