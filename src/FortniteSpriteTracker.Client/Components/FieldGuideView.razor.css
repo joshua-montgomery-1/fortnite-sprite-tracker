@@ -284,7 +284,11 @@
   grid-template-columns: 1fr 1fr;
   gap: 4px;
 }
-.variantActions button {
+.variantActions .detailButton {
+  grid-column: 1 / -1;
+}
+.variantActions button,
+.variantActions .detailButton {
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 4px;
@@ -294,8 +298,13 @@
   font-weight: 800;
   cursor: pointer;
   color: var(--text-muted);
+  text-align: center;
+  text-decoration: none;
+  display: grid;
+  place-items: center;
 }
-.variantActions button:hover {
+.variantActions button:hover,
+.variantActions .detailButton:hover {
   border-color: var(--purple);
 }
 .variantActions button:disabled {

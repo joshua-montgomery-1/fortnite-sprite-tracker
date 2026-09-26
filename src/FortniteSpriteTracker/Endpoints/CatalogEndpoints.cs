@@ -80,6 +80,7 @@ public static class CatalogEndpoints
                             {
                                 Id = variant.VariantStyle.Id,
                                 Name = variant.VariantStyle.Name,
+                                Slug = variant.VariantStyle.ImageSuffix,
                                 Color = variant.VariantStyle.Color,
                                 Bonus = variant.VariantStyle.Bonus,
                                 DisplayOrder = variant.VariantStyle.DisplayOrder
