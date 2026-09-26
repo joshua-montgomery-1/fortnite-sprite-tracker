@@ -1,0 +1,227 @@
+.spriteDetailHero {
+    padding: 2rem clamp(1rem, 4vw, 4rem) 3rem;
+    background:
+        radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--c1) 28%, transparent), transparent 32rem),
+        linear-gradient(135deg, color-mix(in srgb, var(--c1) 18%, #101820), color-mix(in srgb, var(--c2) 18%, #111315));
+    color: #f8fafc;
+}
+
+.spriteDetailHero nav {
+    display: flex;
+    gap: .55rem;
+    align-items: center;
+    max-width: 1120px;
+    margin: 0 auto 1.5rem;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.spriteDetailHero nav a,
+.relatedVariantsHead a,
+.spriteDetailState a {
+    color: inherit;
+    font-weight: 800;
+}
+
+.spriteDetailLayout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 24rem) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(1.5rem, 5vw, 4rem);
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+.spriteDetailArt {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, .18);
+    background: rgba(255, 255, 255, .08);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+}
+
+.spriteDetailArt img {
+    width: min(82%, 19rem);
+    height: min(82%, 19rem);
+    object-fit: contain;
+    filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .35));
+}
+
+.spriteDetailCopy h1 {
+    margin: .75rem 0 1.25rem;
+    font-size: clamp(2.25rem, 6vw, 5rem);
+    line-height: .95;
+    text-transform: uppercase;
+}
+
+.spriteDetailCopy h1 small {
+    display: block;
+    font-size: .35em;
+    color: rgba(255, 255, 255, .68);
+}
+
+.spriteDetailFacts {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+}
+
+.spriteDetailFacts div {
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .08);
+}
+
+.spriteDetailFacts dt {
+    margin-bottom: .35rem;
+    color: rgba(255, 255, 255, .64);
+    font-size: .75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.spriteDetailFacts dd {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.spriteDetailFacts dd i {
+    display: inline-block;
+    width: .8rem;
+    height: .8rem;
+    margin-right: .4rem;
+    border-radius: 999px;
+    vertical-align: -.05rem;
+}
+
+.spriteDetailFacts dd small {
+    display: block;
+    margin-top: .25rem;
+    color: rgba(255, 255, 255, .68);
+    font-size: .85rem;
+    font-weight: 700;
+}
+
+.seasonChoices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.seasonChoices button {
+    padding: .45rem .7rem;
+    color: inherit;
+    font: inherit;
+    font-size: .85rem;
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .06);
+    cursor: pointer;
+}
+
+.seasonChoices button:hover,
+.seasonChoices button.selected {
+    border-color: rgba(255, 255, 255, .82);
+    background: rgba(255, 255, 255, .18);
+}
+
+.relatedVariants {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 2rem clamp(1rem, 4vw, 4rem) 3rem;
+}
+
+.relatedVariantsHead {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: end;
+    margin-bottom: 1rem;
+}
+
+.relatedVariantsHead h2 {
+    margin: .2rem 0 0;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    text-transform: uppercase;
+}
+
+.relatedVariantGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: .9rem;
+}
+
+.relatedVariantCard {
+    display: grid;
+    gap: .55rem;
+    min-height: 13rem;
+    padding: .8rem;
+    color: inherit;
+    text-decoration: none;
+    border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, canvas 96%, currentColor 4%);
+}
+
+.relatedVariantCard:hover,
+.relatedVariantCard.selected {
+    border-color: color-mix(in srgb, #3ba7ff 65%, currentColor);
+    transform: translateY(-1px);
+}
+
+.relatedVariantCard .variantArt {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+}
+
+.relatedVariantCard .variantArt img {
+    width: 82%;
+    height: 82%;
+    object-fit: contain;
+}
+
+.relatedVariantCard .variantName {
+    display: flex;
+    gap: .4rem;
+    align-items: center;
+    font-weight: 900;
+}
+
+.relatedVariantCard .variantName i {
+    width: .7rem;
+    height: .7rem;
+    border-radius: 999px;
+    flex: 0 0 auto;
+}
+
+.relatedVariantCard small {
+    color: color-mix(in srgb, currentColor 68%, transparent);
+    font-weight: 700;
+}
+
+.spriteDetailState {
+    max-width: 42rem;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+.spriteDetailState.notFound {
+    min-height: 45vh;
+}
+
+@media (max-width: 760px) {
+    .spriteDetailLayout {
+        grid-template-columns: 1fr;
+    }
+
+    .relatedVariantsHead {
+        align-items: start;
+        flex-direction: column;
+    }
+}

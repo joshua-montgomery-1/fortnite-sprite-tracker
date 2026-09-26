@@ -12,4 +12,7 @@
     <Project Path="src/FortniteSpriteTracker.Shared/FortniteSpriteTracker.Shared.csproj" />
     <Project Path="src/FortniteSpriteTracker/FortniteSpriteTracker.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FortniteSpriteTracker.Tests/FortniteSpriteTracker.Tests.csproj" />
+  </Folder>
 </Solution>

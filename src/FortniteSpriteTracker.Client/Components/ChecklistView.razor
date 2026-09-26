@@ -37,7 +37,9 @@
                             var isMastered = Mastered.Contains(spriteVariant.Id);
 
                             <td class="@CellClass(isOwned, isMastered)">
-                                <img src="@spriteVariant.ImagePath" alt="@style.Name @sprite.Name" loading="eager" />
+                                <a class="variantImageLink" href="@SpriteCatalogRoutes.VariantPath(sprite, spriteVariant)" aria-label="@($"{style.Name} {sprite.Name} details")">
+                                    <img src="@spriteVariant.ImagePath" alt="@style.Name @sprite.Name" loading="eager" />
+                                </a>
                                 <div>
                                     <button disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓" : "○")<small>OWN</small></button>
                                     <button disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★" : "☆")<small>MASTER</small></button>
@@ -77,7 +79,9 @@
 
                     <div class="mobileVariantRow @CellClass(isOwned, isMastered)">
                         <div class="mobileVariantMeta">
-                            <img src="@spriteVariant.ImagePath" alt="@style.Name @sprite.Name" loading="eager" />
+                            <a class="variantImageLink" href="@SpriteCatalogRoutes.VariantPath(sprite, spriteVariant)" aria-label="@($"{style.Name} {sprite.Name} details")">
+                                <img src="@spriteVariant.ImagePath" alt="@style.Name @sprite.Name" loading="eager" />
+                            </a>
                             <span>
                                 <strong>@style.Name</strong>
                                 <small>@style.Bonus</small>

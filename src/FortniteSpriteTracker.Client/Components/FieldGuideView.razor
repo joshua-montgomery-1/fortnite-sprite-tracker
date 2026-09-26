@@ -34,6 +34,7 @@
                             <span class="variantName"><i style="background:@spriteVariant.Style.Color"></i>@spriteVariant.Style.Name</span>
                             <small>@spriteVariant.Style.Bonus</small>
                             <div class="variantActions">
+                                <a class="detailButton" href="@SpriteCatalogRoutes.VariantPath(sprite, spriteVariant)">Details</a>
                                 <button class="ownButton" disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓ Owned" : "+ Own")</button>
                                 <button class="masterButton" disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★ Mastered" : "☆ Master")</button>
                             </div>
