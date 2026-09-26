@@ -26,6 +26,7 @@
                     {
                         var isOwned = Owned.Contains(spriteVariant.Id);
                         var isMastered = Mastered.Contains(spriteVariant.Id);
+                        var isReleased = IsReleased(spriteVariant);
 
                         <div class="variantTile @(isOwned ? "owned" : "") @(isMastered ? "mastered" : "") @(Filter == "Missing" && isOwned ? "collected" : "")">
                             <span class="variantArt">
@@ -35,8 +36,8 @@
                             <small>@spriteVariant.Style.Bonus</small>
                             <div class="variantActions">
                                 <a class="detailButton" href="@SpriteCatalogRoutes.VariantPath(sprite, spriteVariant)">Details</a>
-                                <button class="ownButton" disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓ Owned" : "+ Own")</button>
-                                <button class="masterButton" disabled="@IsReadOnly" title="@ReadOnlyTitle" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★ Mastered" : "☆ Master")</button>
+                                <button class="ownButton" disabled="@(IsReadOnly || !isReleased)" title="@ActionTitle(spriteVariant)" @onclick="() => OwnedToggled.InvokeAsync(spriteVariant.Id)">@(isOwned ? "✓ Owned" : "+ Own")</button>
+                                <button class="masterButton" disabled="@(IsReadOnly || !isReleased)" title="@ActionTitle(spriteVariant)" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★ Mastered" : "☆ Master")</button>
                             </div>
                         </div>
                     }
@@ -55,4 +56,8 @@
     [Parameter] public EventCallback<int> OwnedToggled { get; set; }
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }
     private string? ReadOnlyTitle => IsReadOnly ? "Collection tracking opens when this season starts." : null;
+    private static bool IsReleased(SpriteVariantDto variant) =>
+        variant.ReleasedAt is null || variant.ReleasedAt <= DateTimeOffset.UtcNow;
+    private string? ActionTitle(SpriteVariantDto variant) =>
+        !IsReleased(variant) ? "Collection tracking opens when this variant is released." : ReadOnlyTitle;
 }

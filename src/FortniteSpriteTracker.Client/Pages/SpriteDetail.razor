@@ -89,8 +89,8 @@ else if (notFound)
                         @if (Detail.Variant.ReleasedAt is { } releasedAt)
                         {
                             <div>
-                                <dt>Released</dt>
-                                <dd>@releasedAt.ToString("MMMM d, yyyy")</dd>
+                                <dt>Release</dt>
+                                <dd>@(releasedAt <= DateTimeOffset.UtcNow ? releasedAt.ToString("MMMM d, yyyy") : $"Unreleased · {releasedAt:MMMM d, yyyy}")</dd>
                             </div>
                         }
                     </dl>
@@ -98,6 +98,8 @@ else if (notFound)
             </div>
         </section>
 
+        @if (Detail.RelatedVariants.Count > 1)
+        {
         <section class="relatedVariants" aria-labelledby="relatedVariantsTitle">
             <div class="relatedVariantsHead">
                 <div>
@@ -123,6 +125,7 @@ else if (notFound)
                 }
             </div>
         </section>
+        }
 
         <SiteFooter />
     }

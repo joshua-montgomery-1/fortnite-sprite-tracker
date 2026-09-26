@@ -182,6 +182,12 @@
     white-space: nowrap;
   }
 
+  .mobileVariantMeta small.releaseStatus {
+    color: var(--accent);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
   .mobileActionGroup {
     display: flex;
     gap: 8px;

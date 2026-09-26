@@ -14,7 +14,7 @@
 <main class="@(printBlank ? "printBlank" : "")">
     <SiteHeader Profile="@profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
     <HeroSection Hero="@HeroSprite"
-                 TotalEntries="@(catalog?.TotalEntries ?? 0)"
+                 TotalEntries="@ReleasedEntryCount"
                  FamilyCount="@(catalog?.Families.Count ?? 0)"
                  Chapter="@(selectedSeason?.Chapter ?? 0)"
                  SeasonNumber="@(selectedSeason?.Number ?? 0)"
@@ -92,9 +92,9 @@
             </div>
         }
 
-        <CollectionProgress OwnedCount="@owned.Count"
-                            MasteredCount="@mastered.Count"
-                            TotalEntries="@(catalog?.TotalEntries ?? 0)"
+        <CollectionProgress OwnedCount="@OwnedReleasedCount"
+                            MasteredCount="@MasteredReleasedCount"
+                            TotalEntries="@ReleasedEntryCount"
                             OwnedPercent="@OwnedPercent"
                             MasteredPercent="@MasteredPercent" />
 
