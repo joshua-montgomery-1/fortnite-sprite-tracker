@@ -37,6 +37,12 @@
                             var isMastered = Mastered.Contains(spriteVariant.Id);
                             var isReleased = IsReleased(spriteVariant);
 
+                            @if (!ShowUnreleased && !isReleased)
+                            {
+                                <td class="unavailable" aria-label="Unreleased variant hidden"></td>
+                            }
+                            else
+                            {
                             <td class="@CellClass(isOwned, isMastered)">
                                 <a class="variantImageLink" href="@SpriteCatalogRoutes.VariantPath(sprite, spriteVariant)" aria-label="@($"{style.Name} {sprite.Name} details")">
                                     <img src="@spriteVariant.ImagePath" alt="@style.Name @sprite.Name" loading="eager" />
@@ -46,6 +52,7 @@
                                     <button disabled="@(IsReadOnly || !isReleased)" title="@ActionTitle(spriteVariant)" @onclick="() => MasteredToggled.InvokeAsync(spriteVariant.Id)">@(isMastered ? "★" : "☆")<small>MASTER</small></button>
                                 </div>
                             </td>
+                            }
                         }
                     }
                 </tr>
@@ -80,6 +87,11 @@
                     var isReleased = IsReleased(spriteVariant);
 
                     if (IsFilteredOut(isOwned, isMastered))
+                    {
+                        continue;
+                    }
+
+                    if (!ShowUnreleased && !isReleased)
                     {
                         continue;
                     }
@@ -119,6 +131,7 @@
     [Parameter, EditorRequired] public IReadOnlySet<int> Owned { get; set; } = new HashSet<int>();
     [Parameter, EditorRequired] public IReadOnlySet<int> Mastered { get; set; } = new HashSet<int>();
     [Parameter] public string Filter { get; set; } = "All";
+    [Parameter] public bool ShowUnreleased { get; set; }
     [Parameter] public bool IsReadOnly { get; set; }
     [Parameter] public EventCallback<int> OwnedToggled { get; set; }
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }

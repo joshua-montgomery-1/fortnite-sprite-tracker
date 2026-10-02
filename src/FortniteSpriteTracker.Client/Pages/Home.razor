@@ -134,6 +134,10 @@
                 }
             </div>
             <div class="filterRight">
+                <label class="showUnreleased">
+                    <input type="checkbox" @bind="showUnreleased" />
+                    Show unreleased
+                </label>
                 <label class="search">
                     <span>⌕</span>
                     <input @bind="query" @bind:event="oninput" placeholder="Search sprites" />
@@ -174,6 +178,7 @@
                            Owned="@owned"
                            Mastered="@mastered"
                            Filter="@filter"
+                           ShowUnreleased="@showUnreleased"
                            IsReadOnly="@SelectedSeasonIsUpcoming"
                            OwnedToggled="ToggleOwned"
                            MasteredToggled="ToggleMastered" />
@@ -184,6 +189,7 @@
                             Owned="@owned"
                             Mastered="@mastered"
                             Filter="@filter"
+                            ShowUnreleased="@showUnreleased"
                             IsReadOnly="@SelectedSeasonIsUpcoming"
                             OwnedToggled="ToggleOwned"
                             MasteredToggled="ToggleMastered" />

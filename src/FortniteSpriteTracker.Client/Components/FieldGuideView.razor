@@ -1,7 +1,8 @@
 <div class="grid">
     @foreach (var sprite in Sprites)
     {
-        var keys = sprite.Variants.Select(item => item.Id).ToArray();
+        var variants = sprite.Variants.Where(item => ShowUnreleased || IsReleased(item)).ToArray();
+        var keys = variants.Select(item => item.Id).ToArray();
 
         <article class="card @(keys.All(Mastered.Contains) ? "done" : "") @(Filter == "Missing" && keys.All(Owned.Contains) ? "collectedCard" : "")">
             <div class="cardTop">
@@ -22,7 +23,7 @@
                     <i>→</i>
                 </div>
                 <div class="variantCarousel" tabindex="0">
-                    @foreach (var spriteVariant in sprite.Variants)
+                    @foreach (var spriteVariant in variants)
                     {
                         var isOwned = Owned.Contains(spriteVariant.Id);
                         var isMastered = Mastered.Contains(spriteVariant.Id);
@@ -57,6 +58,7 @@
     [Parameter, EditorRequired] public IReadOnlySet<int> Owned { get; set; } = new HashSet<int>();
     [Parameter, EditorRequired] public IReadOnlySet<int> Mastered { get; set; } = new HashSet<int>();
     [Parameter] public string Filter { get; set; } = "All";
+    [Parameter] public bool ShowUnreleased { get; set; }
     [Parameter] public bool IsReadOnly { get; set; }
     [Parameter] public EventCallback<int> OwnedToggled { get; set; }
     [Parameter] public EventCallback<int> MasteredToggled { get; set; }
