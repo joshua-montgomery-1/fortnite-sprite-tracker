@@ -67,6 +67,7 @@ public partial class Home : IAsyncDisposable
     private string variant = "All";
     private string query = "";
     private string viewMode = "Checklist";
+    private bool showUnreleased;
     private bool printBlank;
     private bool showAnonymousWarning;
     private bool showImportPrompt;
@@ -297,14 +298,16 @@ public partial class Home : IAsyncDisposable
 
     private bool SpriteIsVisible(SpriteFamilyDto sprite)
     {
+        bool IsIncluded(SpriteVariantDto item) => showUnreleased || IsReleased(item);
+
         // When a specific variant style (Type) is selected, require the status to apply to that same variant.
         var matchesStatus = filter switch
         {
-            "Owned" => sprite.Variants.Any(item => owned.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
-            "Missing" => sprite.Variants.Any(item => !owned.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
-            "Mastered" => sprite.Variants.Any(item => mastered.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
-            "Unmastered" => sprite.Variants.Any(item => IsReleased(item) && !mastered.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
-            _ => true
+            "Owned" => sprite.Variants.Any(item => IsIncluded(item) && owned.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
+            "Missing" => sprite.Variants.Any(item => IsIncluded(item) && !owned.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
+            "Mastered" => sprite.Variants.Any(item => IsIncluded(item) && mastered.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
+            "Unmastered" => sprite.Variants.Any(item => IsIncluded(item) && !mastered.Contains(item.Id) && (variant == "All" || item.Style.Name == variant)),
+            _ => sprite.Variants.Any(item => IsIncluded(item) && (variant == "All" || item.Style.Name == variant))
         };
         var matchesRarity = rarity == "All" || sprite.Rarity == rarity;
         var matchesVariant = variant == "All" || sprite.Variants.Any(item => item.Style.Name == variant);
