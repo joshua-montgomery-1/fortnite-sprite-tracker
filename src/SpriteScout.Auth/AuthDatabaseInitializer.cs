@@ -13,14 +13,22 @@ public sealed class AuthDatabaseInitializer(IServiceScopeFactory scopeFactory, A
         await using var scope = scopeFactory.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<AuthDbContext>().Database.MigrateAsync(cancellationToken);
         var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+        foreach (var client in settings.Clients)
+        {
+            await RegisterClientAsync(manager, client, cancellationToken);
+        }
+    }
+
+    private async Task RegisterClientAsync(
+        IOpenIddictApplicationManager manager, McpClientOptions client, CancellationToken cancellationToken)
+    {
         var descriptor = new OpenIddictApplicationDescriptor
         {
-            ClientId = AuthDefaults.CodexClientId,
-            DisplayName = "Codex — Sprite Scout",
-            ApplicationType = ApplicationTypes.Native,
+            ClientId = client.ClientId,
+            DisplayName = client.DisplayName,
+            ApplicationType = client.ApplicationType,
             ClientType = ClientTypes.Public,
             ConsentType = ConsentTypes.Explicit,
-            RedirectUris = { new Uri("http://127.0.0.1/callback") },
             Permissions =
             {
                 Permissions.Endpoints.Authorization, Permissions.Endpoints.Token,
@@ -30,6 +38,10 @@ public sealed class AuthDatabaseInitializer(IServiceScopeFactory scopeFactory, A
             },
             Requirements = { Requirements.Features.ProofKeyForCodeExchange }
         };
+        foreach (var redirectUri in client.RedirectUris)
+        {
+            descriptor.RedirectUris.Add(new Uri(redirectUri, UriKind.Absolute));
+        }
         var existing = await manager.FindByClientIdAsync(descriptor.ClientId, cancellationToken);
         if (existing is null)
             await manager.CreateAsync(descriptor, cancellationToken);

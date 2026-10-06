@@ -20,9 +20,45 @@ namespace SpriteScout.Auth.Tests;
 
 public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<AuthFixture>
 {
+    private const string ClientId = "integration-desktop";
     private const string Issuer = "https://localhost:7082/identity/";
     private const string Resource = "https://localhost:7082/mcp";
     private const string Callback = "http://127.0.0.1:48123/callback";
+
+    [Fact]
+    public async Task Configured_web_client_can_authenticate_and_call_the_same_MCP_tool()
+    {
+        const string webClient = "integration-web";
+        const string webCallback = "https://mcp-client.example/oauth/callback";
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var (code, verifier) = await AuthorizeAsync(browser, clientId: webClient, callback: webCallback);
+        var response = await RedeemAsync(browser, code, verifier, webClient, webCallback);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var token = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(fixture.FirstAccount.ToString(),
+            await CallAsync(fixture.Host, token.GetProperty("access_token").GetString()!));
+    }
+
+    [Fact]
+    public async Task Configured_clients_cannot_use_each_others_callbacks_or_authorization_codes()
+    {
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var parameters = Parameters(clientId: "integration-web");
+        var response = await browser.GetAsync(QueryHelpers.AddQueryString("/identity/connect/authorize", parameters));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Null(response.Headers.Location);
+
+        parameters = Parameters(clientId: "unregistered-client");
+        response = await browser.GetAsync(QueryHelpers.AddQueryString("/identity/connect/authorize", parameters));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Null(response.Headers.Location);
+
+        var (code, verifier) = await AuthorizeAsync(browser);
+        response = await RedeemAsync(browser, code, verifier, "integration-web",
+            "https://mcp-client.example/oauth/callback");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
 
     [Theory]
     [InlineData("/#collection", "/#collection")]
@@ -176,7 +212,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         var html = await login.Content.ReadAsStringAsync();
         Assert.Contains("Continue with Google", html);
-        Assert.Contains("Codex", html);
+        Assert.Contains("Integration desktop", html);
         Assert.Contains("form-action 'self'", login.Headers.GetValues("Content-Security-Policy").Single());
         Assert.Contains("form-action 'self' https://accounts.google.com", login.Headers.GetValues("Content-Security-Policy").Single());
         var authChallenge = await anonymous.PostAsync(path, Consent(html, "signin"));
@@ -329,7 +365,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         var refresh = token.GetProperty("refresh_token").GetString()!;
         var values = new Dictionary<string, string>
         {
-            ["grant_type"] = "refresh_token", ["client_id"] = AuthDefaults.CodexClientId, ["refresh_token"] = refresh
+            ["grant_type"] = "refresh_token", ["client_id"] = ClientId, ["refresh_token"] = refresh
         };
         var renewal = await client.PostAsync("/identity/connect/token", new FormUrlEncodedContent(values));
         Assert.Equal(HttpStatusCode.OK, renewal.StatusCode);
@@ -411,10 +447,10 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Equal(HttpStatusCode.NotFound, (await enabled.GetAsync("/identity/.well-known/openid-configuration")).StatusCode);
     }
 
-    private static Dictionary<string, string?> Parameters(string? verifier = null, string? scopes = null) => new()
+    private static Dictionary<string, string?> Parameters(string? verifier = null, string? scopes = null, string clientId = ClientId, string callback = Callback) => new()
     {
-        ["client_id"] = AuthDefaults.CodexClientId, ["response_type"] = "code",
-        ["redirect_uri"] = Callback, ["scope"] = scopes ?? "account:read offline_access",
+        ["client_id"] = clientId, ["response_type"] = "code",
+        ["redirect_uri"] = callback, ["scope"] = scopes ?? "account:read offline_access",
         ["state"] = "integration-state", ["resource"] = Resource,
         ["code_challenge_method"] = "S256",
         ["code_challenge"] = Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier ?? new string('a', 43))))
@@ -429,10 +465,10 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         return new FormUrlEncodedContent(fields);
     }
 
-    private static async Task<(string Code, string Verifier)> AuthorizeAsync(HttpClient browser, string? scopes = null)
+    private static async Task<(string Code, string Verifier)> AuthorizeAsync(HttpClient browser, string? scopes = null, string clientId = ClientId, string callback = Callback)
     {
         var verifier = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
-        var path = QueryHelpers.AddQueryString("/identity/connect/authorize", Parameters(verifier, scopes));
+        var path = QueryHelpers.AddQueryString("/identity/connect/authorize", Parameters(verifier, scopes, clientId, callback));
         var response = await browser.GetAsync(path);
         Assert.True(response.StatusCode == HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         var html = await response.Content.ReadAsStringAsync();
@@ -445,11 +481,11 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         return (query["code"].ToString(), verifier);
     }
 
-    private static Task<HttpResponseMessage> RedeemAsync(HttpClient browser, string code, string verifier) =>
+    private static Task<HttpResponseMessage> RedeemAsync(HttpClient browser, string code, string verifier, string clientId = ClientId, string callback = Callback) =>
         browser.PostAsync("/identity/connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["client_id"] = AuthDefaults.CodexClientId, ["grant_type"] = "authorization_code",
-            ["code"] = code, ["redirect_uri"] = Callback, ["code_verifier"] = verifier, ["resource"] = Resource
+            ["client_id"] = clientId, ["grant_type"] = "authorization_code",
+            ["code"] = code, ["redirect_uri"] = callback, ["code_verifier"] = verifier, ["resource"] = Resource
         }));
 
     private static async Task<JsonElement> TokenAsync(HttpClient browser, string? scopes = null)

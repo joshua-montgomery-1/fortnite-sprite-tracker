@@ -21,6 +21,7 @@ public static class AuthRegistration
         if (!settings.Enabled) return settings;
 
         var issuer = ValidateConfiguration(settings, environment);
+        ValidateClients(settings.Clients);
         AddAccountServices(services, settings, connectionString);
         AddBrowserAuthentication(services, configuration, issuer);
         AddOAuth(services, settings, issuer);
@@ -55,6 +56,32 @@ public static class AuthRegistration
             .UseOpenIddict());
         services.AddScoped<AuthIdentityService>();
         services.AddHostedService<AuthDatabaseInitializer>();
+    }
+
+    private static void ValidateClients(IEnumerable<McpClientOptions> clients)
+    {
+        var clientIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var client in clients)
+        {
+            if (string.IsNullOrWhiteSpace(client.ClientId) || !clientIds.Add(client.ClientId) ||
+                string.IsNullOrWhiteSpace(client.DisplayName) || client.RedirectUris.Count == 0 ||
+                client.ApplicationType is not (ApplicationTypes.Native or ApplicationTypes.Web))
+            {
+                throw new InvalidOperationException("MCP clients require a unique client ID, display name, native/web application type, and callback URLs.");
+            }
+
+            foreach (var callback in client.RedirectUris)
+            {
+                if (!Uri.TryCreate(callback, UriKind.Absolute, out var uri) ||
+                    uri.Fragment.Length != 0 || uri.UserInfo.Length != 0 ||
+                    (uri.Scheme != Uri.UriSchemeHttps &&
+                     !(client.ApplicationType == ApplicationTypes.Native &&
+                       uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback)))
+                {
+                    throw new InvalidOperationException($"MCP client '{client.ClientId}' requires HTTPS callbacks or native HTTP loopback callbacks without fragments or user info.");
+                }
+            }
+        }
     }
 
     private static void AddBrowserAuthentication(

@@ -9,3 +9,22 @@ The repository marketplace exposes this plugin without automatically enabling it
 ## Production database preparation
 
 Run the one-time script before deploying this release. Use a database role that owns the new tables, or grant the application's database role the required access afterward. For psql, pass `-v ON_ERROR_STOP=1 -f scripts/migrate-auth-accounts.sql` along with your normal production connection options. The script runs in one transaction and reports website and linked-user counts after committing. The schema portion is intended to run once; only the account import block is repeatable.
+
+## Other MCP clients
+
+The OAuth server and MCP tools are independent of Codex. Register public OAuth clients in `SpriteScoutAuth:Clients`; each entry requires `ClientId`, `DisplayName`, `ApplicationType` (`native` or `web`), and `RedirectUris`. The Codex entry lives in the website's `appsettings.Development.json`, rather than C# code. Configure the other client with its own ID and matching callback; it must support authorization code with S256 PKCE and request the MCP resource and `account:read` scope. `offline_access` is optional.
+
+Example additional registration (merge into the `Clients` array):
+
+```json
+{
+  "ClientId": "sprite-scout-other-desktop",
+  "DisplayName": "My MCP client",
+  "ApplicationType": "native",
+  "RedirectUris": ["http://127.0.0.1/oauth/callback"]
+}
+```
+
+Native loopback callbacks allow variable ports while retaining the registered host and path, following [RFC 8252](https://www.rfc-editor.org/rfc/rfc8252.html#section-7.3). Web callbacks use HTTPS and match the registered URL. These are public clients with no client secret. Client configuration is trusted server configuration; clients cannot register themselves dynamically. Removing a configured entry does not delete its existing database registration or revoke grants.
+
+The Phase 1 issuer remains Development-only on localhost. Cloud MCP clients require a reachable production deployment in a later phase, plus their own supported registration method and callback.
