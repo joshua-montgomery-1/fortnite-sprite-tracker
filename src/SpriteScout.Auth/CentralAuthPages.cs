@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SpriteScout.Auth;
 
@@ -74,15 +75,45 @@ public static class CentralAuthPages
         return new Uri(issuer, "login").AbsoluteUri;
     }
 
-    private static IResult Page(HttpContext context, string title, string heading, string body, int status = 200)
+    private static IResult Page(HttpContext context, string title, string heading, string body, int status = 200) =>
+        new ArtworkPage(title, heading, body, status);
+
+    private sealed record ArtworkPage(string Title, string Heading, string Body, int Status) : IResult
+    {
+        public async Task ExecuteAsync(HttpContext context)
+        {
+            var source = context.RequestServices.GetService<IAuthArtworkSource>();
+            var artwork = source is null ? [] : await source.GetAsync(context.RequestAborted);
+            await Render(context, Title, Heading, Body, Status, artwork).ExecuteAsync(context);
+        }
+    }
+
+    private static IResult Render(HttpContext context, string title, string heading, string body, int status, IReadOnlyList<AuthArtwork> artwork)
     {
         var nonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(24));
-        var sprites = Artwork.ToArray();
+        var groups = artwork.GroupBy(item => item.SeasonId).Select(group =>
+        {
+            var paths = group.Select(item => item.ImagePath)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(path => Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme == "https" ? uri.AbsoluteUri : "/" + path.TrimStart('/'))
+                .Distinct().ToArray();
+            Random.Shared.Shuffle(paths);
+            return paths;
+        }).ToArray();
+        Random.Shared.Shuffle(groups);
+        var selected = new HashSet<string>();
+        for (var round = 0; selected.Count < 10 && groups.Any(group => round < group.Length); round++)
+            foreach (var group in groups)
+                if (round < group.Length && selected.Count < 10) selected.Add(group[round]);
+        var sprites = selected.Count == 0 ? Artwork.Select(file => "/images/sprites/" + file).ToArray() : selected.ToArray();
         Random.Shared.Shuffle(sprites);
         var scenery = string.Join("", sprites.Select((file, index) =>
-            $"<div class=\"sprite-layer layer-{index}\"><img src=\"/images/sprites/{file}\" alt=\"\" decoding=\"async\"></div>"));
+            $"<div class=\"sprite-layer layer-{index}\"><img src=\"{Encode(file)}\" alt=\"\" decoding=\"async\"></div>"));
+        var variation = string.Join("", sprites.Select((_, index) =>
+            $".layer-{index} {{ margin-left:{Random.Shared.Next(-28, 29)}px; margin-top:{Random.Shared.Next(-32, 33)}px; --size:{Random.Shared.Next(15, 23)}vw; --tilt:{Random.Shared.Next(-10, 11)}deg; --depth:{Random.Shared.Next(-140, 41)}px; --turn:{Random.Shared.Next(-8, 9)}deg; animation-duration:{Random.Shared.Next(14, 25)}s; animation-delay:-{Random.Shared.Next(0, 24)}s; }}"));
+        var imageOrigins = string.Join(" ", sprites.Select(path => Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme == "https" ? uri.GetLeftPart(UriPartial.Authority) : "").Distinct());
         context.Response.Headers.ContentSecurityPolicy =
-            $"default-src 'none'; style-src 'self' 'nonce-{nonce}'; script-src 'nonce-{nonce}'; img-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
+            $"default-src 'none'; style-src 'self' 'nonce-{nonce}'; script-src 'nonce-{nonce}'; img-src 'self' {imageOrigins}; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
         context.Response.Headers["Referrer-Policy"] = "no-referrer";
         context.Response.Headers["X-Content-Type-Options"] = "nosniff";
         return Results.Content($$"""
@@ -95,7 +126,7 @@ public static class CentralAuthPages
             .back { font:11px var(--font-mono); color:var(--text-muted); text-decoration:none; }
             .scenery { position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; perspective:1000px; background:radial-gradient(ellipse at 75% 15%,color-mix(in srgb,var(--purple) 12%,transparent),transparent 55%),radial-gradient(ellipse at 20% 85%,color-mix(in srgb,var(--lime) 20%,transparent),transparent 50%); }
             .scenery::before { content:""; position:absolute; inset:0; background-image:radial-gradient(var(--hero-grid) 1px,transparent 1px); background-size:22px 22px; mask-image:radial-gradient(ellipse at center,transparent 22%,#000 80%); }
-            .sprite-layer { position:absolute; width:clamp(120px,19vw,260px); transform-style:preserve-3d; animation:drift 16s ease-in-out infinite alternate; }
+            .sprite-layer { position:absolute; width:clamp(120px,var(--size,19vw),280px); transform-style:preserve-3d; animation:drift 16s ease-in-out infinite alternate; }
             .sprite-layer img { display:block; width:100%; height:auto; opacity:.22; filter:saturate(.8) drop-shadow(0 28px 20px color-mix(in srgb,var(--purple) 25%,transparent)); mask-image:radial-gradient(ellipse,#000 30%,transparent 85%); }
             .layer-0 { top:9%; left:1%; --tilt:-8deg; --depth:30px; }
             .layer-1 { top:4%; right:3%; --tilt:6deg; --depth:-150px; animation-delay:-5s; filter:blur(1px); }
@@ -107,7 +138,8 @@ public static class CentralAuthPages
             .layer-7 { top:-4%; right:25%; --tilt:-5deg; --depth:-50px; animation-delay:-14s; }
             .layer-8 { bottom:-8%; left:28%; --tilt:-8deg; --depth:0px; animation-delay:-2s; }
             .layer-9 { bottom:-8%; right:25%; --tilt:5deg; --depth:-100px; animation-delay:-10s; }
-            @keyframes drift { from { transform:translate3d(0,0,var(--depth)) rotateY(var(--tilt)) rotateZ(-6deg); } to { transform:translate3d(12px,-24px,var(--depth)) rotateY(calc(var(--tilt) + 8deg)) rotateZ(5deg); } }
+            {{variation}}
+            @keyframes drift { from { transform:translate3d(0,0,var(--depth)) rotateY(var(--tilt)) rotateZ(var(--turn)); } to { transform:translate3d(12px,-24px,var(--depth)) rotateY(calc(var(--tilt) + 8deg)) rotateZ(calc(var(--turn) + 8deg)); } }
             .auth-card { width:min(100%,470px); padding:38px; border:1px solid var(--border); border-radius:14px; background:color-mix(in srgb,var(--surface) 94%,transparent); backdrop-filter:blur(18px); box-shadow:8px 8px 0 color-mix(in srgb,var(--lime) 60%,transparent),0 24px 70px var(--shadow); }
             .kicker { font:10px var(--font-mono); letter-spacing:1.5px; color:var(--purple); margin:0 0 22px; }
             .auth-card h1 { font-size:clamp(32px,4vw,44px); font-weight:950; letter-spacing:-2px; line-height:1.05; margin:0 0 22px; text-wrap:balance; }

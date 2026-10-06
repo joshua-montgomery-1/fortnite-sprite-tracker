@@ -36,7 +36,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Contains("/css/app.css", page);
         Assert.Contains("prefers-reduced-motion:reduce", page);
         Assert.Contains("class=\"scenery\" aria-hidden=\"true\"", page);
-        Assert.Equal(10, Regex.Matches(page, "src=\"/images/sprites/").Count);
+        Assert.Equal(10, Regex.Matches(page, "class=\"sprite-layer layer-").Count);
         var response = await browser.PostAsync("/auth/login", Consent(page, "signin"));
         var google = fixture.Host.Services.GetRequiredService<IOptionsMonitor<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>>()
             .Get(Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme);

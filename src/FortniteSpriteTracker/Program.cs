@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IAuthArtworkSource, AuthArtworkSource>();
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddAuthenticationStateSerialization();

@@ -44,3 +44,5 @@ The test host substitutes the central browser session to exercise consent and OA
 **Not exercised:** real Google browser sign-in and invoking the installed plugin through Codex. No server Google credentials were configured locally. Plugin JSON is checked, but installation/OAuth interoperability still needs the manual checklist in [local setup](central-auth-phase-1.md). The automated restart check creates a fresh application host in the test process; it does not claim a deployed-container restart.
 
 No production hostname, deployment, auth cutover, or collection-edit tools are included.
+
+Artwork follow-up: the host supplies a cached pool from all started season catalogs, with a bundled catalog fallback. Ten distinct images are selected by cycling through shuffled season groups. Selection, placement, size, depth, tilt, and animation timing change per render. All 117 manifest assets are bundled (about 2.9 MB total); browser reloads showed different selections with all ten images loading. The 32-test PostgreSQL suite passed again.
