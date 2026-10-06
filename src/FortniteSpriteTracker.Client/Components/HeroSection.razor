@@ -34,6 +34,11 @@
         {
             <div class="heroActions"><a class="primary" href="#collection">View season status <span>↓</span></a></div>
         }
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="heroSignIn"><a href="/auth/login?returnUrl=%2F%23collection">Sign in to save your collection <span aria-hidden="true">↗</span></a><span>Free account. Every find, saved.</span></div>
+            </NotAuthorized>
+        </AuthorizeView>
     </div>
     <div class="heroArt">
         <div class="orbit orbitOne"></div>

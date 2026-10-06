@@ -173,10 +173,7 @@ app.MapGet("/error", (HttpContext context) =>
         statusCode: StatusCodes.Status500InternalServerError);
 }).AllowAnonymous();
 
-app.MapGet("/auth/error", () => Results.Problem(
-    title: "Google sign-in could not be completed.",
-    detail: "The failure was written to the live application logs.",
-    statusCode: StatusCodes.Status500InternalServerError)).AllowAnonymous();
+app.MapGet("/auth/error", (HttpContext context) => CentralAuthPages.WebsiteError(context)).AllowAnonymous();
 
 app.MapAuthenticationEndpoints(googleAuthenticationConfigured);
 app.MapProfileEndpoints();

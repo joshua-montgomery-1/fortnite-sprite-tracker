@@ -24,6 +24,36 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     private const string Resource = "https://localhost:7082/mcp";
     private const string Callback = "http://127.0.0.1:48123/callback";
 
+    [Theory]
+    [InlineData("/#collection", "/#collection")]
+    [InlineData("https://attacker.example", "/")]
+    [InlineData("//attacker.example", "/")]
+    [InlineData("/\\attacker.example", "/")]
+    public async Task Website_login_preserves_only_local_destinations(string destination, string expected)
+    {
+        using var browser = fixture.Host.Browser();
+        var page = await browser.GetStringAsync(QueryHelpers.AddQueryString("/auth/login", "returnUrl", destination));
+        Assert.Contains("/css/app.css", page);
+        Assert.Contains("prefers-reduced-motion:reduce", page);
+        Assert.Contains("class=\"scenery\" aria-hidden=\"true\"", page);
+        Assert.Equal(10, Regex.Matches(page, "src=\"/images/sprites/").Count);
+        var response = await browser.PostAsync("/auth/login", Consent(page, "signin"));
+        var google = fixture.Host.Services.GetRequiredService<IOptionsMonitor<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>>()
+            .Get(Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme);
+        var state = QueryHelpers.ParseQuery(response.Headers.Location!.Query)["state"].ToString();
+        Assert.Equal(expected, google.StateDataFormat.Unprotect(state)!.RedirectUri);
+    }
+
+    [Fact]
+    public async Task Website_login_requires_antiforgery_before_challenging_Google()
+    {
+        using var browser = fixture.Host.Browser();
+        var response = await browser.PostAsync("/auth/login", new FormUrlEncodedContent(new Dictionary<string, string> { ["returnUrl"] = "/" }));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Null(response.Headers.Location);
+        Assert.Contains("Try again", await response.Content.ReadAsStringAsync());
+    }
+
     [Fact]
     public async Task Central_migrations_leave_the_reserved_auth_schema_untouched()
     {
@@ -148,7 +178,8 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Equal(Parameters()["code_challenge"], preserved["code_challenge"].ToString());
         Assert.False(preserved.ContainsKey("decision"));
         Assert.False(preserved.ContainsKey("__RequestVerificationToken"));
-        var website = await anonymous.GetAsync("/auth/login");
+        var websitePage = await anonymous.GetStringAsync("/auth/login");
+        var website = await anonymous.PostAsync("/auth/login", Consent(websitePage, "signin"));
         Assert.Equal(HttpStatusCode.Redirect, website.StatusCode);
         Assert.Equal("https://localhost:7082/signin-google", QueryHelpers.ParseQuery(website.Headers.Location!.Query)["redirect_uri"].ToString());
         using var browser = fixture.Host.Browser(fixture.FirstAccount);

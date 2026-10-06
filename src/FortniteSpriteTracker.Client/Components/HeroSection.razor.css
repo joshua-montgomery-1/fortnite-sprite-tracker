@@ -24,6 +24,9 @@
 .heroCopy {
   will-change: transform;
 }
+.heroSignIn { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; margin-top:26px; }
+.heroSignIn a { color:var(--purple); font-size:13px; font-weight:800; text-underline-offset:4px; }
+.heroSignIn > span { color:var(--text-muted); font:10px var(--font-mono); }
 .heroArt {
   min-height: 430px;
   position: relative;

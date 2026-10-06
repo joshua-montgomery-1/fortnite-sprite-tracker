@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using SpriteScout.Auth;
 
 namespace FortniteSpriteTracker.Server.Endpoints;
 
@@ -11,15 +12,18 @@ public static class AuthenticationEndpoints
         this IEndpointRouteBuilder endpoints,
         bool googleAuthenticationConfigured)
     {
-        endpoints.MapGet("/auth/login", (string? returnUrl) =>
+        endpoints.MapMethods("/auth/login", ["GET", "POST"], async (HttpContext context, IAntiforgery antiforgery) =>
         {
-            if (!googleAuthenticationConfigured)
+            if (HttpMethods.IsGet(context.Request.Method))
             {
-                return Results.Problem(
-                    "Google authentication has not been configured for this environment.",
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
+                var destination = context.Request.Query["returnUrl"].ToString();
+                return CentralAuthPages.WebsiteLogin(context, antiforgery,
+                    IsLocalReturnUrl(destination) ? destination : "/", googleAuthenticationConfigured);
             }
-
+            try { await antiforgery.ValidateRequestAsync(context); }
+            catch (AntiforgeryValidationException) { return CentralAuthPages.WebsiteError(context); }
+            if (!googleAuthenticationConfigured) return CentralAuthPages.WebsiteLogin(context, antiforgery, "/", false);
+            var returnUrl = context.Request.Form["returnUrl"].ToString();
             var safeReturnUrl = IsLocalReturnUrl(returnUrl) ? returnUrl! : "/";
             return Results.Challenge(
                 new AuthenticationProperties
@@ -50,5 +54,7 @@ public static class AuthenticationEndpoints
     private static bool IsLocalReturnUrl(string? returnUrl) =>
         !string.IsNullOrWhiteSpace(returnUrl)
         && returnUrl.StartsWith('/')
-        && !returnUrl.StartsWith("//");
+        && !returnUrl.StartsWith("//")
+        && !returnUrl.Contains('\\')
+        && !returnUrl.Any(char.IsControl);
 }
