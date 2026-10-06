@@ -22,6 +22,10 @@ public static class AuthEndpoints
         var issuer = new Uri(settings.Issuer);
         var resource = new Uri(settings.Resource);
         var metadataPath = "/.well-known/oauth-authorization-server" + issuer.AbsolutePath.TrimEnd('/');
+        // Clients prioritize challenged scopes over discovery metadata. Include
+        // collection access so the default consent covers all advertised tools.
+        var connectionScopes = string.Join(' ', AuthDefaults.AccountReadScope,
+            AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope);
         app.Use(async (context, next) =>
         {
             var isAuth = context.Request.Path.StartsWithSegments(issuer.AbsolutePath.TrimEnd('/')) ||
@@ -47,7 +51,7 @@ public static class AuthEndpoints
                     {
                         var error = context.Response.StatusCode == 403 ? ", error=\"insufficient_scope\"" : "";
                         context.Response.Headers.WWWAuthenticate =
-                            $"Bearer resource_metadata=\"{resource.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-protected-resource/mcp\", scope=\"{AuthDefaults.AccountReadScope}\"{error}";
+                            $"Bearer resource_metadata=\"{resource.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-protected-resource/mcp\", scope=\"{connectionScopes}\"{error}";
                     }
                     return Task.CompletedTask;
                 });

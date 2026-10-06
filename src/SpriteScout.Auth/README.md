@@ -69,6 +69,8 @@ Register `https://spritescout.com/identity/signin-google` in the same Google OAu
 
 Every MCP connection requires a free account and `account:read`. Clients may request `collection:read`, `collection:write`, and optionally `offline_access`; the consent page describes the requested access. Configured public clients are permitted these scopes when auth startup registers them. Previously issued tokens retain their original scopes: reconnect to approve collection access.
 
+The default HTTP authentication challenge requests `account:read collection:read collection:write`, so clients following MCP scope selection obtain collection permissions during initial sign-in after consent. Clients intentionally requesting fewer scopes can use only the corresponding tools. Old connections must reconnect and approve the new scope set; a tool error does not automatically upgrade an existing token.
+
 | Tool | Additional permission | Behavior |
 | --- | --- | --- |
 | `who_am_i` | None | Connected account and website profile identity |
