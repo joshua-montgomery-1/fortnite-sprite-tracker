@@ -6,7 +6,7 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace SpriteScout.Auth;
 
-public sealed class AuthDatabaseInitializer(IServiceScopeFactory scopeFactory, CentralAuthOptions settings) : IHostedService
+public sealed class AuthDatabaseInitializer(IServiceScopeFactory scopeFactory, AuthOptions settings) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {

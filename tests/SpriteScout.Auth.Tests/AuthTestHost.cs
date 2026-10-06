@@ -37,9 +37,9 @@ public sealed class AuthTestHost : WebApplicationFactory<Program>
         var settings = new Dictionary<string, string>
             {
                 ["ConnectionStrings:sprite-tracker"] = connectionString,
-                ["CentralAuth:Enabled"] = enabled.ToString(),
-                ["CentralAuth:Issuer"] = "https://localhost:7082/identity/",
-                ["CentralAuth:Resource"] = "https://localhost:7082/mcp",
+                ["SpriteScoutAuth:Enabled"] = enabled.ToString(),
+                ["SpriteScoutAuth:Issuer"] = "https://localhost:7082/identity/",
+                ["SpriteScoutAuth:Resource"] = "https://localhost:7082/mcp",
                 ["Authentication:Google:ClientId"] = "integration-test",
                 ["Authentication:Google:ClientSecret"] = "integration-test",
                 ["Logging:LogLevel:Default"] = "Warning",
@@ -50,11 +50,11 @@ public sealed class AuthTestHost : WebApplicationFactory<Program>
         builder.ConfigureTestServices(services =>
         {
             if (!enabled) return;
-            // Substitute only the central browser session in this test host. No test login endpoint
+            // Substitute only the auth browser session in this test host. No test login endpoint
             // or header-based authentication is registered by the application.
-            services.AddTransient<TestCentralSession>();
+            services.AddTransient<TestAuthSession>();
             services.Configure<AuthenticationOptions>(options =>
-                options.SchemeMap[AuthDefaults.SessionScheme].HandlerType = typeof(TestCentralSession));
+                options.SchemeMap[AuthDefaults.SessionScheme].HandlerType = typeof(TestAuthSession));
         });
     }
 
@@ -74,7 +74,7 @@ public sealed class AuthTestHost : WebApplicationFactory<Program>
     }
 }
 
-internal sealed class TestCentralSession(
+internal sealed class TestAuthSession(
     IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
@@ -144,18 +144,20 @@ public sealed class AuthFixture : IAsyncLifetime
         await website.SaveChangesAsync();
         FirstUserId = first.Id;
         FirstPublicId = first.PublicId;
-        // Arrange real legacy rows, then return to the pre-Phase-1 schema. Startup must upgrade
-        // that database and link accounts without changing profile IDs or collection foreign keys.
+        // Arrange real website rows, then run the production script against the pre-Phase-1
+        // schema before starting the app. IDs and collection foreign keys must survive.
         var previous = (await website.Database.GetAppliedMigrationsAsync())
-            .Last(migration => string.CompareOrdinal(migration, "20261006034616_AddCentralAccountReference") < 0);
+            .Last(migration => string.CompareOrdinal(migration, "20261006034616_AddAccountReference") < 0);
         await website.GetService<IMigrator>().MigrateAsync(previous);
-        // Simulate a provider-owned auth namespace: central migrations must leave it untouched.
+        // Simulate a provider-owned auth namespace: auth migrations must leave it untouched.
         await website.Database.ExecuteSqlRawAsync("""
             CREATE SCHEMA auth;
             CREATE TABLE auth.platform_marker (id integer PRIMARY KEY);
             INSERT INTO auth.platform_marker VALUES (1);
             REVOKE ALL ON SCHEMA auth FROM PUBLIC;
             """);
+        await website.Database.ExecuteSqlRawAsync(await File.ReadAllTextAsync(
+            Path.Combine(AppContext.BaseDirectory, "migrate-auth-accounts.sql")));
         website.ChangeTracker.Clear();
         Host = new AuthTestHost(ConnectionString);
         using var browser = Host.Browser();

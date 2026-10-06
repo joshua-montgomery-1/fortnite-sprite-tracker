@@ -12,8 +12,8 @@ using SpriteScout.Auth;
 namespace SpriteScout.Auth.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20261006034539_CreateCentralAuth")]
-    partial class CreateCentralAuth
+    [Migration("20261006034539_CreateAuth")]
+    partial class CreateAuth
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

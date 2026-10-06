@@ -13,20 +13,20 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace SpriteScout.Auth;
 
-public static class CentralAuthRegistration
+public static class AuthRegistration
 {
-    public static CentralAuthOptions AddCentralAuth(
+    public static AuthOptions AddAuth(
         this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment,
         string connectionString)
     {
-        var settings = configuration.GetSection("CentralAuth").Get<CentralAuthOptions>() ?? new();
+        var settings = configuration.GetSection("SpriteScoutAuth").Get<AuthOptions>() ?? new();
         if (!settings.Enabled)
         {
             return settings;
         }
         if (!environment.IsDevelopment())
         {
-            throw new InvalidOperationException("Phase 1 central auth is available only in Development.");
+            throw new InvalidOperationException("Phase 1 auth is available only in Development.");
         }
         var issuer = new Uri(settings.Issuer, UriKind.Absolute);
         var resource = new Uri(settings.Resource, UriKind.Absolute);
@@ -43,12 +43,12 @@ public static class CentralAuthRegistration
             .UseOpenIddict());
         services.AddScoped<AuthIdentityService>();
         services.AddHostedService<AuthDatabaseInitializer>();
-        services.AddScoped<IAuthorizationHandler, CentralAccountAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, AccountAuthorizationHandler>();
 
         services.AddAuthentication()
             .AddCookie(AuthDefaults.SessionScheme, options =>
             {
-                options.Cookie.Name = "__Host-spritescout-central";
+                options.Cookie.Name = "__Host-spritescout-auth";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
                 options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
@@ -71,7 +71,7 @@ public static class CentralAuthRegistration
                         ?? throw new InvalidOperationException("Google did not return a subject.");
                     var accounts = context.HttpContext.RequestServices.GetRequiredService<AuthIdentityService>();
                     var accountId = await accounts.GetOrCreateGoogleAsync(subject, context.HttpContext.RequestAborted);
-                    foreach (var observer in context.HttpContext.RequestServices.GetServices<ICentralAccountObserver>())
+                    foreach (var observer in context.HttpContext.RequestServices.GetServices<IAccountProfileProvisioner>())
                     {
                         await observer.GoogleSignedInAsync(accountId, subject,
                             context.Principal?.FindFirstValue(ClaimTypes.Name), context.HttpContext.RequestAborted);
@@ -82,7 +82,7 @@ public static class CentralAuthRegistration
                 };
                 options.Events.OnRemoteFailure = context =>
                 {
-                    var retry = CentralAuthPages.SafeRetry(settings, context.Properties?.RedirectUri);
+                    var retry = AuthPages.SafeRetry(settings, context.Properties?.RedirectUri);
                     context.Response.Redirect(Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
                         new Uri(issuer, "error").AbsoluteUri, "returnUrl", retry));
                     context.HandleResponse();
@@ -135,24 +135,24 @@ public static class CentralAuthRegistration
                 options.EnableAuthorizationEntryValidation();
                 options.UseAspNetCore();
             });
-        services.AddAuthorization(options => options.AddPolicy("CentralMcp", policy =>
+        services.AddAuthorization(options => options.AddPolicy("McpAccount", policy =>
         {
             policy.AddAuthenticationSchemes(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
             policy.RequireAuthenticatedUser();
             policy.RequireAssertion(context => context.User.HasScope(AuthDefaults.AccountReadScope));
-            policy.AddRequirements(new CentralAccountRequirement());
+            policy.AddRequirements(new AccountRequirement());
         }));
         return settings;
     }
 }
 
-internal sealed class CentralAccountRequirement : IAuthorizationRequirement;
+internal sealed class AccountRequirement : IAuthorizationRequirement;
 
-internal sealed class CentralAccountAuthorizationHandler(AuthDbContext database)
-    : AuthorizationHandler<CentralAccountRequirement>
+internal sealed class AccountAuthorizationHandler(AuthDbContext database)
+    : AuthorizationHandler<AccountRequirement>
 {
     protected override async Task HandleRequirementAsync(
-        AuthorizationHandlerContext context, CentralAccountRequirement requirement)
+        AuthorizationHandlerContext context, AccountRequirement requirement)
     {
         if (Guid.TryParse(context.User.GetClaim(Claims.Subject), out var id) &&
             await database.Accounts.AnyAsync(account => account.Id == id))

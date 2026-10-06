@@ -120,14 +120,14 @@ if (googleAuthenticationConfigured)
 builder.Services.AddAuthorization();
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
-var centralAuth = builder.Services.AddCentralAuth(
+var auth = builder.Services.AddAuth(
     builder.Configuration, builder.Environment, databaseConnectionString);
-if (centralAuth.Enabled)
+if (auth.Enabled)
 {
-    builder.Services.AddScoped<ICentralAccountObserver, CentralAccountProfileLinker>();
+    builder.Services.AddScoped<IAccountProfileProvisioner, AccountProfileLinker>();
     builder.Services.AddMcpServer()
         .WithHttpTransport(options => options.SessionMode = HttpServerSessionMode.Stateless)
-        .WithTools<CentralAuthProofTools>();
+        .WithTools<AccountProofTools>();
 }
 
 var app = builder.Build();
@@ -143,16 +143,16 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseCentralAuthBoundary(centralAuth);
+app.UseAuthBoundary(auth);
 app.MapStaticAssets();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
-app.MapCentralAuthEndpoints(centralAuth);
-if (centralAuth.Enabled)
+app.MapAuthEndpoints(auth);
+if (auth.Enabled)
 {
-    app.MapMcp(new Uri(centralAuth.Resource).AbsolutePath).RequireAuthorization("CentralMcp");
+    app.MapMcp(new Uri(auth.Resource).AbsolutePath).RequireAuthorization("McpAccount");
 }
 
 app.MapGet("/error", (HttpContext context) =>
@@ -172,7 +172,7 @@ app.MapGet("/error", (HttpContext context) =>
         statusCode: StatusCodes.Status500InternalServerError);
 }).AllowAnonymous();
 
-app.MapGet("/auth/error", (HttpContext context) => CentralAuthPages.WebsiteError(context)).AllowAnonymous();
+app.MapGet("/auth/error", (HttpContext context) => AuthPages.WebsiteError(context)).AllowAnonymous();
 
 app.MapAuthenticationEndpoints(googleAuthenticationConfigured);
 app.MapProfileEndpoints();

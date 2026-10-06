@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SpriteScout.Auth.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateCentralAuth : Migration
+    public partial class CreateAuth : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

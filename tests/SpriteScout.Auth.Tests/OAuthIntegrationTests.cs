@@ -36,7 +36,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Contains("/css/app.css", page);
         Assert.Contains("prefers-reduced-motion:reduce", page);
         Assert.Contains("class=\"scenery\" aria-hidden=\"true\"", page);
-        Assert.Equal(1, Regex.Matches(page, "class=\"sprite-layer layer-").Count);
+        Assert.Single(Regex.Matches(page, "class=\"sprite-layer layer-").Cast<Match>());
         Assert.Contains("https://fortnitespritetracker.org/images/sprites/air_basic.webp", page);
         Assert.Contains("data-enhance=\"false\"", page);
         var response = await browser.PostAsync("/auth/login", Consent(page, "signin"));
@@ -57,7 +57,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     }
 
     [Fact]
-    public async Task Central_migrations_leave_the_reserved_auth_schema_untouched()
+    public async Task Auth_migrations_leave_the_reserved_auth_schema_untouched()
     {
         await using var connection = new Npgsql.NpgsqlConnection(fixture.ConnectionString);
         await connection.OpenAsync();
@@ -68,7 +68,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         command.CommandText = "SELECT count(*) FROM auth.platform_marker WHERE id = 1";
         Assert.Equal(1L, await command.ExecuteScalarAsync());
         command.CommandText = "SELECT count(*) FROM sprite_scout_auth.\"__EFMigrationsHistory\"";
-        Assert.Equal(2L, await command.ExecuteScalarAsync());
+        Assert.Equal(1L, await command.ExecuteScalarAsync());
     }
 
     [Fact]
@@ -78,8 +78,8 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         var auth = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
         var accountCount = await auth.Accounts.CountAsync();
         var identityCount = await auth.ExternalIdentities.CountAsync();
-        var sql = new SpriteScout.Auth.Migrations.ImportWebsiteAccounts().UpOperations
-            .OfType<Microsoft.EntityFrameworkCore.Migrations.Operations.SqlOperation>().Single().Sql;
+        var script = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "migrate-auth-accounts.sql"));
+        var sql = script.Split("-- BEGIN ACCOUNT IMPORT")[1].Split("-- END ACCOUNT IMPORT")[0];
         await using (var transaction = await auth.Database.BeginTransactionAsync())
         {
             await auth.Database.ExecuteSqlRawAsync(sql);
@@ -105,7 +105,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     {
         await using var scope = fixture.Host.Services.CreateAsyncScope();
         var identities = scope.ServiceProvider.GetRequiredService<AuthIdentityService>();
-        var observer = scope.ServiceProvider.GetRequiredService<ICentralAccountObserver>();
+        var observer = scope.ServiceProvider.GetRequiredService<IAccountProfileProvisioner>();
         await observer.GoogleSignedInAsync(fixture.FirstAccount, "google-existing-1", "Changed Google name", default);
         var newAccount = await identities.GetOrCreateGoogleAsync("google-new", default);
         await observer.GoogleSignedInAsync(newAccount, "google-new", "New Scout", default);
@@ -129,7 +129,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Contains("resource_metadata=", response.Headers.WwwAuthenticate.ToString());
         Assert.Equal("no-store", response.Headers.CacheControl!.ToString());
-        // Central MCP tokens do not replace the existing website's cookie scheme.
+        // MCP tokens do not replace the existing website's cookie scheme.
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/me/")).StatusCode);
     }
 
@@ -179,13 +179,13 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Contains("Codex", html);
         Assert.Contains("form-action 'self'", login.Headers.GetValues("Content-Security-Policy").Single());
         Assert.Contains("form-action 'self' https://accounts.google.com", login.Headers.GetValues("Content-Security-Policy").Single());
-        var central = await anonymous.PostAsync(path, Consent(html, "signin"));
-        Assert.Equal(HttpStatusCode.Redirect, central.StatusCode);
-        Assert.Equal("accounts.google.com", central.Headers.Location!.Host);
-        Assert.Equal(Issuer + "signin-google", QueryHelpers.ParseQuery(central.Headers.Location.Query)["redirect_uri"].ToString());
+        var authChallenge = await anonymous.PostAsync(path, Consent(html, "signin"));
+        Assert.Equal(HttpStatusCode.Redirect, authChallenge.StatusCode);
+        Assert.Equal("accounts.google.com", authChallenge.Headers.Location!.Host);
+        Assert.Equal(Issuer + "signin-google", QueryHelpers.ParseQuery(authChallenge.Headers.Location.Query)["redirect_uri"].ToString());
         var google = fixture.Host.Services.GetRequiredService<IOptionsMonitor<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>>()
             .Get(AuthDefaults.GoogleScheme);
-        var properties = google.StateDataFormat.Unprotect(QueryHelpers.ParseQuery(central.Headers.Location.Query)["state"]!);
+        var properties = google.StateDataFormat.Unprotect(QueryHelpers.ParseQuery(authChallenge.Headers.Location.Query)["state"]!);
         Assert.NotNull(properties);
         var preserved = QueryHelpers.ParseQuery(new Uri(properties.RedirectUri!).Query);
         Assert.Equal("integration-state", preserved["state"].ToString());

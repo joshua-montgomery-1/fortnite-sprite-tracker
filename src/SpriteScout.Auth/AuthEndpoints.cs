@@ -16,9 +16,9 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace SpriteScout.Auth;
 
-public static class CentralAuthEndpoints
+public static class AuthEndpoints
 {
-    public static void UseCentralAuthBoundary(this WebApplication app, CentralAuthOptions settings)
+    public static void UseAuthBoundary(this WebApplication app, AuthOptions settings)
     {
         if (!settings.Enabled) return;
         var issuer = new Uri(settings.Issuer);
@@ -57,7 +57,7 @@ public static class CentralAuthEndpoints
         });
     }
 
-    public static void MapCentralAuthEndpoints(this WebApplication app, CentralAuthOptions settings)
+    public static void MapAuthEndpoints(this WebApplication app, AuthOptions settings)
     {
         if (!settings.Enabled) return;
         var issuer = new Uri(settings.Issuer);
@@ -66,8 +66,8 @@ public static class CentralAuthEndpoints
         app.MapPost(new Uri(issuer, "connect/token").AbsolutePath, ExchangeAsync)
             .AllowAnonymous();
         app.MapMethods(new Uri(issuer, "login").AbsolutePath, ["GET", "POST"], LoginAsync).AllowAnonymous();
-        app.MapGet(new Uri(issuer, "error").AbsolutePath, (HttpContext context) => CentralAuthPages.Error(
-            context, CentralAuthPages.SafeRetry(settings, context.Request.Query["returnUrl"]))).AllowAnonymous();
+        app.MapGet(new Uri(issuer, "error").AbsolutePath, (HttpContext context) => AuthPages.Error(
+            context, AuthPages.SafeRetry(settings, context.Request.Query["returnUrl"]))).AllowAnonymous();
         app.MapGet("/.well-known/oauth-protected-resource/mcp", () => Results.Json(new
         {
             resource = settings.Resource,
@@ -78,7 +78,7 @@ public static class CentralAuthEndpoints
     }
 
     private static async Task<IResult> AuthorizeAsync(
-        HttpContext context, AuthDbContext database, CentralAuthOptions settings,
+        HttpContext context, AuthDbContext database, AuthOptions settings,
         IOpenIddictApplicationManager applications, IOpenIddictAuthorizationManager authorizations,
         IAntiforgery antiforgery, CancellationToken cancellationToken)
     {
@@ -96,13 +96,13 @@ public static class CentralAuthEndpoints
             var available = await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null;
             if (HttpMethods.IsGet(context.Request.Method) || !available)
             {
-                var form = available ? CentralAuthPages.Form(context, antiforgery, AuthorizationFields(context),
+                var form = available ? AuthPages.Form(context, antiforgery, AuthorizationFields(context),
                     "<button name=\"decision\" value=\"signin\">Continue with Google</button>") : null;
-                return CentralAuthPages.Login(context, name, form, available);
+                return AuthPages.Login(context, name, form, available);
             }
             var retry = AuthorizationReturn(settings, request);
             if (!await ValidateFormAsync(context, antiforgery))
-                return CentralAuthPages.Error(context, retry, expired: true);
+                return AuthPages.Error(context, retry, expired: true);
             if (context.Request.Form["decision"] != "signin") return Results.BadRequest();
             return Results.Challenge(new AuthenticationProperties
             {
@@ -116,12 +116,12 @@ public static class CentralAuthEndpoints
 
         if (HttpMethods.IsGet(context.Request.Method))
         {
-            var form = CentralAuthPages.Form(context, antiforgery, AuthorizationFields(context),
+            var form = AuthPages.Form(context, antiforgery, AuthorizationFields(context),
                 "<button name=\"decision\" value=\"allow\">Allow connection</button><button class=\"secondary\" name=\"decision\" value=\"deny\">Cancel</button>");
-            return CentralAuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess), form, request.RedirectUri!);
+            return AuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess), form, request.RedirectUri!);
         }
         if (!await ValidateFormAsync(context, antiforgery))
-            return CentralAuthPages.Error(context, AuthorizationReturn(settings, request), expired: true);
+            return AuthPages.Error(context, AuthorizationReturn(settings, request), expired: true);
         if (context.Request.Form["decision"] != "allow")
             return Reject(Errors.AccessDenied, "The user declined the connection.");
 
@@ -145,7 +145,7 @@ public static class CentralAuthEndpoints
         context.Request.Query.SelectMany(parameter => parameter.Value.Select(value =>
             $"<input type=\"hidden\" name=\"{HtmlEncoder.Default.Encode(parameter.Key)}\" value=\"{HtmlEncoder.Default.Encode(value ?? "")}\">")));
 
-    private static string AuthorizationReturn(CentralAuthOptions settings, OpenIddictRequest request) =>
+    private static string AuthorizationReturn(AuthOptions settings, OpenIddictRequest request) =>
         QueryHelpers.AddQueryString(new Uri(new Uri(settings.Issuer), "connect/authorize").AbsoluteUri,
             request.GetParameters().Where(parameter => parameter.Key is not ("decision" or "__RequestVerificationToken"))
                 .ToDictionary(parameter => parameter.Key, parameter => (string?)parameter.Value.ToString()));
@@ -157,26 +157,26 @@ public static class CentralAuthEndpoints
     }
 
     private static async Task<IResult> LoginAsync(HttpContext context, IAntiforgery antiforgery,
-        CentralAuthOptions settings, IAuthenticationSchemeProvider schemes)
+        AuthOptions settings, IAuthenticationSchemeProvider schemes)
     {
         var login = new Uri(new Uri(settings.Issuer), "login").AbsoluteUri;
         if (HttpMethods.IsPost(context.Request.Method))
         {
             if (!await ValidateFormAsync(context, antiforgery))
-                return CentralAuthPages.Error(context, login, expired: true);
+                return AuthPages.Error(context, login, expired: true);
             if (await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null)
                 return Results.Challenge(new AuthenticationProperties { RedirectUri = login, IsPersistent = true },
                     [AuthDefaults.GoogleScheme]);
         }
         var session = await context.AuthenticateAsync(AuthDefaults.SessionScheme);
-        if (session.Succeeded) return CentralAuthPages.SignedIn(context);
+        if (session.Succeeded) return AuthPages.SignedIn(context);
         var available = await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null;
-        return CentralAuthPages.Login(context, null, available ? CentralAuthPages.Form(context, antiforgery, "",
+        return AuthPages.Login(context, null, available ? AuthPages.Form(context, antiforgery, "",
             "<button>Continue with Google</button>") : null, available);
     }
 
     private static async Task<IResult> ExchangeAsync(
-        HttpContext context, AuthDbContext database, CentralAuthOptions settings, CancellationToken cancellationToken)
+        HttpContext context, AuthDbContext database, AuthOptions settings, CancellationToken cancellationToken)
     {
         var request = context.GetOpenIddictServerRequest()
             ?? throw new InvalidOperationException("The OAuth request was not validated.");

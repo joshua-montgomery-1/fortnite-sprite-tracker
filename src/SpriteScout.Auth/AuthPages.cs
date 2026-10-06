@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace SpriteScout.Auth;
 
-public static class CentralAuthPages
+public static class AuthPages
 {
     private static string Encode(string value) => HtmlEncoder.Default.Encode(value);
 
@@ -61,7 +61,7 @@ public static class CentralAuthPages
         {form}
         """, formRedirect: redirectUri);
 
-    internal static string SafeRetry(CentralAuthOptions settings, string? candidate)
+    internal static string SafeRetry(AuthOptions settings, string? candidate)
     {
         var issuer = new Uri(settings.Issuer);
         if (Uri.TryCreate(candidate, UriKind.Absolute, out var uri) &&

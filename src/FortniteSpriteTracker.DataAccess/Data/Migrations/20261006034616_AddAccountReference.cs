@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,21 +6,21 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FortniteSpriteTracker.DataAccess.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCentralAccountReference : Migration
+    public partial class AddAccountReference : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<Guid>(
-                name: "CentralAccountId",
+                name: "AccountId",
                 table: "Users",
                 type: "uuid",
                 nullable: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_CentralAccountId",
+                name: "IX_Users_AccountId",
                 table: "Users",
-                column: "CentralAccountId",
+                column: "AccountId",
                 unique: true);
         }
 
@@ -28,11 +28,11 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(
-                name: "IX_Users_CentralAccountId",
+                name: "IX_Users_AccountId",
                 table: "Users");
 
             migrationBuilder.DropColumn(
-                name: "CentralAccountId",
+                name: "AccountId",
                 table: "Users");
         }
     }

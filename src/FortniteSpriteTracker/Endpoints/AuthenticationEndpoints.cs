@@ -17,12 +17,12 @@ public static class AuthenticationEndpoints
             if (HttpMethods.IsGet(context.Request.Method))
             {
                 var destination = context.Request.Query["returnUrl"].ToString();
-                return CentralAuthPages.WebsiteLogin(context, antiforgery,
+                return AuthPages.WebsiteLogin(context, antiforgery,
                     IsLocalReturnUrl(destination) ? destination : "/", googleAuthenticationConfigured);
             }
             try { await antiforgery.ValidateRequestAsync(context); }
-            catch (AntiforgeryValidationException) { return CentralAuthPages.WebsiteError(context); }
-            if (!googleAuthenticationConfigured) return CentralAuthPages.WebsiteLogin(context, antiforgery, "/", false);
+            catch (AntiforgeryValidationException) { return AuthPages.WebsiteError(context); }
+            if (!googleAuthenticationConfigured) return AuthPages.WebsiteLogin(context, antiforgery, "/", false);
             var returnUrl = context.Request.Form["returnUrl"].ToString();
             var safeReturnUrl = IsLocalReturnUrl(returnUrl) ? returnUrl! : "/";
             return Results.Challenge(

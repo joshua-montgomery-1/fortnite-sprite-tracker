@@ -9,7 +9,7 @@ using OpenIddict.Abstractions;
 namespace FortniteSpriteTracker.Server.Endpoints;
 
 [McpServerToolType]
-public sealed class CentralAuthProofTools(SpriteTrackerDbContext database)
+public sealed class AccountProofTools(SpriteTrackerDbContext database)
 {
     [McpServerTool(Name = "who_am_i", ReadOnly = true)]
     [Description("Read the connected Sprite Scout account's display name and public profile identifier.")]
