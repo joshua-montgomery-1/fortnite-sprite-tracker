@@ -80,15 +80,28 @@ The default HTTP authentication challenge requests `account:read account:write c
 | `list_sprites` | None | Searchable, paginated variants across seasons |
 | `list_sprites_by_season` | None | Searchable, paginated variants for one season |
 | `list_collection` | `collection:read` | Paginated personal progress, optionally filtered by season |
-| `set_sprite_mastered` | `collection:write` | Set mastery and ownership |
-| `set_sprite_unmastered` | `collection:write` | Clear mastery, preserving ownership |
-| `set_sprite_owned` | `collection:write` | Set ownership, preserving mastery |
-| `set_sprite_unowned` | `collection:write` | Remove saved progress and clear mastery |
+| `update_collection` | `collection:write` | Apply 1–1,000 ownership/mastery updates atomically |
 
-Mutation tools require an exact `spriteVariantId` from catalog tools, never a family ID or target user ID. The OAuth subject resolves the website user through `AccountId`. Unknown/unreleased variants are rejected using the website's availability rules. A variant's collection state is shared across seasons. Listings default to 50 entries and permit up to 100 per page; use `offset` / `limit` and `hasMore` for pagination. Mutations are idempotent state setters, marked as write/destructive tools for client confirmation handling. The normal single-variant website endpoint shares the same EF Core update service. Only requested flags are marked modified, preserving mastery for ownership-only writes. Concurrent inserts/removals retry up to three attempts using fresh EF entity state; no raw SQL is used for collection updates.
+Collection updates require an exact `spriteVariantId` from catalog tools, never a family ID or target user ID. The OAuth subject resolves the website user through `AccountId`. Unknown/unreleased variants are rejected using the website's availability rules. A variant's collection state is shared across seasons. Listings default to 50 entries and permit up to 100 per page; use `offset` / `limit` and `hasMore` for pagination. Mutations are idempotent state setters, marked as write/destructive tools for client confirmation handling. The normal single-variant website endpoint shares the same EF Core update service. Only requested flags are marked modified, preserving mastery for ownership-only writes. Concurrent inserts/removals retry up to three attempts using fresh EF entity state; no raw SQL is used for collection updates.
 
 Profile updates resolve the signed-in user's account and use EF Core. `displayName` accepts 1–80 characters and `epicDisplayName` accepts 3–16 characters, after trimming. Omitted names stay unchanged. Set `clearEpicDisplayName` to remove the Epic name; it cannot be combined with a new Epic name. Epic-name normalization is updated alongside the name. Account identity, profile privacy, and theme settings are preserved.
 
 ## UI structure
 
 Login/error pages use normal Blazor routes with `ExcludeFromInteractiveRouting`, static server rendering, and `AuthLayout`. The application shell owns document markup and theme setup. OAuth consent and failed form posts render through that same shell and layout using `IAuthPageRenderer`. Auth forms submit normal HTTP POSTs with antiforgery tokens. Sprite artwork comes from the database through the host's five-minute cache.
+
+### Batch collection updates
+
+`update_collection` replaces the four individual collection mutation tools. Pass `updates` containing 1–1,000 items with unique `spriteVariantId` values and at least one of `isOwned` or `isMastered` per item. Omitted/null flags preserve existing state. Mastery implies ownership, unmastering preserves ownership, and setting ownership false clears mastery. Combining `isOwned: false` with `isMastered: true` is rejected. Unknown/unreleased variants, duplicate IDs, and invalid items reject the entire batch before saving. EF Core saves all changes in one transaction and retries concurrent insert/removal conflicts up to three attempts. Results contain `items` in input order. Use a one-item batch for a single Sprite; split larger requests into separate batches, each with its own transaction.
+
+```json
+{
+  "updates": [
+    { "spriteVariantId": 1, "isMastered": true },
+    { "spriteVariantId": 2, "isOwned": false },
+    { "spriteVariantId": 3, "isMastered": false }
+  ]
+}
+```
+
+IDs above are examples; resolve real IDs with the catalog tools. The website collection endpoints remain available.
