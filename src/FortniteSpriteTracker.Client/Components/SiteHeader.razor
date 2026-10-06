@@ -27,11 +27,11 @@
                 }
                 else
                 {
-                    <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in again</a>
+                    <a class="signin" href="auth/login?returnUrl=/" data-enhance-nav="false"><span>↗</span> Sign in again</a>
                 }
             </Authorized>
             <NotAuthorized>
-                <a class="signin" href="auth/login?returnUrl=/"><span>↗</span> Sign in with Google</a>
+                <a class="signin" href="auth/login?returnUrl=/" data-enhance-nav="false"><span>↗</span> Sign in</a>
             </NotAuthorized>
         </AuthorizeView>
         <details class="mobileMenu">
@@ -60,11 +60,11 @@
                         <a href="/tracked-players">Tracked players <span>→</span></a>
                         @if (!IsAccountLoading && Profile is null)
                         {
-                            <a class="mobileSignIn" href="auth/login?returnUrl=/">Sign in again <span>↗</span></a>
+                            <a class="mobileSignIn" href="auth/login?returnUrl=/" data-enhance-nav="false">Sign in again <span>↗</span></a>
                         }
                     </Authorized>
                     <NotAuthorized>
-                        <a class="mobileSignIn" href="auth/login?returnUrl=/">Sign in with Google <span>↗</span></a>
+                        <a class="mobileSignIn" href="auth/login?returnUrl=/" data-enhance-nav="false">Sign in <span>↗</span></a>
                     </NotAuthorized>
                 </AuthorizeView>
             </div>

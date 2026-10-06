@@ -1,0 +1,20 @@
+{
+  "name": "sprite-scout-development",
+  "interface": {
+    "displayName": "Sprite Scout Development"
+  },
+  "plugins": [
+    {
+      "name": "sprite-scout-local",
+      "source": {
+        "source": "local",
+        "path": "./plugins/sprite-scout-local"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

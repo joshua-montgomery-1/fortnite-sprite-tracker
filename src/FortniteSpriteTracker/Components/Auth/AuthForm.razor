@@ -1,0 +1,21 @@
+@using Microsoft.AspNetCore.Components
+
+<form method="post" action="@Model.Action" data-enhance="false">
+    @foreach (var field in Model.Fields)
+    {
+        <input type="hidden" name="@field.Name" value="@field.Value" />
+    }
+    @if (Model.Consent)
+    {
+        <button name="decision" value="allow">Allow connection</button>
+        <button class="secondary" name="decision" value="deny">Cancel</button>
+    }
+    else
+    {
+        <button name="decision" value="signin">Continue with Google <span aria-hidden="true">↗</span></button>
+    }
+</form>
+
+@code {
+    [Parameter, EditorRequired] public AuthFormModel Model { get; set; } = default!;
+}

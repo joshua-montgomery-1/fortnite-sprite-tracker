@@ -12,6 +12,20 @@ param googleClientId string
 @secure()
 param googleClientSecret string
 
+@secure()
+param authSigningPfx string
+
+@secure()
+param authEncryptionPfx string
+
+@secure()
+param authSigningPassword string
+
+@secure()
+param authEncryptionPassword string
+
+param authClients array
+
 param budgetContactEmail string
 param monthlyBudgetAmount int
 param deploymentVersion string
@@ -36,6 +50,24 @@ resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
     ]
   }
 }
+
+var authClientEnvironment = flatten(map(authClients, (client, index) => concat([
+  {
+    name: 'SpriteScoutAuth__Clients__${index}__ClientId'
+    value: client.ClientId
+  }
+  {
+    name: 'SpriteScoutAuth__Clients__${index}__DisplayName'
+    value: client.DisplayName
+  }
+  {
+    name: 'SpriteScoutAuth__Clients__${index}__ApplicationType'
+    value: client.ApplicationType
+  }
+], map(client.RedirectUris, (redirectUri, redirectIndex) => {
+  name: 'SpriteScoutAuth__Clients__${index}__RedirectUris__${redirectIndex}'
+  value: redirectUri
+}))))
 
 // Managed certificates require the custom hostnames to exist before issuance,
 // so they are bootstrapped once outside Bicep and renewed automatically by Azure.
@@ -92,6 +124,22 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
           name: 'google-client-secret'
           value: googleClientSecret
         }
+        {
+          name: 'auth-signing-password'
+          value: authSigningPassword
+        }
+        {
+          name: 'auth-signing-pfx'
+          value: authSigningPfx
+        }
+        {
+          name: 'auth-encryption-pfx'
+          value: authEncryptionPfx
+        }
+        {
+          name: 'auth-encryption-password'
+          value: authEncryptionPassword
+        }
       ]
     }
     template: {
@@ -99,7 +147,7 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
         {
           name: 'server'
           image: containerImage
-          env: [
+          env: concat([
             {
               name: 'ASPNETCORE_ENVIRONMENT'
               value: 'Production'
@@ -124,7 +172,31 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
               name: 'Authentication__Google__ClientSecret'
               secretRef: 'google-client-secret'
             }
-          ]
+            {
+              name: 'SpriteScoutAuth__Issuer'
+              value: 'https://${customDomainName}/identity/'
+            }
+            {
+              name: 'SpriteScoutAuth__Resource'
+              value: 'https://${customDomainName}/mcp'
+            }
+            {
+              name: 'SpriteScoutAuth__Certificates__SigningBase64'
+              secretRef: 'auth-signing-pfx'
+            }
+            {
+              name: 'SpriteScoutAuth__Certificates__EncryptionBase64'
+              secretRef: 'auth-encryption-pfx'
+            }
+            {
+              name: 'SpriteScoutAuth__Certificates__SigningPassword'
+              secretRef: 'auth-signing-password'
+            }
+            {
+              name: 'SpriteScoutAuth__Certificates__EncryptionPassword'
+              secretRef: 'auth-encryption-password'
+            }
+          ], authClientEnvironment)
           probes: [
             {
               type: 'Liveness'

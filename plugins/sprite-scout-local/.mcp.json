@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "sprite-scout": {
+      "type": "http",
+      "url": "https://localhost:7082/mcp",
+      "oauth": {
+        "clientId": "sprite-scout-codex",
+        "callbackUrl": "http://127.0.0.1/callback"
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using SpriteScout.Auth;
 
 namespace FortniteSpriteTracker.Server.Endpoints;
 
@@ -11,15 +12,12 @@ public static class AuthenticationEndpoints
         this IEndpointRouteBuilder endpoints,
         bool googleAuthenticationConfigured)
     {
-        endpoints.MapGet("/auth/login", (string? returnUrl) =>
+        endpoints.MapPost("/auth/login", async (HttpContext context, IAntiforgery antiforgery) =>
         {
-            if (!googleAuthenticationConfigured)
-            {
-                return Results.Problem(
-                    "Google authentication has not been configured for this environment.",
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
-
+            try { await antiforgery.ValidateRequestAsync(context); }
+            catch (AntiforgeryValidationException) { return AuthPages.WebsiteError(context); }
+            if (!googleAuthenticationConfigured) return AuthPages.WebsiteLogin(context, antiforgery, "/", false);
+            var returnUrl = context.Request.Form["returnUrl"].ToString();
             var safeReturnUrl = IsLocalReturnUrl(returnUrl) ? returnUrl! : "/";
             return Results.Challenge(
                 new AuthenticationProperties
@@ -47,8 +45,10 @@ public static class AuthenticationEndpoints
         return endpoints;
     }
 
-    private static bool IsLocalReturnUrl(string? returnUrl) =>
+    internal static bool IsLocalReturnUrl(string? returnUrl) =>
         !string.IsNullOrWhiteSpace(returnUrl)
         && returnUrl.StartsWith('/')
-        && !returnUrl.StartsWith("//");
+        && !returnUrl.StartsWith("//")
+        && !returnUrl.Contains('\\')
+        && !returnUrl.Any(char.IsControl);
 }

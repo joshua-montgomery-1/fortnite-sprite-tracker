@@ -24,6 +24,21 @@ param googleClientId string
 @secure()
 param googleClientSecret string
 
+@secure()
+param authSigningPfx string
+
+@secure()
+param authEncryptionPfx string
+
+@secure()
+param authSigningPassword string
+
+@secure()
+param authEncryptionPassword string
+
+@description('Public OAuth clients and their registered callbacks. Client self-registration is not enabled.')
+param authClients array = []
+
 @description('Optional address for Azure budget alerts. Leave empty to omit the budget resource.')
 param budgetContactEmail string = ''
 
@@ -58,6 +73,11 @@ module application 'app.bicep' = {
     databaseConnectionString: databaseConnectionString
     googleClientId: googleClientId
     googleClientSecret: googleClientSecret
+    authSigningPfx: authSigningPfx
+    authEncryptionPfx: authEncryptionPfx
+    authSigningPassword: authSigningPassword
+    authEncryptionPassword: authEncryptionPassword
+    authClients: authClients
     budgetContactEmail: budgetContactEmail
     monthlyBudgetAmount: monthlyBudgetAmount
     deploymentVersion: deploymentVersion

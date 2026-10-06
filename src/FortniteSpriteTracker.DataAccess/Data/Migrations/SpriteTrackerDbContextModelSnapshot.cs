@@ -17,7 +17,7 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -319,6 +319,9 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<Guid?>("AccountId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -358,6 +361,9 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId")
+                        .IsUnique();
+
                     b.HasIndex("GoogleSubject")
                         .IsUnique();
 
@@ -390,12 +396,12 @@ namespace FortniteSpriteTracker.DataAccess.Data.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Slug")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");

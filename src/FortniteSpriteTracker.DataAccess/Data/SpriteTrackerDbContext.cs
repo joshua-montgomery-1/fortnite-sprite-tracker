@@ -27,6 +27,7 @@ public sealed class SpriteTrackerDbContext(DbContextOptions<SpriteTrackerDbConte
         users.HasKey(user => user.Id);
         users.Property(user => user.Id).ValueGeneratedOnAdd();
         users.HasIndex(user => user.PublicId).IsUnique();
+        users.HasIndex(user => user.AccountId).IsUnique();
         users.HasIndex(user => user.GoogleSubject).IsUnique();
         users.HasIndex(user => user.NormalizedEpicDisplayName);
         users.Property(user => user.GoogleSubject).HasMaxLength(255);

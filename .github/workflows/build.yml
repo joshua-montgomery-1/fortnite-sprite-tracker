@@ -15,6 +15,8 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet restore FortniteSpriteTracker.slnx
       - run: dotnet build FortniteSpriteTracker.slnx -c Release --no-restore
+      - run: dotnet run --project tests/FortniteSpriteTracker.Tests -c Release --no-build
+      - run: dotnet test tests/SpriteScout.Auth.Tests/SpriteScout.Auth.Tests.csproj -c Release --no-build
       - run: dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj -c Release --no-build
       - uses: actions/upload-artifact@v7
         with:

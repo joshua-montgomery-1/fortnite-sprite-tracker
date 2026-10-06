@@ -1,0 +1,30 @@
+@page "/identity/login"
+@inject IConfiguration Configuration
+@inject IAntiforgery Antiforgery
+@inject IAuthenticationSchemeProvider Schemes
+
+<AuthCard Model="model" />
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    private AuthPageModel model = new(AuthPageKind.Login);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = Configuration.GetSection("SpriteScoutAuth").Get<AuthOptions>() ?? new();
+        var session = await HttpContext.AuthenticateAsync(AuthDefaults.SessionScheme);
+        if (session.Succeeded)
+        {
+            model = new(AuthPageKind.SignedIn);
+            return;
+        }
+        var available = await Schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null;
+        model = new(AuthPageKind.Login)
+        {
+            Available = available,
+            Form = available ? AuthPages.Form(HttpContext, Antiforgery, []) with
+                { Action = new Uri(new Uri(settings.Issuer), "login").AbsolutePath } : null
+        };
+        HttpContext.Response.StatusCode = available ? 200 : 503;
+    }
+}
