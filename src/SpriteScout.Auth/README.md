@@ -24,7 +24,7 @@ Set these configuration values before deploying. URLs must be publicly reachable
 
 Azure environment variables use double underscores instead of colons, for example `SpriteScoutAuth__Certificates__SigningBase64`. Base64 is encoding, not encryption: treat the PFX values and passwords as secrets. The app decodes PFX bytes and loads keys with `EphemeralKeySet`, without writing certificate files or persisting private keys to the operating system key store. File-based hosting remains supported through `SigningPath` / `EncryptionPath`; configure exactly one source per certificate. Retain the same credentials across deployments, restarts, and replicas; development certificate generation is never used in production. Renew before expiry and coordinate rotation with existing tokens. These certificates are for OAuth tokens and are separate from HTTPS certificates.
 
-The local Codex registration is defined only in `appsettings.Development.json`. Register production clients separately through `SpriteScoutAuth:Clients`, with their own IDs and callbacks, `ApplicationType` (`native` or `web`), and a `DisplayName`. Public clients use authorization code with mandatory S256 PKCE, without client secrets. Native loopback callbacks permit variable ports; web callbacks require HTTPS. Client self-registration is not implemented.
+The local remote-MCP registration is defined only in `appsettings.Development.json`. Register production clients separately through `SpriteScoutAuth:Clients`, with their own IDs and callbacks, `ApplicationType` (`native` or `web`), and a `DisplayName`. Public clients use authorization code with mandatory S256 PKCE, without client secrets. Native loopback callbacks permit variable ports; web callbacks require HTTPS. Client self-registration is not implemented.
 
 Register both Google callback URLs using the actual deployed website origin and issuer: `<website-origin>/signin-google` and `<issuer>signin-google`. Login/error UI pages remain at `/auth/login`, `/auth/error`, `/identity/login`, and `/identity/error`; a custom issuer path redirects its login/error aliases to the UI pages. OAuth protocol endpoints remain relative to the configured issuer.
 
@@ -57,10 +57,10 @@ The GitHub user needs access to update production environment secrets/variables.
 
 Local encrypted PFX/password backups are restricted to your Windows user and SYSTEM under `%LOCALAPPDATA%/SpriteScout/AuthCertificates/<owner>/<repository>/`. The password backups use Windows DPAPI and are decryptable only by the same Windows user. Preserve a secure, recoverable backup of these credentials. Reruns reuse local files and check the recorded GitHub thumbprints; the script refuses missing backups for existing secrets, mismatched thumbprints, or expired credentials instead of silently rotating keys. It does not change the running application or register Google callbacks. Each Base64 value must fit GitHub's 48 KB secret limit, which the script checks.
 
-Set the optional GitHub production variable `AUTH_CLIENTS` to a JSON array of explicitly allowed clients before deployment. An empty array permits no new client registrations; removing an entry does not delete an existing database registration. For a production Codex connection:
+Set the optional GitHub production variable `AUTH_CLIENTS` to a JSON array of explicitly allowed clients before deployment. An empty array permits no new client registrations; removing an entry does not delete an existing database registration. For a production native MCP connection:
 
 ```json
-[{"ClientId":"sprite-scout-codex","DisplayName":"Codex — Sprite Scout","ApplicationType":"native","RedirectUris":["http://127.0.0.1/callback"]}]
+[{"ClientId":"sprite-scout-mcp","DisplayName":"Sprite Scout remote MCP","ApplicationType":"native","RedirectUris":["http://127.0.0.1/callback"]}]
 ```
 
 Register `https://spritescout.com/identity/signin-google` in the same Google OAuth client used by the website, retaining `https://spritescout.com/signin-google`. After review and merge, the release workflow supplies the secrets before starting the application. Check `https://spritescout.com/identity/.well-known/openid-configuration`, then complete a Google sign-in and an authenticated MCP call. Google callback registration and a production sign-in cannot be verified by a local build.

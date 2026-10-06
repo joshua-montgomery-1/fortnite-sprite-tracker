@@ -1,0 +1,96 @@
+@page "/chatgpt"
+@inject AccountState AccountState
+@inject IJSRuntime JS
+
+<PageTitle>Connect Sprite Scout to an AI Client</PageTitle>
+<HeadContent>
+    <PageMetadata Title="Connect Sprite Scout to an AI Client"
+                  Description="Connect Sprite Scout to ChatGPT, Claude, Copilot, or another remote MCP client to check and update your Fortnite Sprite collection."
+                  Path="/chatgpt">
+        <OpenGraphMetadata />
+        <TwitterCardMetadata />
+    </PageMetadata>
+</HeadContent>
+
+<main class="chatGptPage">
+    <SiteHeader Profile="@AccountState.Profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
+
+    <section class="chatGptHero">
+        <div class="chatGptHeroCopy">
+            <span class="sectionKicker">SPRITE SCOUT × AI ASSISTANTS</span>
+            <h1>Your field guide,<br /><em>wherever you chat.</em></h1>
+            <h2 class="chatGptSubhead">Connect your AI client to Sprite Scout.</h2>
+            <p>Ask what you own, find missing Sprites by season, and update your collection from ChatGPT, Claude, Copilot, or another compatible AI assistant.</p>
+            <a class="chatGptInstall" href="/chatgpt#connect" data-enhance-nav="false">
+                Connect Sprite Scout <span aria-hidden="true">↓</span>
+            </a>
+            <small class="chatGptInstallNote">Remote MCP setup for ChatGPT, Claude, Copilot, and compatible clients</small>
+        </div>
+        <div class="chatGptHeroMark" aria-hidden="true">
+            <span class="chatGptOrbit orbitOne"></span>
+            <span class="chatGptOrbit orbitTwo"></span>
+            <span class="chatGptMark">S</span>
+        </div>
+    </section>
+
+    <section class="chatGptSteps" aria-labelledby="chatGptStepsTitle">
+        <div class="chatGptSectionHeading">
+            <span class="sectionKicker">REMOTE MCP SETUP</span>
+            <h2 id="chatGptStepsTitle">Connect Sprite Scout to your MCP client.</h2>
+        </div>
+        <div class="chatGptStepGrid">
+            <article><span>01</span><h3>Open your client settings</h3><p>In ChatGPT, Claude, Copilot, or another compatible client, choose the option to add a custom remote MCP server.</p></article>
+            <article><span>02</span><h3>Enter connection details</h3><p>Use the endpoint below. If your client requires a client ID, use the ID registered for that client. No client secret is needed for PKCE clients.</p></article>
+            <article><span>03</span><h3>Authorize access</h3><p>Complete Sprite Scout sign-in and approve the collection permissions you want to use.</p></article>
+        </div>
+    </section>
+
+    <section class="chatGptConnection" id="connect" aria-labelledby="chatGptConnectionTitle">
+        <div>
+            <span class="sectionKicker">CONNECTION DETAILS</span>
+            <h2 id="chatGptConnectionTitle">Add Sprite Scout as a remote MCP server.</h2>
+            <p>Your MCP client uses the endpoint to start OAuth. A client ID identifies the app; it is not a password. Some clients provide their own OAuth registration and do not need the Sprite Scout ID below.</p>
+        </div>
+        <dl class="chatGptConnectionDetails">
+            <div><dt>Server endpoint</dt><dd><code>https://spritescout.com/mcp</code><button type="button" @onclick="CopyEndpointAsync">Copy</button></dd></div>
+            <div><dt>Client ID</dt><dd><code>sprite-scout-mcp</code><button type="button" @onclick="CopyClientIdAsync">Copy</button></dd></div>
+            <div><dt>Authentication</dt><dd><span>OAuth 2.0 + PKCE · no client secret</span></dd></div>
+            <div><dt>Permissions</dt><dd><span>Account, collection read, collection write</span></dd></div>
+        </dl>
+        @if (copied) { <p class="chatGptCopied" role="status">Copied to clipboard.</p> }
+        <p class="chatGptClientNote"><strong>Client note:</strong> Client IDs and redirect URIs are registered per application. If Claude, Copilot, or another client supplies its own OAuth identity, leave this field blank; otherwise use the client ID Sprite Scout has registered for that client.</p>
+    </section>
+
+    <section class="chatGptCapabilities" aria-labelledby="chatGptCapabilitiesTitle">
+        <div>
+            <span class="sectionKicker">WHAT YOU CAN ASK</span>
+            <h2 id="chatGptCapabilitiesTitle">Your collection, ready when you are.</h2>
+        </div>
+        <div class="chatGptPromptGrid">
+            <p>“Which Sprites am I missing from this season?”</p>
+            <p>“Show me every Sprite I own from Chapter 1.”</p>
+            <p>“Mark this Sprite as owned and mastered.”</p>
+        </div>
+    </section>
+
+    <section class="chatGptTrust" aria-label="Privacy and account information">
+        <strong>Private by default.</strong>
+        <span>Sprite Scout only reads or changes your own collection after you approve the connection. You can disconnect it from ChatGPT at any time.</span>
+        <a href="/privacy">Read our privacy policy <span aria-hidden="true">→</span></a>
+    </section>
+
+    <SiteFooter />
+</main>
+
+@code {
+    private bool copied;
+
+    private async Task CopyAsync(string value)
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", value);
+        copied = true;
+    }
+
+    private Task CopyEndpointAsync() => CopyAsync("https://spritescout.com/mcp");
+    private Task CopyClientIdAsync() => CopyAsync("sprite-scout-mcp");
+}
