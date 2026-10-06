@@ -6,7 +6,7 @@ Verified locally on 2026-10-06, Windows, .NET 10, PostgreSQL 17.6.
 | --- | --- |
 | Solution Release build | Passed, 0 warnings / 0 errors |
 | Existing console test suite | Passed (`Sprite catalog route tests passed.`) |
-| Auth integration suite | 21 passed, 0 failed, 0 skipped |
+| Auth integration suite | 27 passed, 0 failed, 0 skipped |
 | Server Release publish | Passed |
 | Website/auth model snapshots | No pending model changes in PostgreSQL fixture |
 | Plugin, MCP, and marketplace JSON | Parsed successfully |
@@ -22,6 +22,7 @@ Verified locally on 2026-10-06, Windows, .NET 10, PostgreSQL 17.6.
 - Reject missing/plain PKCE, unknown clients/scopes, missing/wrong resources, external callbacks, and incorrect loopback host/path.
 - Accept two different native callback ports; return matching issuer and state on successful authorization.
 - Challenge Google using the distinct central callback while the legacy website login retains its callback.
+- Render the branded central sign-in page before the Google challenge, preserve OAuth state/PKCE through the sign-in form, require antiforgery on both standalone and connection sign-in, and return a friendly retry page after Google denies sign-in. Retry links accept only the configured issuer's login/authorization paths.
 - Require a valid consent antiforgery token; declining returns no authorization code.
 - Reject wrong code verifiers and replayed authorization codes.
 - Exchange real OAuth codes for tokens and call `who_am_i` over HTTP MCP for two independent accounts.

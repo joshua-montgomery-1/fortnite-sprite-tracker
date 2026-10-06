@@ -128,10 +128,26 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     public async Task Google_challenge_uses_separate_callback_and_native_callback_ports_are_supported()
     {
         using var anonymous = fixture.Host.Browser();
-        var central = await anonymous.GetAsync(QueryHelpers.AddQueryString("/identity/connect/authorize", Parameters()));
+        var path = QueryHelpers.AddQueryString("/identity/connect/authorize", Parameters());
+        var login = await anonymous.GetAsync(path);
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var html = await login.Content.ReadAsStringAsync();
+        Assert.Contains("Continue with Google", html);
+        Assert.Contains("Codex", html);
+        Assert.Contains("form-action 'self'", login.Headers.GetValues("Content-Security-Policy").Single());
+        var central = await anonymous.PostAsync(path, Consent(html, "signin"));
         Assert.Equal(HttpStatusCode.Redirect, central.StatusCode);
         Assert.Equal("accounts.google.com", central.Headers.Location!.Host);
         Assert.Equal(Issuer + "signin-google", QueryHelpers.ParseQuery(central.Headers.Location.Query)["redirect_uri"].ToString());
+        var google = fixture.Host.Services.GetRequiredService<IOptionsMonitor<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>>()
+            .Get(AuthDefaults.GoogleScheme);
+        var properties = google.StateDataFormat.Unprotect(QueryHelpers.ParseQuery(central.Headers.Location.Query)["state"]!);
+        Assert.NotNull(properties);
+        var preserved = QueryHelpers.ParseQuery(new Uri(properties.RedirectUri!).Query);
+        Assert.Equal("integration-state", preserved["state"].ToString());
+        Assert.Equal(Parameters()["code_challenge"], preserved["code_challenge"].ToString());
+        Assert.False(preserved.ContainsKey("decision"));
+        Assert.False(preserved.ContainsKey("__RequestVerificationToken"));
         var website = await anonymous.GetAsync("/auth/login");
         Assert.Equal(HttpStatusCode.Redirect, website.StatusCode);
         Assert.Equal("https://localhost:7082/signin-google", QueryHelpers.ParseQuery(website.Headers.Location!.Query)["redirect_uri"].ToString());
@@ -143,6 +159,70 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
             Assert.Equal(HttpStatusCode.OK, (await browser.GetAsync(
                 QueryHelpers.AddQueryString("/identity/connect/authorize", parameters))).StatusCode);
         }
+    }
+
+    [Fact]
+    public async Task Standalone_login_is_branded_and_requires_a_valid_form_before_Google()
+    {
+        using var browser = fixture.Host.Browser();
+        var html = await browser.GetStringAsync("/identity/login");
+        Assert.Contains("Welcome to Sprite Scout", html);
+        Assert.Contains("Continue with Google", html);
+        var rejected = await browser.PostAsync("/identity/login", new FormUrlEncodedContent(new Dictionary<string, string>()));
+        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+        Assert.Null(rejected.Headers.Location);
+        var challenge = await browser.PostAsync("/identity/login", Consent(html, "signin"));
+        Assert.Equal(HttpStatusCode.Redirect, challenge.StatusCode);
+        Assert.Equal("accounts.google.com", challenge.Headers.Location!.Host);
+        using var signedIn = fixture.Host.Browser(fixture.FirstAccount);
+        Assert.Contains("You're signed in", WebUtility.HtmlDecode(await signedIn.GetStringAsync("/identity/login")));
+    }
+
+    [Fact]
+    public async Task Anonymous_OAuth_login_requires_antiforgery_before_redirecting_to_Google()
+    {
+        using var browser = fixture.Host.Browser();
+        var values = Parameters().ToDictionary(item => item.Key, item => item.Value!);
+        values["decision"] = "signin";
+        var response = await browser.PostAsync("/identity/connect/authorize", new FormUrlEncodedContent(values));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Null(response.Headers.Location);
+        Assert.Contains("consent form expired", await response.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData("https://attacker.example/identity/login")]
+    [InlineData("https://localhost:7082/auth/logout")]
+    [InlineData("//attacker.example/identity/login")]
+    public async Task Sign_in_error_page_does_not_link_to_untrusted_retry_destinations(string retry)
+    {
+        using var browser = fixture.Host.Browser();
+        var response = await browser.GetAsync(QueryHelpers.AddQueryString("/identity/error", "returnUrl", retry));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Google sign-in", html);
+        Assert.Contains("href=\"https://localhost:7082/identity/login\"", html);
+        Assert.DoesNotContain(retry, html);
+    }
+
+    [Fact]
+    public async Task Failed_Google_callback_returns_the_friendly_sign_in_error_page()
+    {
+        using var browser = fixture.Host.Browser();
+        var path = QueryHelpers.AddQueryString("/identity/connect/authorize", Parameters());
+        var login = await browser.GetStringAsync(path);
+        var challenge = await browser.PostAsync(path, Consent(login, "signin"));
+        var state = QueryHelpers.ParseQuery(challenge.Headers.Location!.Query)["state"].ToString();
+        var callback = await browser.GetAsync(QueryHelpers.AddQueryString("/identity/signin-google",
+            new Dictionary<string, string?> { ["error"] = "access_denied", ["state"] = state }));
+        Assert.Equal(HttpStatusCode.Redirect, callback.StatusCode);
+        Assert.StartsWith(Issuer + "error", callback.Headers.Location!.AbsoluteUri);
+        var retry = new Uri(QueryHelpers.ParseQuery(callback.Headers.Location.Query)["returnUrl"].ToString());
+        Assert.Equal("/identity/connect/authorize", retry.AbsolutePath);
+        Assert.Equal("integration-state", QueryHelpers.ParseQuery(retry.Query)["state"].ToString());
+        var error = await browser.GetAsync(callback.Headers.Location);
+        Assert.Equal(HttpStatusCode.BadRequest, error.StatusCode);
+        Assert.Contains("Try again", await error.Content.ReadAsStringAsync());
     }
 
     [Fact]

@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenIddict.Abstractions;
@@ -65,8 +65,9 @@ public static class CentralAuthEndpoints
             .AllowAnonymous();
         app.MapPost(new Uri(issuer, "connect/token").AbsolutePath, ExchangeAsync)
             .AllowAnonymous();
-        app.MapGet(new Uri(issuer, "error").AbsolutePath, () => Results.Problem(
-            title: "Google sign-in could not be completed.", statusCode: 400)).AllowAnonymous();
+        app.MapMethods(new Uri(issuer, "login").AbsolutePath, ["GET", "POST"], LoginAsync).AllowAnonymous();
+        app.MapGet(new Uri(issuer, "error").AbsolutePath, (HttpContext context) => CentralAuthPages.Error(
+            context, CentralAuthPages.SafeRetry(settings, context.Request.Query["returnUrl"]))).AllowAnonymous();
         app.MapGet("/.well-known/oauth-protected-resource/mcp", () => Results.Json(new
         {
             resource = settings.Resource,
@@ -85,15 +86,27 @@ public static class CentralAuthEndpoints
             ?? throw new InvalidOperationException("The OAuth request was not validated.");
         if (request.GetResources().Length != 1 || request.GetResources()[0] != settings.Resource)
             return Reject(Errors.InvalidTarget, "Request the Sprite Scout MCP resource.");
+        var application = await applications.FindByClientIdAsync(request.ClientId!, cancellationToken)
+            ?? throw new InvalidOperationException("The OAuth client was not found.");
+        var name = await applications.GetDisplayNameAsync(application, cancellationToken) ?? "This application";
         var session = await context.AuthenticateAsync(AuthDefaults.SessionScheme);
         if (session.Principal is null)
         {
             var schemes = context.RequestServices.GetRequiredService<IAuthenticationSchemeProvider>();
-            if (await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is null)
-                return Results.Problem("Configure Google credentials to sign in.", statusCode: 503);
+            var available = await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null;
+            if (HttpMethods.IsGet(context.Request.Method) || !available)
+            {
+                var form = available ? CentralAuthPages.Form(context, antiforgery, AuthorizationFields(context),
+                    "<button name=\"decision\" value=\"signin\">Continue with Google</button>") : null;
+                return CentralAuthPages.Login(context, name, form, available);
+            }
+            var retry = AuthorizationReturn(settings, request);
+            if (!await ValidateFormAsync(context, antiforgery))
+                return CentralAuthPages.Error(context, retry, expired: true);
+            if (context.Request.Form["decision"] != "signin") return Results.BadRequest();
             return Results.Challenge(new AuthenticationProperties
             {
-                RedirectUri = context.Request.GetEncodedUrl(),
+                RedirectUri = retry,
                 IsPersistent = true
             }, [AuthDefaults.GoogleScheme]);
         }
@@ -101,38 +114,14 @@ public static class CentralAuthEndpoints
             !await database.Accounts.AnyAsync(account => account.Id == accountId, cancellationToken))
             return Reject(Errors.AccessDenied, "The Sprite Scout account is unavailable.");
 
-        var application = await applications.FindByClientIdAsync(request.ClientId!, cancellationToken)
-            ?? throw new InvalidOperationException("The OAuth client was not found.");
         if (HttpMethods.IsGet(context.Request.Method))
         {
-            var token = antiforgery.GetAndStoreTokens(context);
-            var encode = HtmlEncoder.Default;
-            var name = await applications.GetDisplayNameAsync(application, cancellationToken) ?? "This application";
-            context.Response.Headers.ContentSecurityPolicy = "default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
-            var parameters = string.Join("", context.Request.Query.SelectMany(parameter => parameter.Value.Select(value =>
-                $"<input type=\"hidden\" name=\"{encode.Encode(parameter.Key)}\" value=\"{encode.Encode(value ?? "")}\">")));
-            return Results.Content($"""
-                <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-                <title>Connect to Sprite Scout</title></head><body>
-                <main><h1>Connect to Sprite Scout</h1>
-                <p>{encode.Encode(name)} wants to read your Sprite Scout account name and public profile identifier.</p>
-                <p>This connection cannot change your collection.
-                {(request.HasScope(Scopes.OfflineAccess) ? "It can stay connected for up to 30 days." : "")}</p>
-                <form method="post" action="{encode.Encode(context.Request.Path)}">
-                {parameters}
-                <input type="hidden" name="{encode.Encode(token.FormFieldName)}" value="{encode.Encode(token.RequestToken!)}">
-                <button name="decision" value="allow">Allow connection</button>
-                <button name="decision" value="deny">Cancel</button></form></main></body></html>
-                """, "text/html; charset=utf-8");
+            var form = CentralAuthPages.Form(context, antiforgery, AuthorizationFields(context),
+                "<button name=\"decision\" value=\"allow\">Allow connection</button><button class=\"secondary\" name=\"decision\" value=\"deny\">Cancel</button>");
+            return CentralAuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess), form);
         }
-        try
-        {
-            await antiforgery.ValidateRequestAsync(context);
-        }
-        catch (AntiforgeryValidationException)
-        {
-            return Results.BadRequest(new { error = "The consent form expired. Start sign-in again." });
-        }
+        if (!await ValidateFormAsync(context, antiforgery))
+            return CentralAuthPages.Error(context, AuthorizationReturn(settings, request), expired: true);
         if (context.Request.Form["decision"] != "allow")
             return Reject(Errors.AccessDenied, "The user declined the connection.");
 
@@ -150,6 +139,40 @@ public static class CentralAuthEndpoints
             type: AuthorizationTypes.Permanent, scopes: principal.GetScopes(), cancellationToken: cancellationToken);
         principal.SetAuthorizationId(await authorizations.GetIdAsync(grant, cancellationToken));
         return Results.SignIn(principal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+    }
+
+    private static string AuthorizationFields(HttpContext context) => string.Join("",
+        context.Request.Query.SelectMany(parameter => parameter.Value.Select(value =>
+            $"<input type=\"hidden\" name=\"{HtmlEncoder.Default.Encode(parameter.Key)}\" value=\"{HtmlEncoder.Default.Encode(value ?? "")}\">")));
+
+    private static string AuthorizationReturn(CentralAuthOptions settings, OpenIddictRequest request) =>
+        QueryHelpers.AddQueryString(new Uri(new Uri(settings.Issuer), "connect/authorize").AbsoluteUri,
+            request.GetParameters().Where(parameter => parameter.Key is not ("decision" or "__RequestVerificationToken"))
+                .ToDictionary(parameter => parameter.Key, parameter => (string?)parameter.Value.ToString()));
+
+    private static async Task<bool> ValidateFormAsync(HttpContext context, IAntiforgery antiforgery)
+    {
+        try { await antiforgery.ValidateRequestAsync(context); return true; }
+        catch (AntiforgeryValidationException) { return false; }
+    }
+
+    private static async Task<IResult> LoginAsync(HttpContext context, IAntiforgery antiforgery,
+        CentralAuthOptions settings, IAuthenticationSchemeProvider schemes)
+    {
+        var login = new Uri(new Uri(settings.Issuer), "login").AbsoluteUri;
+        if (HttpMethods.IsPost(context.Request.Method))
+        {
+            if (!await ValidateFormAsync(context, antiforgery))
+                return CentralAuthPages.Error(context, login, expired: true);
+            if (await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null)
+                return Results.Challenge(new AuthenticationProperties { RedirectUri = login, IsPersistent = true },
+                    [AuthDefaults.GoogleScheme]);
+        }
+        var session = await context.AuthenticateAsync(AuthDefaults.SessionScheme);
+        if (session.Succeeded) return CentralAuthPages.SignedIn(context);
+        var available = await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null;
+        return CentralAuthPages.Login(context, null, available ? CentralAuthPages.Form(context, antiforgery, "",
+            "<button>Continue with Google</button>") : null, available);
     }
 
     private static async Task<IResult> ExchangeAsync(

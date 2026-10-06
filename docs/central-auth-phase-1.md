@@ -57,7 +57,9 @@ OpenIddict development signing/encryption certificates persist in the current OS
 
 The repository marketplace at `.agents/plugins/marketplace.json` exposes `plugins/sprite-scout-local`. Open this repository in the desktop client and install **sprite-scout-local** from **Sprite Scout Development**. If the marketplace is not visible, add the repository root with `codex plugin marketplace add <absolute-repository-path>`, then refresh/restart the client. CLI installation is `codex plugin add sprite-scout-local@sprite-scout-development`.
 
-The package supplies the HTTPS server URL, public client ID, and `http://127.0.0.1/callback`. Codex chooses the callback port. Connect with Google in the browser and approve the account-read consent screen. Ask Codex to call `who_am_i`; it should return the account UUID, website public profile UUID, and display name. The tool cannot edit collection progress.
+The package supplies the HTTPS server URL, public client ID, and `http://127.0.0.1/callback`. Codex chooses the callback port. The browser first shows a Sprite Scout sign-in page naming the connecting application. Choose **Continue with Google**, then approve the account-read consent screen after signing in. Ask Codex to call `who_am_i`; it should return the account UUID, website public profile UUID, and display name. The tool cannot edit collection progress.
+
+The standalone central sign-in page is `https://localhost:7082/identity/login`. Sign-in failures show a friendly retry page; when sign-in started from an application connection, retry preserves that connection request. Existing website login still uses its original flow during Phase 1.
 
 If configuring MCP directly instead of installing the plugin, use:
 

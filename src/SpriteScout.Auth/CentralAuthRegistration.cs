@@ -82,7 +82,9 @@ public static class CentralAuthRegistration
                 };
                 options.Events.OnRemoteFailure = context =>
                 {
-                    context.Response.Redirect(new Uri(issuer, "error").AbsoluteUri);
+                    var retry = CentralAuthPages.SafeRetry(settings, context.Properties?.RedirectUri);
+                    context.Response.Redirect(Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
+                        new Uri(issuer, "error").AbsoluteUri, "returnUrl", retry));
                     context.HandleResponse();
                     return Task.CompletedTask;
                 };
