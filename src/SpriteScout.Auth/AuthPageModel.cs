@@ -10,6 +10,7 @@ public sealed record AuthPageModel(AuthPageKind Kind)
     public bool Offline { get; init; }
     public bool CollectionRead { get; init; }
     public bool CollectionWrite { get; init; }
+    public bool AccountWrite { get; init; }
     public bool Expired { get; init; }
     public string? Retry { get; init; }
 

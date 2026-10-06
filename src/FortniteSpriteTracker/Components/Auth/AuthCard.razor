@@ -37,7 +37,8 @@
         }
         @if (Model.Form is not null)
         {
-            <AuthForm Model="Model.Form" CollectionRead="Model.CollectionRead" CollectionWrite="Model.CollectionWrite" Offline="Model.Offline" />
+            <AuthForm Model="Model.Form" CollectionRead="Model.CollectionRead" CollectionWrite="Model.CollectionWrite"
+                      AccountWrite="Model.AccountWrite" Offline="Model.Offline" />
         }
         @if (Model.Kind is AuthPageKind.Login or AuthPageKind.WebsiteLogin)
         {

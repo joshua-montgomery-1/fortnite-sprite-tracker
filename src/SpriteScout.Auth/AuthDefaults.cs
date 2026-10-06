@@ -6,6 +6,7 @@ public static class AuthDefaults
     public const string GoogleScheme = "SpriteScout.Google";
     public const string GoogleIssuer = "https://accounts.google.com";
     public const string AccountReadScope = "account:read";
+    public const string AccountWriteScope = "account:write";
     public const string CollectionReadScope = "collection:read";
     public const string CollectionWriteScope = "collection:write";
 }

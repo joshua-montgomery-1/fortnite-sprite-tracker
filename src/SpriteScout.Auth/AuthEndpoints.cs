@@ -25,7 +25,7 @@ public static class AuthEndpoints
         // Clients prioritize challenged scopes over discovery metadata. Include
         // collection access so the default consent covers all advertised tools.
         var connectionScopes = string.Join(' ', AuthDefaults.AccountReadScope,
-            AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope, Scopes.OfflineAccess);
+            AuthDefaults.AccountWriteScope, AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope, Scopes.OfflineAccess);
         app.Use(async (context, next) =>
         {
             var isAuth = context.Request.Path.StartsWithSegments(issuer.AbsolutePath.TrimEnd('/')) ||
@@ -80,7 +80,7 @@ public static class AuthEndpoints
         {
             resource = settings.Resource,
             authorization_servers = new[] { settings.Issuer },
-            scopes_supported = new[] { AuthDefaults.AccountReadScope, AuthDefaults.CollectionReadScope,
+            scopes_supported = new[] { AuthDefaults.AccountReadScope, AuthDefaults.AccountWriteScope, AuthDefaults.CollectionReadScope,
                 AuthDefaults.CollectionWriteScope, Scopes.OfflineAccess },
             bearer_methods_supported = new[] { "header" }
         })).AllowAnonymous();
@@ -129,7 +129,7 @@ public static class AuthEndpoints
             var form = AuthPages.Form(context, antiforgery, AuthorizationFields(context), consent: true);
             return AuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess),
                 request.HasScope(AuthDefaults.CollectionReadScope), request.HasScope(AuthDefaults.CollectionWriteScope),
-                form, request.RedirectUri!);
+                request.HasScope(AuthDefaults.AccountWriteScope), form, request.RedirectUri!);
         }
         if (!await ValidateFormAsync(context, antiforgery))
             return AuthPages.Error(context, AuthorizationReturn(settings, request), expired: true);
@@ -139,7 +139,7 @@ public static class AuthEndpoints
         var approvedScopes = context.Request.Form["approved_scope"].Select(scope => scope ?? "")
             .Append(AuthDefaults.AccountReadScope).Distinct(StringComparer.Ordinal).ToArray();
         if (approvedScopes.Any(scope => !request.HasScope(scope) ||
-            scope is not (AuthDefaults.AccountReadScope or AuthDefaults.CollectionReadScope or
+            scope is not (AuthDefaults.AccountReadScope or AuthDefaults.AccountWriteScope or AuthDefaults.CollectionReadScope or
                 AuthDefaults.CollectionWriteScope or Scopes.OfflineAccess)))
             return Reject(Errors.InvalidScope, "Approve only permissions requested by this application.");
 
