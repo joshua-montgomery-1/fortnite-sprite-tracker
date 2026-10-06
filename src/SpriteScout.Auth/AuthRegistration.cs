@@ -1,7 +1,5 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,10 +18,18 @@ public static class AuthRegistration
         string connectionString)
     {
         var settings = configuration.GetSection("SpriteScoutAuth").Get<AuthOptions>() ?? new();
-        if (!settings.Enabled)
-        {
-            return settings;
-        }
+        if (!settings.Enabled) return settings;
+
+        var issuer = ValidateConfiguration(settings, environment);
+        AddAccountServices(services, settings, connectionString);
+        AddBrowserAuthentication(services, configuration, issuer);
+        AddOAuth(services, settings, issuer);
+        AddMcpAuthorization(services);
+        return settings;
+    }
+
+    private static Uri ValidateConfiguration(AuthOptions settings, IHostEnvironment environment)
+    {
         if (!environment.IsDevelopment())
         {
             throw new InvalidOperationException("Phase 1 auth is available only in Development.");
@@ -37,60 +43,51 @@ public static class AuthRegistration
         {
             throw new InvalidOperationException("Phase 1 requires HTTPS loopback URLs and an issuer path ending in '/'.");
         }
+        return issuer;
+    }
+
+    private static void AddAccountServices(
+        IServiceCollection services, AuthOptions settings, string connectionString)
+    {
         services.AddSingleton(settings);
         services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(connectionString,
             postgres => postgres.MigrationsHistoryTable("__EFMigrationsHistory", "sprite_scout_auth"))
             .UseOpenIddict());
         services.AddScoped<AuthIdentityService>();
         services.AddHostedService<AuthDatabaseInitializer>();
-        services.AddScoped<IAuthorizationHandler, AccountAuthorizationHandler>();
+    }
 
-        services.AddAuthentication()
+    private static void AddBrowserAuthentication(
+        IServiceCollection services, IConfiguration configuration, Uri issuer)
+    {
+        var authentication = services.AddAuthentication()
             .AddCookie(AuthDefaults.SessionScheme, options =>
             {
                 options.Cookie.Name = "__Host-spritescout-auth";
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
-                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.Path = "/";
                 options.ExpireTimeSpan = TimeSpan.FromDays(30);
             });
-        var googleClientId = configuration["Authentication:Google:ClientId"];
-        var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
-        if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
-        {
-            services.AddAuthentication().AddGoogle(AuthDefaults.GoogleScheme, options =>
-            {
-                options.ClientId = googleClientId;
-                options.ClientSecret = googleClientSecret;
-                options.SignInScheme = AuthDefaults.SessionScheme;
-                options.CallbackPath = issuer.AbsolutePath.TrimEnd('/') + "/signin-google";
-                options.Events.OnCreatingTicket = async context =>
-                {
-                    var subject = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier)
-                        ?? throw new InvalidOperationException("Google did not return a subject.");
-                    var accounts = context.HttpContext.RequestServices.GetRequiredService<AuthIdentityService>();
-                    var accountId = await accounts.GetOrCreateGoogleAsync(subject, context.HttpContext.RequestAborted);
-                    foreach (var observer in context.HttpContext.RequestServices.GetServices<IAccountProfileProvisioner>())
-                    {
-                        await observer.GoogleSignedInAsync(accountId, subject,
-                            context.Principal?.FindFirstValue(ClaimTypes.Name), context.HttpContext.RequestAborted);
-                    }
-                    var identity = new ClaimsIdentity(AuthDefaults.SessionScheme);
-                    identity.AddClaim(new Claim(Claims.Subject, accountId.ToString()));
-                    context.Principal = new ClaimsPrincipal(identity);
-                };
-                options.Events.OnRemoteFailure = context =>
-                {
-                    var retry = AuthPages.SafeRetry(settings, context.Properties?.RedirectUri);
-                    context.Response.Redirect(Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
-                        new Uri(issuer, "error").AbsoluteUri, "returnUrl", retry));
-                    context.HandleResponse();
-                    return Task.CompletedTask;
-                };
-            });
-        }
 
+        var clientId = configuration["Authentication:Google:ClientId"];
+        var clientSecret = configuration["Authentication:Google:ClientSecret"];
+        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret)) return;
+
+        services.AddScoped<GoogleAuthEvents>();
+        authentication.AddGoogle(AuthDefaults.GoogleScheme, options =>
+        {
+            options.ClientId = clientId;
+            options.ClientSecret = clientSecret;
+            options.SignInScheme = AuthDefaults.SessionScheme;
+            options.CallbackPath = issuer.AbsolutePath.TrimEnd('/') + "/signin-google";
+            options.EventsType = typeof(GoogleAuthEvents);
+        });
+    }
+
+    private static void AddOAuth(IServiceCollection services, AuthOptions settings, Uri issuer)
+    {
         services.AddOpenIddict()
             .AddCore(options => options.UseEntityFrameworkCore().UseDbContext<AuthDbContext>())
             .AddServer(options =>
@@ -135,6 +132,11 @@ public static class AuthRegistration
                 options.EnableAuthorizationEntryValidation();
                 options.UseAspNetCore();
             });
+    }
+
+    private static void AddMcpAuthorization(IServiceCollection services)
+    {
+        services.AddScoped<IAuthorizationHandler, AccountAuthorizationHandler>();
         services.AddAuthorization(options => options.AddPolicy("McpAccount", policy =>
         {
             policy.AddAuthenticationSchemes(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
@@ -142,22 +144,5 @@ public static class AuthRegistration
             policy.RequireAssertion(context => context.User.HasScope(AuthDefaults.AccountReadScope));
             policy.AddRequirements(new AccountRequirement());
         }));
-        return settings;
-    }
-}
-
-internal sealed class AccountRequirement : IAuthorizationRequirement;
-
-internal sealed class AccountAuthorizationHandler(AuthDbContext database)
-    : AuthorizationHandler<AccountRequirement>
-{
-    protected override async Task HandleRequirementAsync(
-        AuthorizationHandlerContext context, AccountRequirement requirement)
-    {
-        if (Guid.TryParse(context.User.GetClaim(Claims.Subject), out var id) &&
-            await database.Accounts.AnyAsync(account => account.Id == id))
-        {
-            context.Succeed(requirement);
-        }
     }
 }
