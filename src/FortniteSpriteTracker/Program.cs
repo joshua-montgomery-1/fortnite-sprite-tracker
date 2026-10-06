@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics;
 using FortniteSpriteTracker.DataAccess.Seeding;
 using Microsoft.EntityFrameworkCore;
+using SpriteScout.Auth;
+using ModelContextProtocol.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -117,6 +119,18 @@ if (googleAuthenticationConfigured)
 builder.Services.AddAuthorization();
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
+var centralAuth = builder.Services.AddCentralAuth(
+    builder.Configuration, builder.Environment, databaseConnectionString);
+if (centralAuth.Enabled)
+{
+    builder.Services.AddScoped<CentralAccountBackfill>();
+    builder.Services.AddScoped<ICentralAccountObserver, CentralAccountProfileLinker>();
+    builder.Services.AddHostedService<CentralAccountBackfillInitializer>();
+    builder.Services.AddMcpServer()
+        .WithHttpTransport(options => options.SessionMode = HttpServerSessionMode.Stateless)
+        .WithTools<CentralAuthProofTools>();
+}
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -130,10 +144,17 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseCentralAuthBoundary(centralAuth);
 app.MapStaticAssets();
-app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
+
+app.MapCentralAuthEndpoints(centralAuth);
+if (centralAuth.Enabled)
+{
+    app.MapMcp(new Uri(centralAuth.Resource).AbsolutePath).RequireAuthorization("CentralMcp");
+}
 
 app.MapGet("/error", (HttpContext context) =>
 {
@@ -184,3 +205,5 @@ if (args.Contains("--seed-catalog", StringComparer.Ordinal))
 }
 
 app.Run();
+
+public partial class Program;

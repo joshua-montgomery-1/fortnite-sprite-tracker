@@ -1,0 +1,9 @@
+{
+  "name": "sprite-scout-local",
+  "version": "0.1.0",
+  "description": "Local Sprite Scout account connection proof. Requires the development server.",
+  "author": {
+    "name": "Sprite Scout"
+  },
+  "mcpServers": "./.mcp.json"
+}

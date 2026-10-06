@@ -1,0 +1,339 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using FortniteSpriteTracker.DataAccess;
+using FortniteSpriteTracker.Server.Services;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using OpenIddict.Abstractions;
+using OpenIddict.Server;
+
+namespace SpriteScout.Auth.Tests;
+
+public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<AuthFixture>
+{
+    private const string Issuer = "https://localhost:7082/identity/";
+    private const string Resource = "https://localhost:7082/mcp";
+    private const string Callback = "http://127.0.0.1:48123/callback";
+
+    [Fact]
+    public async Task Backfill_is_repeatable_and_preserves_profile_and_progress()
+    {
+        await using var scope = fixture.Host.Services.CreateAsyncScope();
+        var count = await scope.ServiceProvider.GetRequiredService<CentralAccountBackfill>().RunAsync();
+        Assert.Equal(0, count);
+        var website = scope.ServiceProvider.GetRequiredService<SpriteTrackerDbContext>();
+        var user = await website.Users.SingleAsync(item => item.Id == fixture.FirstUserId);
+        Assert.Equal(fixture.FirstAccount, user.CentralAccountId);
+        Assert.Equal(fixture.FirstPublicId, user.PublicId);
+        var progress = await website.SpriteProgress.SingleAsync(item => item.UserId == user.Id);
+        Assert.Equal(fixture.VariantId, progress.SpriteVariantId);
+        Assert.True(progress.IsOwned && progress.IsMastered);
+        Assert.NotEqual(fixture.FirstAccount, fixture.SecondAccount);
+        var identities = scope.ServiceProvider.GetRequiredService<AuthIdentityService>();
+        Assert.Equal(fixture.FirstAccount, await identities.GetOrCreateGoogleAsync("google-existing-1", default));
+    }
+
+    [Fact]
+    public async Task Google_observer_links_new_profiles_without_overwriting_existing_names()
+    {
+        await using var scope = fixture.Host.Services.CreateAsyncScope();
+        var identities = scope.ServiceProvider.GetRequiredService<AuthIdentityService>();
+        var observer = scope.ServiceProvider.GetRequiredService<ICentralAccountObserver>();
+        await observer.GoogleSignedInAsync(fixture.FirstAccount, "google-existing-1", "Changed Google name", default);
+        var newAccount = await identities.GetOrCreateGoogleAsync("google-new", default);
+        await observer.GoogleSignedInAsync(newAccount, "google-new", "New Scout", default);
+        var database = scope.ServiceProvider.GetRequiredService<SpriteTrackerDbContext>();
+        Assert.Equal("First Scout", (await database.Users.SingleAsync(user => user.Id == fixture.FirstUserId)).DisplayName);
+        Assert.Equal(newAccount, (await database.Users.SingleAsync(user => user.GoogleSubject == "google-new")).CentralAccountId);
+    }
+
+    [Fact]
+    public async Task Discovery_and_missing_credentials_provide_OAuth_metadata()
+    {
+        using var client = fixture.Host.Browser();
+        var discovery = await client.GetFromJsonAsync<JsonElement>("/identity/.well-known/openid-configuration");
+        Assert.Equal(Issuer, discovery.GetProperty("issuer").GetString());
+        Assert.True(discovery.GetProperty("authorization_response_iss_parameter_supported").GetBoolean());
+        Assert.Contains("S256", discovery.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(item => item.GetString()));
+        Assert.DoesNotContain("plain", discovery.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(item => item.GetString()));
+        var resource = await client.GetFromJsonAsync<JsonElement>("/.well-known/oauth-protected-resource/mcp");
+        Assert.Equal(Resource, resource.GetProperty("resource").GetString());
+        var response = await client.PostAsJsonAsync("/mcp", new { jsonrpc = "2.0", id = 1, method = "tools/list" });
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Contains("resource_metadata=", response.Headers.WwwAuthenticate.ToString());
+        Assert.Equal("no-store", response.Headers.CacheControl!.ToString());
+        // Central MCP tokens do not replace the existing website's cookie scheme.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/me/")).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("missing-pkce")]
+    [InlineData("plain-pkce")]
+    [InlineData("wrong-callback")]
+    [InlineData("wrong-loopback-path")]
+    [InlineData("wrong-loopback-host")]
+    [InlineData("unknown-client")]
+    [InlineData("missing-resource")]
+    [InlineData("wrong-resource")]
+    [InlineData("unknown-scope")]
+    public async Task Invalid_authorization_requests_are_rejected(string variation)
+    {
+        var parameters = Parameters();
+        if (variation == "missing-pkce") { parameters.Remove("code_challenge"); parameters.Remove("code_challenge_method"); }
+        if (variation == "plain-pkce") parameters["code_challenge_method"] = "plain";
+        if (variation == "wrong-callback") parameters["redirect_uri"] = "https://attacker.example/callback";
+        if (variation == "wrong-loopback-path") parameters["redirect_uri"] = "http://127.0.0.1:48123/other";
+        if (variation == "wrong-loopback-host") parameters["redirect_uri"] = "http://localhost:48123/callback";
+        if (variation == "unknown-client") parameters["client_id"] = "unknown";
+        if (variation == "missing-resource") parameters.Remove("resource");
+        if (variation == "wrong-resource") parameters["resource"] = "https://attacker.example/api";
+        if (variation == "unknown-scope") parameters["scope"] = "admin:all";
+        using var client = fixture.Host.Browser(fixture.FirstAccount);
+        var response = await client.GetAsync(QueryHelpers.AddQueryString("/identity/connect/authorize", parameters));
+        Assert.True(response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Redirect);
+        if (response.Headers.Location is { } location)
+        {
+            Assert.StartsWith("http://127.0.0.1:", location.AbsoluteUri);
+            Assert.Contains("error=", location.Query);
+            Assert.DoesNotContain("code=", location.Query);
+            Assert.Equal(Issuer, QueryHelpers.ParseQuery(location.Query)["iss"].ToString());
+        }
+    }
+
+    [Fact]
+    public async Task Google_challenge_uses_separate_callback_and_native_callback_ports_are_supported()
+    {
+        using var anonymous = fixture.Host.Browser();
+        var central = await anonymous.GetAsync(QueryHelpers.AddQueryString("/identity/connect/authorize", Parameters()));
+        Assert.Equal(HttpStatusCode.Redirect, central.StatusCode);
+        Assert.Equal("accounts.google.com", central.Headers.Location!.Host);
+        Assert.Equal(Issuer + "signin-google", QueryHelpers.ParseQuery(central.Headers.Location.Query)["redirect_uri"].ToString());
+        var website = await anonymous.GetAsync("/auth/login");
+        Assert.Equal(HttpStatusCode.Redirect, website.StatusCode);
+        Assert.Equal("https://localhost:7082/signin-google", QueryHelpers.ParseQuery(website.Headers.Location!.Query)["redirect_uri"].ToString());
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        foreach (var callback in new[] { "http://127.0.0.1:43117/callback", "http://127.0.0.1:59123/callback" })
+        {
+            var parameters = Parameters();
+            parameters["redirect_uri"] = callback;
+            Assert.Equal(HttpStatusCode.OK, (await browser.GetAsync(
+                QueryHelpers.AddQueryString("/identity/connect/authorize", parameters))).StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task Consent_requires_antiforgery_and_denial_returns_no_code()
+    {
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var path = QueryHelpers.AddQueryString("/identity/connect/authorize", Parameters());
+        var html = await browser.GetStringAsync(path);
+        var noAntiforgery = Parameters().ToDictionary(item => item.Key, item => item.Value!);
+        noAntiforgery["decision"] = "allow";
+        var rejected = await browser.PostAsync(path, new FormUrlEncodedContent(noAntiforgery));
+        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+        Assert.Contains("consent form expired", await rejected.Content.ReadAsStringAsync());
+        var response = await browser.PostAsync(path, Consent(html, "deny"));
+        Assert.Contains("error=access_denied", response.Headers.Location!.Query);
+        Assert.DoesNotContain("code=", response.Headers.Location.Query);
+    }
+
+    [Fact]
+    public async Task Authorization_code_requires_correct_verifier_and_cannot_be_replayed()
+    {
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var (code, verifier) = await AuthorizeAsync(browser);
+        var bad = await RedeemAsync(browser, code, Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32)));
+        Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
+        (code, verifier) = await AuthorizeAsync(browser);
+        Assert.Equal(HttpStatusCode.OK, (await RedeemAsync(browser, code, verifier)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await RedeemAsync(browser, code, verifier)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Two_accounts_receive_their_own_identity_through_MCP()
+    {
+        using var first = fixture.Host.Browser(fixture.FirstAccount);
+        using var second = fixture.Host.Browser(fixture.SecondAccount);
+        var firstToken = await TokenAsync(first);
+        var secondToken = await TokenAsync(second);
+        var firstResult = await CallAsync(fixture.Host, firstToken.GetProperty("access_token").GetString()!);
+        var secondResult = await CallAsync(fixture.Host, secondToken.GetProperty("access_token").GetString()!);
+        Assert.Contains("First Scout", firstResult);
+        Assert.Contains(fixture.FirstAccount.ToString(), firstResult);
+        Assert.Contains(fixture.FirstPublicId.ToString(), firstResult);
+        Assert.DoesNotContain("Second Scout", firstResult);
+        Assert.Contains("Second Scout", secondResult);
+        Assert.Contains(fixture.SecondAccount.ToString(), secondResult);
+        Assert.DoesNotContain("google-existing", firstResult + secondResult);
+    }
+
+    [Fact]
+    public async Task Tokens_survive_host_restart_and_refresh_rotation_rejects_reuse()
+    {
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var token = await TokenAsync(browser);
+        await using var restarted = new AuthTestHost(fixture.ConnectionString);
+        Assert.Contains("First Scout", await CallAsync(restarted, token.GetProperty("access_token").GetString()!));
+        using var client = restarted.Browser();
+        var refresh = token.GetProperty("refresh_token").GetString()!;
+        var values = new Dictionary<string, string>
+        {
+            ["grant_type"] = "refresh_token", ["client_id"] = AuthDefaults.CodexClientId, ["refresh_token"] = refresh
+        };
+        var renewal = await client.PostAsync("/identity/connect/token", new FormUrlEncodedContent(values));
+        Assert.Equal(HttpStatusCode.OK, renewal.StatusCode);
+        var renewed = await renewal.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.NotEqual(refresh, renewed.GetProperty("refresh_token").GetString());
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await client.PostAsync("/identity/connect/token", new FormUrlEncodedContent(values))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Invalid_expired_wrong_audience_and_wrong_issuer_tokens_are_rejected()
+    {
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var token = (await TokenAsync(browser)).GetProperty("access_token").GetString()!;
+        var reader = new JwtSecurityTokenHandler();
+        var original = reader.ReadJwtToken(token);
+        var credentials = fixture.Host.Services.GetRequiredService<IOptionsMonitor<OpenIddictServerOptions>>()
+            .CurrentValue.SigningCredentials.First();
+        var claims = original.Claims.Where(claim => claim.Type is not ("iss" or "aud" or "exp" or "nbf" or "iat"));
+        var wrongAudience = reader.WriteToken(new JwtSecurityToken(Issuer, "https://other.example/mcp",
+            claims, original.ValidFrom, original.ValidTo, credentials) { Header = { ["typ"] = "at+jwt" } });
+        var wrongIssuer = reader.WriteToken(new JwtSecurityToken("https://other.example/", Resource, claims,
+            original.ValidFrom, original.ValidTo, credentials) { Header = { ["typ"] = "at+jwt" } });
+        foreach (var invalid in new[] { "invalid-token", wrongAudience, wrongIssuer })
+        {
+            using var client = fixture.Host.Browser();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", invalid);
+            var response = await client.PostAsJsonAsync("/mcp", new { jsonrpc = "2.0", id = 1, method = "tools/list" });
+            Assert.True(response.StatusCode == HttpStatusCode.Unauthorized,
+                $"Token case {Array.IndexOf(new[] { "invalid-token", wrongAudience, wrongIssuer }, invalid)}: {response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+        }
+        // Entry validation restores the authoritative expiration from PostgreSQL, not a forged JWT.
+        await using var scope = fixture.Host.Services.CreateAsyncScope();
+        var tokens = scope.ServiceProvider.GetRequiredService<IOpenIddictTokenManager>();
+        var entry = await tokens.FindByIdAsync(original.Claims.Single(claim =>
+            claim.Type == OpenIddictConstants.Claims.Private.TokenId).Value);
+        Assert.NotNull(entry);
+        var descriptor = new OpenIddictTokenDescriptor();
+        await tokens.PopulateAsync(descriptor, entry);
+        descriptor.ExpirationDate = DateTimeOffset.UtcNow.AddHours(-1);
+        await tokens.UpdateAsync(entry, descriptor);
+        using var expiredClient = fixture.Host.Browser();
+        expiredClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await expiredClient.PostAsJsonAsync("/mcp",
+            new { jsonrpc = "2.0", id = 1, method = "tools/list" })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Missing_scope_is_forbidden_and_revoked_grants_are_rejected()
+    {
+        using var browser = fixture.Host.Browser(fixture.SecondAccount);
+        var readless = await TokenAsync(browser, "offline_access");
+        using var client = fixture.Host.Browser();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", readless.GetProperty("access_token").GetString());
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/mcp", new { jsonrpc = "2.0", id = 1, method = "tools/list" })).StatusCode);
+        var token = await TokenAsync(browser);
+        await using var scope = fixture.Host.Services.CreateAsyncScope();
+        var authorizations = scope.ServiceProvider.GetRequiredService<IOpenIddictAuthorizationManager>();
+        var count = 0;
+        await foreach (var grant in authorizations.FindBySubjectAsync(fixture.SecondAccount.ToString()))
+        {
+            Assert.True(await authorizations.TryRevokeAsync(grant));
+            count++;
+        }
+        Assert.True(count > 0);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.GetProperty("access_token").GetString());
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/mcp", new { jsonrpc = "2.0", id = 1, method = "tools/list" })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Disabled_feature_and_wrong_hostname_do_not_expose_auth_proof()
+    {
+        await using var disabled = new AuthTestHost(fixture.ConnectionString, enabled: false);
+        using var client = disabled.Browser();
+        var response = await client.GetAsync("/identity/.well-known/openid-configuration");
+        Assert.NotEqual("application/json", response.Content.Headers.ContentType?.MediaType);
+        using var enabled = fixture.Host.Browser();
+        enabled.DefaultRequestHeaders.Host = "other.example";
+        Assert.Equal(HttpStatusCode.NotFound, (await enabled.GetAsync("/identity/.well-known/openid-configuration")).StatusCode);
+    }
+
+    private static Dictionary<string, string?> Parameters(string? verifier = null, string? scopes = null) => new()
+    {
+        ["client_id"] = AuthDefaults.CodexClientId, ["response_type"] = "code",
+        ["redirect_uri"] = Callback, ["scope"] = scopes ?? "account:read offline_access",
+        ["state"] = "integration-state", ["resource"] = Resource,
+        ["code_challenge_method"] = "S256",
+        ["code_challenge"] = Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier ?? new string('a', 43))))
+    };
+
+    private static FormUrlEncodedContent Consent(string html, string decision)
+    {
+        var fields = Regex.Matches(html, "<input type=\"hidden\" name=\"([^\"]+)\" value=\"([^\"]*)\"")
+            .ToDictionary(match => WebUtility.HtmlDecode(match.Groups[1].Value),
+                match => WebUtility.HtmlDecode(match.Groups[2].Value));
+        fields["decision"] = decision;
+        return new FormUrlEncodedContent(fields);
+    }
+
+    private static async Task<(string Code, string Verifier)> AuthorizeAsync(HttpClient browser, string? scopes = null)
+    {
+        var verifier = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
+        var path = QueryHelpers.AddQueryString("/identity/connect/authorize", Parameters(verifier, scopes));
+        var response = await browser.GetAsync(path);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var html = await response.Content.ReadAsStringAsync();
+        var consent = await browser.PostAsync(path, Consent(html, "allow"));
+        Assert.True(consent.StatusCode == HttpStatusCode.Redirect, await consent.Content.ReadAsStringAsync());
+        var query = QueryHelpers.ParseQuery(consent.Headers.Location!.Query);
+        Assert.Equal(Issuer, query["iss"].ToString());
+        Assert.Equal("integration-state", query["state"].ToString());
+        Assert.True(query.ContainsKey("code"), consent.Headers.Location.ToString());
+        return (query["code"].ToString(), verifier);
+    }
+
+    private static Task<HttpResponseMessage> RedeemAsync(HttpClient browser, string code, string verifier) =>
+        browser.PostAsync("/identity/connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["client_id"] = AuthDefaults.CodexClientId, ["grant_type"] = "authorization_code",
+            ["code"] = code, ["redirect_uri"] = Callback, ["code_verifier"] = verifier, ["resource"] = Resource
+        }));
+
+    private static async Task<JsonElement> TokenAsync(HttpClient browser, string? scopes = null)
+    {
+        var (code, verifier) = await AuthorizeAsync(browser, scopes);
+        var response = await RedeemAsync(browser, code, verifier);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    private static async Task<string> CallAsync(AuthTestHost host, string token)
+    {
+        using var client = host.Browser();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2025-11-25");
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        client.DefaultRequestHeaders.Accept.ParseAdd("text/event-stream");
+        var response = await client.PostAsJsonAsync("/mcp", new
+        {
+            jsonrpc = "2.0", id = 1, method = "tools/call",
+            @params = new { name = "who_am_i", arguments = new { } }
+        });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var text = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("\"isError\":true", text);
+        Assert.DoesNotContain("\"error\":", text);
+        return text;
+    }
+}

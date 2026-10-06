@@ -1,0 +1,8 @@
+namespace SpriteScout.Auth;
+
+public sealed class CentralAuthOptions
+{
+    public bool Enabled { get; set; }
+    public string Issuer { get; set; } = "https://localhost:7082/identity/";
+    public string Resource { get; set; } = "https://localhost:7082/mcp";
+}

@@ -11,8 +11,10 @@
     <Project Path="src/FortniteSpriteTracker.ServiceDefaults/FortniteSpriteTracker.ServiceDefaults.csproj" />
     <Project Path="src/FortniteSpriteTracker.Shared/FortniteSpriteTracker.Shared.csproj" />
     <Project Path="src/FortniteSpriteTracker/FortniteSpriteTracker.csproj" />
+    <Project Path="src/SpriteScout.Auth/SpriteScout.Auth.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FortniteSpriteTracker.Tests/FortniteSpriteTracker.Tests.csproj" />
+    <Project Path="tests/SpriteScout.Auth.Tests/SpriteScout.Auth.Tests.csproj" />
   </Folder>
 </Solution>

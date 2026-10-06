@@ -1,10 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
     <ProjectReference Include="..\FortniteSpriteTracker.DataAccess\FortniteSpriteTracker.DataAccess.csproj" />
     <ProjectReference Include="..\FortniteSpriteTracker.Shared\FortniteSpriteTracker.Shared.csproj" />
     <ProjectReference Include="..\FortniteSpriteTracker.Client\FortniteSpriteTracker.Client.csproj" />
     <ProjectReference Include="..\FortniteSpriteTracker.ServiceDefaults\FortniteSpriteTracker.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\SpriteScout.Auth\SpriteScout.Auth.csproj" />
   </ItemGroup>
 
   <ItemGroup>

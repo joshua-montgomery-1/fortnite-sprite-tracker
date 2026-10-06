@@ -6,6 +6,7 @@ public sealed class UserAccount
 {
     public long Id { get; set; }
     public Guid PublicId { get; set; } = Guid.NewGuid();
+    public Guid? CentralAccountId { get; set; }
     public required string GoogleSubject { get; set; }
     public required string DisplayName { get; set; }
     public string? EpicDisplayName { get; set; }
