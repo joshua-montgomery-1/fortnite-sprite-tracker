@@ -38,6 +38,23 @@
   position: absolute;
   bottom: 0;
 }
+.aiClientBanner {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 8px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--purple) 22%, var(--border));
+  background: color-mix(in srgb, var(--purple) 7%, var(--paper));
+  color: var(--text-subtle);
+  font-size: 12px;
+}
+.aiClientBanner strong { color: var(--ink); }
+.aiClientBannerSignal { color: var(--purple); font-size: 15px; }
+.aiClientBanner a { color: var(--purple); font-weight: 850; text-decoration: none; }
+.aiClientBanner a span { margin-left: 3px; }
+.aiClientBanner a:hover { text-decoration: underline; }
 .signin {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -167,4 +184,5 @@
   .brand > span:last-child {
     display: none;
   }
+  .aiClientBanner { justify-content: flex-start; font-size: 11px; }
 }

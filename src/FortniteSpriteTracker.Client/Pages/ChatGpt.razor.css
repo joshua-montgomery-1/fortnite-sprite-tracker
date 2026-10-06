@@ -1,0 +1,43 @@
+.chatGptPage { min-height: 100vh; }
+.chatGptHero, .chatGptSteps, .chatGptCapabilities, .chatGptTrust { width: min(1120px, calc(100% - 36px)); margin-inline: auto; }
+.chatGptHero { min-height: 570px; display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: 40px; padding: 72px 0 86px; }
+.chatGptHeroCopy { max-width: 650px; }
+.chatGptHero h1 { margin: 14px 0 22px; font-size: clamp(48px, 7vw, 88px); line-height: .94; letter-spacing: -.065em; }
+.chatGptHero h1 em { color: var(--purple); font-style: normal; }
+.chatGptSubhead { margin: 0 0 12px; color: var(--ink); font-size: clamp(21px, 3vw, 30px); letter-spacing: -.035em; }
+.chatGptHeroCopy > p { max-width: 570px; color: var(--text-subtle); font-size: 18px; line-height: 1.6; }
+.chatGptInstall { display: inline-flex; gap: 20px; align-items: center; margin-top: 22px; padding: 15px 19px; border-radius: 8px; background: var(--ink); color: var(--surface); text-decoration: none; font-size: 14px; font-weight: 850; box-shadow: 0 10px 24px #17172220; }
+.chatGptInstall span { color: var(--lime); font-size: 18px; }
+.chatGptInstall:hover { transform: translateY(-1px); }
+.chatGptInstallNote { display: block; margin-top: 12px; color: var(--text-subtle); font-size: 12px; }
+.chatGptHeroMark { position: relative; display: grid; place-items: center; width: min(360px, 80vw); aspect-ratio: 1; margin-inline: auto; border-radius: 50%; background: radial-gradient(circle at 35% 28%, #ffffff, var(--surface-muted) 42%, #d9d1ff); box-shadow: inset 0 0 0 1px var(--border), 0 30px 80px #624cf326; }
+.chatGptMark { display: grid; place-items: center; width: 126px; height: 126px; border-radius: 34px; background: var(--purple); color: white; font-size: 78px; font-weight: 900; transform: rotate(-8deg); box-shadow: 13px 16px 0 var(--lime); }
+.chatGptOrbit { position: absolute; border: 1px solid #806df066; border-radius: 50%; }
+.orbitOne { inset: 12%; transform: rotate(22deg) scaleY(.35); }
+.orbitTwo { inset: 4%; transform: rotate(-42deg) scaleY(.3); }
+.chatGptSteps { padding: 34px 0 82px; border-top: 1px solid var(--border); }
+.chatGptSectionHeading h2, .chatGptCapabilities h2 { margin: 10px 0 30px; font-size: clamp(28px, 4vw, 48px); letter-spacing: -.04em; }
+.chatGptStepGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.chatGptStepGrid article { min-height: 190px; padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.chatGptStepGrid article > span { color: var(--purple); font-size: 12px; font-weight: 900; }
+.chatGptStepGrid h3 { margin: 22px 0 8px; font-size: 19px; }
+.chatGptStepGrid p { margin: 0; color: var(--text-subtle); line-height: 1.55; }
+.chatGptConnection { display: grid; grid-template-columns: .9fr 1.1fr; gap: 50px; width: min(1120px, calc(100% - 36px)); margin: 0 auto 76px; padding: 32px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-muted); }
+.chatGptConnection h2 { margin: 10px 0 12px; font-size: clamp(27px, 4vw, 44px); letter-spacing: -.04em; }
+.chatGptConnection p { color: var(--text-subtle); line-height: 1.55; }
+.chatGptConnectionDetails { margin: 0; padding: 0; }
+.chatGptConnectionDetails > div { display: grid; grid-template-columns: 130px 1fr; gap: 15px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.chatGptConnectionDetails dt { color: var(--text-subtle); font-size: 11px; font-weight: 850; text-transform: uppercase; }
+.chatGptConnectionDetails dd { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--ink); font-size: 13px; }
+.chatGptConnectionDetails code { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+.chatGptConnectionDetails button { border: 1px solid var(--border); border-radius: 5px; padding: 5px 8px; background: var(--surface); color: var(--purple); cursor: pointer; font-size: 11px; font-weight: 800; }
+.chatGptCopied { grid-column: 1 / -1; margin: 18px 0 0; color: #278858 !important; font-size: 12px; font-weight: 800; }
+.chatGptClientNote { grid-column: 1 / -1; margin: 18px 0 0 !important; padding-top: 18px; border-top: 1px solid var(--border); font-size: 12px; }
+.chatGptCapabilities { display: grid; grid-template-columns: .8fr 1.2fr; gap: 50px; padding: 76px 0; }
+.chatGptPromptGrid { display: grid; gap: 12px; }
+.chatGptPromptGrid p { margin: 0; padding: 17px 19px; border-left: 3px solid var(--lime); border-radius: 0 9px 9px 0; background: var(--surface-muted); color: var(--ink); font-weight: 700; }
+.chatGptTrust { display: flex; align-items: center; gap: 15px; margin-bottom: 90px; padding: 21px 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-muted); }
+.chatGptTrust strong { white-space: nowrap; }
+.chatGptTrust span { color: var(--text-subtle); font-size: 13px; line-height: 1.45; }
+.chatGptTrust a { margin-left: auto; white-space: nowrap; color: var(--purple); font-size: 13px; font-weight: 800; text-decoration: none; }
+@media (max-width: 720px) { .chatGptHero { grid-template-columns: 1fr; padding: 54px 0 70px; } .chatGptHeroMark { width: 250px; } .chatGptStepGrid, .chatGptCapabilities, .chatGptConnection { grid-template-columns: 1fr; } .chatGptCapabilities { gap: 12px; } .chatGptConnection { padding: 22px; gap: 18px; } .chatGptConnectionDetails > div { grid-template-columns: 1fr; gap: 7px; } .chatGptTrust { align-items: flex-start; flex-direction: column; margin-bottom: 60px; } .chatGptTrust a { margin-left: 0; } }
