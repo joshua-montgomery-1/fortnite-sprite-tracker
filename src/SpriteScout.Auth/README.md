@@ -67,9 +67,9 @@ Register `https://spritescout.com/identity/signin-google` in the same Google OAu
 
 ## MCP tools and permissions
 
-Every MCP connection requires a free account and `account:read`. Clients may request `collection:read`, `collection:write`, and optionally `offline_access`; the consent page describes the requested access. Configured public clients are permitted these scopes when auth startup registers them. Previously issued tokens retain their original scopes: reconnect to approve collection access.
+Every MCP connection requires a free account and `account:read`; authorization requests omitting account access are rejected. Clients may request `collection:read`, `collection:write`, and `offline_access`. Consent shows only requested permissions, with required account access fixed on and every optional permission checked by default. Users can uncheck any optional permission. The server grants only the approved subset, rejects unrequested/unknown selections, and uses the approved scopes for the authorization grant and tokens. Configured public clients are permitted these scopes when auth startup registers them. Previously issued tokens retain their original scopes: reconnect to approve collection access.
 
-The default HTTP authentication challenge requests `account:read collection:read collection:write`, so clients following MCP scope selection obtain collection permissions during initial sign-in after consent. Clients intentionally requesting fewer scopes can use only the corresponding tools. Old connections must reconnect and approve the new scope set; a tool error does not automatically upgrade an existing token.
+The default HTTP authentication challenge requests `account:read collection:read collection:write offline_access`, so clients following MCP scope selection offer all optional permissions during initial sign-in. Clients intentionally requesting fewer scopes or users deselecting permissions can use only the corresponding tools. Deselecting "Stay connected" prevents issuance of a refresh token. Old connections must reconnect and approve the new scope set; a tool error does not automatically upgrade an existing token.
 
 | Tool | Additional permission | Behavior |
 | --- | --- | --- |

@@ -24,26 +24,6 @@
                 break;
             case AuthPageKind.Consent:
                 <p class="intro"><strong>@Model.Application</strong> wants to connect to your Sprite Scout account.</p>
-                <div class="notice">
-                    <h2>Account access</h2>
-                    <p>Read your display name and public profile identifier.</p>
-                    @if (Model.CollectionRead)
-                    {
-                        <p>Read which Sprites you own and have mastered.</p>
-                    }
-                    @if (Model.CollectionWrite)
-                    {
-                        <p>Mark Sprites owned, unowned, mastered, or unmastered in your collection. Removing ownership also clears mastery.</p>
-                    }
-                    else
-                    {
-                        <p>This connection cannot change your collection.</p>
-                    }
-                    @if (Model.Offline)
-                    {
-                        <p>It can stay connected for up to 30 days.</p>
-                    }
-                </div>
                 break;
             case AuthPageKind.Error:
                 <p class="intro" role="alert">
@@ -57,7 +37,7 @@
         }
         @if (Model.Form is not null)
         {
-            <AuthForm Model="Model.Form" />
+            <AuthForm Model="Model.Form" CollectionRead="Model.CollectionRead" CollectionWrite="Model.CollectionWrite" Offline="Model.Offline" />
         }
         @if (Model.Kind is AuthPageKind.Login or AuthPageKind.WebsiteLogin)
         {
