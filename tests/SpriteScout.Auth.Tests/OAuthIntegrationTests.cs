@@ -182,7 +182,8 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.True(discovery.GetProperty("authorization_response_iss_parameter_supported").GetBoolean());
         Assert.Contains("S256", discovery.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(item => item.GetString()));
         Assert.DoesNotContain("plain", discovery.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(item => item.GetString()));
-        var resource = await client.GetFromJsonAsync<JsonElement>("/.well-known/oauth-protected-resource/mcp");
+        Assert.Contains("none", discovery.GetProperty("token_endpoint_auth_methods_supported").EnumerateArray().Select(item => item.GetString()));
+        var resource = await client.GetFromJsonAsync<JsonElement>("/.well-known/oauth-protected-resource");
         Assert.Equal(Resource, resource.GetProperty("resource").GetString());
         var response = await client.PostAsJsonAsync("/mcp", new { jsonrpc = "2.0", id = 1, method = "tools/list" });
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
