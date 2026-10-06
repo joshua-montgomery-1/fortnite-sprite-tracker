@@ -7,6 +7,37 @@
     }
     @if (Model.Consent)
     {
+        <fieldset class="consent-permissions">
+            <legend>Choose what this connection can do</legend>
+            <label class="consent-permission">
+                <input type="checkbox" checked disabled />
+                <span><strong>Identify your account <span class="required-permission">Required</span></strong>
+                    <small>Read your display name and public profile identifier.</small></span>
+            </label>
+            <input type="hidden" name="approved_scope" value="@AuthDefaults.AccountReadScope" />
+            @if (CollectionRead)
+            {
+                <label class="consent-permission">
+                    <input type="checkbox" name="approved_scope" value="@AuthDefaults.CollectionReadScope" checked />
+                    <span><strong>Read your collection</strong><small>See which Sprites you own and have mastered.</small></span>
+                </label>
+            }
+            @if (CollectionWrite)
+            {
+                <label class="consent-permission">
+                    <input type="checkbox" name="approved_scope" value="@AuthDefaults.CollectionWriteScope" checked />
+                    <span><strong>Update your collection</strong><small>Mark Sprites owned, unowned, mastered, or unmastered. Removing ownership also clears mastery.</small></span>
+                </label>
+            }
+            @if (Offline)
+            {
+                <label class="consent-permission">
+                    <input type="checkbox" name="approved_scope" value="@OpenIddict.Abstractions.OpenIddictConstants.Scopes.OfflineAccess" checked />
+                    <span><strong>Stay connected</strong><small>Keep this connection for up to 30 days without signing in again.</small></span>
+                </label>
+            }
+        </fieldset>
+        <p class="consent-note">Uncheck any optional permission. Features needing that permission will be unavailable.</p>
         <button name="decision" value="allow">Allow connection</button>
         <button class="secondary" name="decision" value="deny">Cancel</button>
     }
@@ -18,4 +49,7 @@
 
 @code {
     [Parameter, EditorRequired] public AuthFormModel Model { get; set; } = default!;
+    [Parameter] public bool CollectionRead { get; set; }
+    [Parameter] public bool CollectionWrite { get; set; }
+    [Parameter] public bool Offline { get; set; }
 }

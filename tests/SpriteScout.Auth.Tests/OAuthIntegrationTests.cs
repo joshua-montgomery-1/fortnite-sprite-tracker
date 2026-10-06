@@ -437,13 +437,14 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     }
 
     [Fact]
-    public async Task Missing_scope_is_forbidden_and_revoked_grants_are_rejected()
+    public async Task Missing_account_scope_and_revoked_grants_are_rejected()
     {
         using var browser = fixture.Host.Browser(fixture.SecondAccount);
-        var readless = await TokenAsync(browser, "offline_access");
+        var missingScope = await browser.GetAsync(QueryHelpers.AddQueryString("/identity/connect/authorize",
+            Parameters(scopes: "offline_access")));
+        Assert.Equal(HttpStatusCode.Redirect, missingScope.StatusCode);
+        Assert.Contains("error=invalid_scope", missingScope.Headers.Location!.Query);
         using var client = fixture.Host.Browser();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", readless.GetProperty("access_token").GetString());
-        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/mcp", new { jsonrpc = "2.0", id = 1, method = "tools/list" })).StatusCode);
         var token = await TokenAsync(browser);
         await using var scope = fixture.Host.Services.CreateAsyncScope();
         var authorizations = scope.ServiceProvider.GetRequiredService<IOpenIddictAuthorizationManager>();
@@ -478,9 +479,11 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     private static FormUrlEncodedContent Consent(string html, string decision)
     {
         var fields = Regex.Matches(html, "<input type=\"hidden\" name=\"([^\"]+)\" value=\"([^\"]*)\"")
-            .ToDictionary(match => WebUtility.HtmlDecode(match.Groups[1].Value),
-                match => WebUtility.HtmlDecode(match.Groups[2].Value));
-        fields["decision"] = decision;
+            .Select(match => new KeyValuePair<string, string>(WebUtility.HtmlDecode(match.Groups[1].Value),
+                WebUtility.HtmlDecode(match.Groups[2].Value))).ToList();
+        fields.AddRange(Regex.Matches(html, "<input type=\"checkbox\" name=\"approved_scope\" value=\"([^\"]+)\" checked")
+            .Select(match => new KeyValuePair<string, string>("approved_scope", WebUtility.HtmlDecode(match.Groups[1].Value))));
+        fields.Add(new("decision", decision));
         return new FormUrlEncodedContent(fields);
     }
 
