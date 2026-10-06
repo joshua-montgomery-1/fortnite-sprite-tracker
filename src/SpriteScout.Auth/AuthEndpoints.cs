@@ -21,7 +21,6 @@ public static class AuthEndpoints
     {
         var issuer = new Uri(settings.Issuer);
         var resource = new Uri(settings.Resource);
-        var metadataPath = "/.well-known/oauth-authorization-server" + issuer.AbsolutePath.TrimEnd('/');
         // Clients prioritize challenged scopes over discovery metadata. Include
         // collection access so the default consent covers all advertised tools.
         var connectionScopes = string.Join(' ', AuthDefaults.AccountReadScope,
@@ -30,7 +29,7 @@ public static class AuthEndpoints
         {
             var isAuth = context.Request.Path.StartsWithSegments(issuer.AbsolutePath.TrimEnd('/')) ||
                 context.Request.Path.StartsWithSegments("/identity") ||
-                context.Request.Path == metadataPath;
+                context.Request.Path == "/.well-known/oauth-authorization-server" + issuer.AbsolutePath.TrimEnd('/');
             var isMcp = context.Request.Path.StartsWithSegments(resource.AbsolutePath) ||
                 context.Request.Path == "/.well-known/oauth-protected-resource/mcp";
             var expected = isAuth ? issuer : isMcp ? resource : null;
@@ -51,7 +50,7 @@ public static class AuthEndpoints
                     {
                         var error = context.Response.StatusCode == 403 ? ", error=\"insufficient_scope\"" : "";
                         context.Response.Headers.WWWAuthenticate =
-                            $"Bearer resource_metadata=\"{resource.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-protected-resource/mcp\", scope=\"{connectionScopes}\"{error}";
+                            $"Bearer resource_metadata=\"{resource.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-protected-resource\", scope=\"{connectionScopes}\"{error}";
                     }
                     return Task.CompletedTask;
                 });
@@ -76,7 +75,8 @@ public static class AuthEndpoints
                 QueryHelpers.AddQueryString("/identity/error", "returnUrl",
                     AuthPages.SafeRetry(settings, context.Request.Query["returnUrl"])))).AllowAnonymous();
         }
-        app.MapGet("/.well-known/oauth-protected-resource/mcp", () => Results.Json(new
+        // Publish the RFC 9728 root location used by ChatGPT and other MCP clients.
+        app.MapGet("/.well-known/oauth-protected-resource", () => Results.Json(new
         {
             resource = settings.Resource,
             authorization_servers = new[] { settings.Issuer },

@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -150,6 +151,8 @@ public static class AuthRegistration
                     handler.UseInlineHandler(context =>
                     {
                         context.Response["authorization_response_iss_parameter_supported"] = true;
+                        context.Response["token_endpoint_auth_methods_supported"] = JsonSerializer.SerializeToElement(
+                            new[] { "none" });
                         return default;
                     }));
                 options.AddEventHandler<OpenIddictServerEvents.ApplyAuthorizationResponseContext>(handler =>
