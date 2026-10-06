@@ -70,7 +70,11 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         using var browser = fixture.Host.Browser();
         var page = await browser.GetStringAsync(QueryHelpers.AddQueryString("/auth/login", "returnUrl", destination));
         Assert.Contains("/css/app.css", page);
-        Assert.Contains("prefers-reduced-motion:reduce", page);
+        Assert.Contains("/_content/SpriteScout.Auth/css/auth.css", page);
+        var styles = await browser.GetStringAsync("/_content/SpriteScout.Auth/css/auth.css");
+        Assert.Contains("prefers-reduced-motion:reduce", styles);
+        Assert.Contains("width:100%; height:auto", styles);
+        Assert.Contains("sprite-scout-theme-preference", await browser.GetStringAsync("/_content/SpriteScout.Auth/js/auth-theme.js"));
         Assert.Contains("class=\"scenery\" aria-hidden=\"true\"", page);
         Assert.Single(Regex.Matches(page, "class=\"sprite-layer layer-").Cast<Match>());
         Assert.Contains("https://fortnitespritetracker.org/images/sprites/air_basic.webp", page);

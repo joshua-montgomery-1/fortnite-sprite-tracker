@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Security.Claims;
-using System.Text.Encodings.Web;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
@@ -96,8 +95,7 @@ public static class AuthEndpoints
             var available = await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null;
             if (HttpMethods.IsGet(context.Request.Method) || !available)
             {
-                var form = available ? AuthPages.Form(context, antiforgery, AuthorizationFields(context),
-                    "<button name=\"decision\" value=\"signin\">Continue with Google</button>") : null;
+                var form = available ? AuthPages.Form(context, antiforgery, AuthorizationFields(context)) : null;
                 return AuthPages.Login(context, name, form, available);
             }
             var retry = AuthorizationReturn(settings, request);
@@ -116,8 +114,7 @@ public static class AuthEndpoints
 
         if (HttpMethods.IsGet(context.Request.Method))
         {
-            var form = AuthPages.Form(context, antiforgery, AuthorizationFields(context),
-                "<button name=\"decision\" value=\"allow\">Allow connection</button><button class=\"secondary\" name=\"decision\" value=\"deny\">Cancel</button>");
+            var form = AuthPages.Form(context, antiforgery, AuthorizationFields(context), consent: true);
             return AuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess), form, request.RedirectUri!);
         }
         if (!await ValidateFormAsync(context, antiforgery))
@@ -141,9 +138,9 @@ public static class AuthEndpoints
         return Results.SignIn(principal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
-    private static string AuthorizationFields(HttpContext context) => string.Join("",
+    private static IEnumerable<AuthFormField> AuthorizationFields(HttpContext context) =>
         context.Request.Query.SelectMany(parameter => parameter.Value.Select(value =>
-            $"<input type=\"hidden\" name=\"{HtmlEncoder.Default.Encode(parameter.Key)}\" value=\"{HtmlEncoder.Default.Encode(value ?? "")}\">")));
+            new AuthFormField(parameter.Key, value ?? "")));
 
     private static string AuthorizationReturn(AuthOptions settings, OpenIddictRequest request) =>
         QueryHelpers.AddQueryString(new Uri(new Uri(settings.Issuer), "connect/authorize").AbsoluteUri,
@@ -171,8 +168,7 @@ public static class AuthEndpoints
         var session = await context.AuthenticateAsync(AuthDefaults.SessionScheme);
         if (session.Succeeded) return AuthPages.SignedIn(context);
         var available = await schemes.GetSchemeAsync(AuthDefaults.GoogleScheme) is not null;
-        return AuthPages.Login(context, null, available ? AuthPages.Form(context, antiforgery, "",
-            "<button>Continue with Google</button>") : null, available);
+        return AuthPages.Login(context, null, available ? AuthPages.Form(context, antiforgery, []) : null, available);
     }
 
     private static async Task<IResult> ExchangeAsync(

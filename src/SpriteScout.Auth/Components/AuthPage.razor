@@ -1,0 +1,93 @@
+@using Microsoft.AspNetCore.Components
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@Model.Title</title>
+    <script nonce="@Model.Nonce" src="/_content/SpriteScout.Auth/js/auth-theme.js"></script>
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/_content/SpriteScout.Auth/css/auth.css" />
+    <style nonce="@Model.Nonce">@Model.SpriteStyles</style>
+</head>
+<body class="auth-page">
+    <header class="auth-nav">
+        <a class="brand" href="/" aria-label="Sprite Scout home"><span class="brandmark" aria-hidden="true">S</span><span>SPRITE<em>SCOUT</em></span></a>
+        <a class="back" href="/">← BACK TO FIELD GUIDE</a>
+    </header>
+    <div class="scenery" aria-hidden="true">
+        @for (var index = 0; index < Model.Sprites.Count; index++)
+        {
+            <div class="sprite-layer layer-@index"><img src="@Model.Sprites[index]" alt="" decoding="async" /></div>
+        }
+    </div>
+    <main class="auth-card" aria-labelledby="page-heading">
+        <div class="kicker">YOUR SPRITE SCOUT ACCOUNT</div>
+        <h1 id="page-heading">@Model.Heading</h1>
+        @switch (Model.Kind)
+        {
+            case AuthPageKind.WebsiteLogin:
+                <p class="intro">Keep your field guide close. Sign in to save your Sprite collection and pick up where you left off, on any device.</p>
+                break;
+            case AuthPageKind.Login:
+                <p class="intro">
+                    @if (Model.Application is null)
+                    {
+                        <text>Your Sprite Scout account starts here.</text>
+                    }
+                    else
+                    {
+                        <text>Sign in to connect Sprite Scout to <strong>@Model.Application</strong>.</text>
+                    }
+                </p>
+                break;
+            case AuthPageKind.Consent:
+                <p class="intro"><strong>@Model.Application</strong> wants to connect to your Sprite Scout account.</p>
+                <div class="notice">
+                    <h2>Account access</h2>
+                    <p>Read your display name and public profile identifier.</p>
+                    <p>This connection cannot change your collection.</p>
+                    @if (Model.Offline)
+                    {
+                        <p>It can stay connected for up to 30 days.</p>
+                    }
+                </div>
+                break;
+            case AuthPageKind.Error:
+                <p class="intro" role="alert">
+                    @(Model.Expired ? "The consent form expired. Start sign-in again." : "Google sign-in couldn't be completed. Your connection hasn't been approved.")
+                </p>
+                <a class="button" href="@Model.Retry">Try again</a>
+                break;
+            case AuthPageKind.SignedIn:
+                <p class="intro">Return to the application you want to connect to Sprite Scout. You'll review its permissions before granting access.</p>
+                break;
+        }
+        @if (Model.Form is not null)
+        {
+            <AuthForm Model="Model.Form" />
+        }
+        @if (Model.Kind is AuthPageKind.Login or AuthPageKind.WebsiteLogin)
+        {
+            @if (!Model.Available)
+            {
+                <p class="notice" role="status">Sign-in is unavailable right now. Please try again later.</p>
+            }
+            else if (Model.Kind == AuthPageKind.WebsiteLogin)
+            {
+                <p class="note">A free account. Your collection, wherever you play.</p>
+            }
+            else
+            {
+                <p class="note">Use your Google account to sign in or create a free Sprite Scout account. You'll review permissions before connecting an application.</p>
+            }
+        }
+    </main>
+    <footer class="auth-footer">SCOUT. COLLECT. COMPLETE.</footer>
+</body>
+</html>
+
+@code {
+    [Parameter, EditorRequired] public AuthPageModel Model { get; set; } = default!;
+}
