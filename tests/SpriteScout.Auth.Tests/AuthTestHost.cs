@@ -8,8 +8,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -148,11 +146,6 @@ public sealed class AuthFixture : IAsyncLifetime
         await website.SaveChangesAsync();
         FirstUserId = first.Id;
         FirstPublicId = first.PublicId;
-        // Arrange real website rows, then run the production script against the pre-Phase-1
-        // schema before starting the app. IDs and collection foreign keys must survive.
-        var previous = (await website.Database.GetAppliedMigrationsAsync())
-            .Last(migration => string.CompareOrdinal(migration, "20261006034616_AddAccountReference") < 0);
-        await website.GetService<IMigrator>().MigrateAsync(previous);
         // Simulate a provider-owned auth namespace: auth migrations must leave it untouched.
         await website.Database.ExecuteSqlRawAsync("""
             CREATE SCHEMA auth;
@@ -160,12 +153,16 @@ public sealed class AuthFixture : IAsyncLifetime
             INSERT INTO auth.platform_marker VALUES (1);
             REVOKE ALL ON SCHEMA auth FROM PUBLIC;
             """);
-        await website.Database.ExecuteSqlRawAsync(await File.ReadAllTextAsync(
-            Path.Combine(AppContext.BaseDirectory, "migrate-auth-accounts.sql")));
         website.ChangeTracker.Clear();
         Host = new AuthTestHost(ConnectionString);
         using var browser = Host.Browser();
         await using var scope = Host.Services.CreateAsyncScope();
+        var identities = scope.ServiceProvider.GetRequiredService<AuthIdentityService>();
+        var profiles = scope.ServiceProvider.GetRequiredService<IAccountProfileProvisioner>();
+        var firstAccount = await identities.GetOrCreateGoogleAsync(first.GoogleSubject, default);
+        var secondAccount = await identities.GetOrCreateGoogleAsync(second.GoogleSubject, default);
+        await profiles.GoogleSignedInAsync(firstAccount, first.GoogleSubject, first.DisplayName, default);
+        await profiles.GoogleSignedInAsync(secondAccount, second.GoogleSubject, second.DisplayName, default);
         var upgraded = scope.ServiceProvider.GetRequiredService<SpriteTrackerDbContext>();
         Assert.False(upgraded.Database.HasPendingModelChanges());
         Assert.False(scope.ServiceProvider.GetRequiredService<AuthDbContext>().Database.HasPendingModelChanges());

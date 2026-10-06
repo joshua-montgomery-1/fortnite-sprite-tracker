@@ -30,7 +30,7 @@ Register both Google callback URLs using the actual deployed website origin and 
 
 Ensure the host routes the issuer and MCP hostnames to this application. Behind a TLS-terminating proxy, set `ReverseProxy:KnownProxies` to the trusted immediate proxy IP addresses (`ReverseProxy__KnownProxies__0`, etc. in Azure). The app processes `X-Forwarded-Proto` only from trusted proxies, before HTTPS redirects and authentication. Configure the proxy to preserve the public Host header and send the external HTTPS scheme. Loopback proxies are trusted by the framework defaults. This change does not provision Azure hostnames, certificates, routes, or Key Vault secrets.
 
-For the original production website database, run `scripts/migrate-auth-accounts.sql` before this release. It prepares the new schema and preserves website users and progress. Use a database role that owns the new schema/tables, or grant the application's role access afterward. The complete schema script is a one-time rollout; it is not for a database already migrated during development.
+The production account migration has been completed. New databases use the normal EF migrations; website profiles are linked on Google sign-in.
 
 ## UI structure
 

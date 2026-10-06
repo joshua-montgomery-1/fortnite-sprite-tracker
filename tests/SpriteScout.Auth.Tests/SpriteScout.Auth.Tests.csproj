@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
-    <None Include="../../scripts/migrate-auth-accounts.sql" Link="migrate-auth-accounts.sql" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

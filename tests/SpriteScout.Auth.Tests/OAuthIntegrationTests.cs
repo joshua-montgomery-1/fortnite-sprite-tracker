@@ -133,19 +133,18 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     }
 
     [Fact]
-    public async Task Sql_import_is_repeatable_and_preserves_profile_and_progress()
+    public async Task Repeated_sign_in_preserves_account_profile_and_progress()
     {
         await using var scope = fixture.Host.Services.CreateAsyncScope();
         var auth = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
         var accountCount = await auth.Accounts.CountAsync();
         var identityCount = await auth.ExternalIdentities.CountAsync();
-        var script = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "migrate-auth-accounts.sql"));
-        var sql = script.Split("-- BEGIN ACCOUNT IMPORT")[1].Split("-- END ACCOUNT IMPORT")[0];
-        await using (var transaction = await auth.Database.BeginTransactionAsync())
+        var identities = scope.ServiceProvider.GetRequiredService<AuthIdentityService>();
+        var profiles = scope.ServiceProvider.GetRequiredService<IAccountProfileProvisioner>();
+        for (var attempt = 0; attempt < 2; attempt++)
         {
-            await auth.Database.ExecuteSqlRawAsync(sql);
-            await auth.Database.ExecuteSqlRawAsync(sql);
-            await transaction.CommitAsync();
+            var accountId = await identities.GetOrCreateGoogleAsync("google-existing-1", default);
+            await profiles.GoogleSignedInAsync(accountId, "google-existing-1", "Updated Google name", default);
         }
         Assert.Equal(accountCount, await auth.Accounts.CountAsync());
         Assert.Equal(identityCount, await auth.ExternalIdentities.CountAsync());
@@ -157,7 +156,6 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Equal(fixture.VariantId, progress.SpriteVariantId);
         Assert.True(progress.IsOwned && progress.IsMastered);
         Assert.NotEqual(fixture.FirstAccount, fixture.SecondAccount);
-        var identities = scope.ServiceProvider.GetRequiredService<AuthIdentityService>();
         Assert.Equal(fixture.FirstAccount, await identities.GetOrCreateGoogleAsync("google-existing-1", default));
     }
 
