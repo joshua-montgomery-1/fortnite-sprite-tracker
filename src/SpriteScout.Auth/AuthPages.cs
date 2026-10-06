@@ -31,11 +31,11 @@ public static class AuthPages
     internal static IResult SignedIn(HttpContext context) => new AuthPageResult(new(AuthPageKind.SignedIn));
 
     internal static IResult Consent(HttpContext context, string application, bool offline, bool collectionRead,
-        bool collectionWrite, AuthFormModel form, string redirectUri) =>
+        bool collectionWrite, bool accountWrite, AuthFormModel form, string redirectUri) =>
         new AuthPageResult(new(AuthPageKind.Consent)
         {
             Application = application, Offline = offline, CollectionRead = collectionRead,
-            CollectionWrite = collectionWrite, Form = form
+            CollectionWrite = collectionWrite, AccountWrite = accountWrite, Form = form
         },
             formRedirect: redirectUri);
 

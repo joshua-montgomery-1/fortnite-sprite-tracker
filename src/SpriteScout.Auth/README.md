@@ -67,13 +67,15 @@ Register `https://spritescout.com/identity/signin-google` in the same Google OAu
 
 ## MCP tools and permissions
 
-Every MCP connection requires a free account and `account:read`; authorization requests omitting account access are rejected. Clients may request `collection:read`, `collection:write`, and `offline_access`. Consent shows only requested permissions, with required account access fixed on and every optional permission checked by default. Users can uncheck any optional permission. The server grants only the approved subset, rejects unrequested/unknown selections, and uses the approved scopes for the authorization grant and tokens. Configured public clients are permitted these scopes when auth startup registers them. Previously issued tokens retain their original scopes: reconnect to approve collection access.
+Every MCP connection requires a free account and `account:read`; authorization requests omitting account access are rejected. Clients may request `account:write`, `collection:read`, `collection:write`, and `offline_access`. Consent groups permissions under **Collection** (Read/Write), **Profile & account** (required Read/optional Write), and **Connection** (Stay connected). It shows only requested permissions, with required account access fixed on and every optional permission checked by default. Users can uncheck any optional permission. The server grants only the approved subset, rejects unrequested/unknown selections, and uses the approved scopes for the authorization grant and tokens. Configured public clients are permitted these scopes when auth startup registers them. Previously issued tokens retain their original scopes: reconnect to approve additional access.
 
-The default HTTP authentication challenge requests `account:read collection:read collection:write offline_access`, so clients following MCP scope selection offer all optional permissions during initial sign-in. Clients intentionally requesting fewer scopes or users deselecting permissions can use only the corresponding tools. Deselecting "Stay connected" prevents issuance of a refresh token. Old connections must reconnect and approve the new scope set; a tool error does not automatically upgrade an existing token.
+The default HTTP authentication challenge requests `account:read account:write collection:read collection:write offline_access`, so clients following MCP scope selection offer all optional permissions during initial sign-in. Clients intentionally requesting fewer scopes or users deselecting permissions can use only the corresponding tools. Deselecting "Stay connected" prevents issuance of a refresh token. Old connections must reconnect and approve the new scope set; a tool error does not automatically upgrade an existing token.
 
 | Tool | Additional permission | Behavior |
 | --- | --- | --- |
 | `who_am_i` | None | Connected account and website profile identity |
+| `get_profile` | None | Display/Epic names and profile settings |
+| `update_profile` | `account:write` | Edit display name and Epic Games display name |
 | `list_seasons` | None | Season IDs, dates and catalog availability |
 | `list_sprites` | None | Searchable, paginated variants across seasons |
 | `list_sprites_by_season` | None | Searchable, paginated variants for one season |
@@ -84,6 +86,8 @@ The default HTTP authentication challenge requests `account:read collection:read
 | `set_sprite_unowned` | `collection:write` | Remove saved progress and clear mastery |
 
 Mutation tools require an exact `spriteVariantId` from catalog tools, never a family ID or target user ID. The OAuth subject resolves the website user through `AccountId`. Unknown/unreleased variants are rejected using the website's availability rules. A variant's collection state is shared across seasons. Listings default to 50 entries and permit up to 100 per page; use `offset` / `limit` and `hasMore` for pagination. Mutations are idempotent state setters, marked as write/destructive tools for client confirmation handling. The normal single-variant website endpoint shares the same EF Core update service. Only requested flags are marked modified, preserving mastery for ownership-only writes. Concurrent inserts/removals retry up to three attempts using fresh EF entity state; no raw SQL is used for collection updates.
+
+Profile updates resolve the signed-in user's account and use EF Core. `displayName` accepts 1–80 characters and `epicDisplayName` accepts 3–16 characters, after trimming. Omitted names stay unchanged. Set `clearEpicDisplayName` to remove the Epic name; it cannot be combined with a new Epic name. Epic-name normalization is updated alongside the name. Account identity, profile privacy, and theme settings are preserved.
 
 ## UI structure
 

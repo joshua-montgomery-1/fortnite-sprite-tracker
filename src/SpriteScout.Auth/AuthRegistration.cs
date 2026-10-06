@@ -125,7 +125,8 @@ public static class AuthRegistration
                 options.SetJsonWebKeySetEndpointUris(new Uri(issuer, ".well-known/jwks"));
                 options.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow();
                 options.RequireProofKeyForCodeExchange();
-                options.RegisterScopes(AuthDefaults.AccountReadScope, AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope);
+                options.RegisterScopes(AuthDefaults.AccountReadScope, AuthDefaults.AccountWriteScope,
+                    AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope);
                 options.RegisterResources(settings.Resource);
                 options.SetAccessTokenLifetime(TimeSpan.FromMinutes(10));
                 options.SetRefreshTokenLifetime(TimeSpan.FromDays(30));
