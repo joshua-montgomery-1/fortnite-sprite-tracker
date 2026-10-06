@@ -46,3 +46,5 @@ The test host substitutes the central browser session to exercise consent and OA
 No production hostname, deployment, auth cutover, or collection-edit tools are included.
 
 Artwork follow-up: the host supplies a cached pool from all started season catalogs, with a bundled catalog fallback. Ten distinct images are selected by cycling through shuffled season groups. Selection, placement, size, depth, tilt, and animation timing change per render. All 117 manifest assets are bundled (about 2.9 MB total); browser reloads showed different selections with all ten images loading. The 32-test PostgreSQL suite passed again.
+
+Scatter follow-up: fixed perimeter slots removed; positions now sample the full scene with a small spacing guard. Independent scaling, translation, and depth movement create a slow 3D effect; reduced-motion users retain a static scene. Server Release build passed with zero warnings/errors. This revision was not visually checked: automatic approval review blocked the local preview launch.
