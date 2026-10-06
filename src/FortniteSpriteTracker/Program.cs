@@ -124,9 +124,7 @@ var centralAuth = builder.Services.AddCentralAuth(
     builder.Configuration, builder.Environment, databaseConnectionString);
 if (centralAuth.Enabled)
 {
-    builder.Services.AddScoped<CentralAccountBackfill>();
     builder.Services.AddScoped<ICentralAccountObserver, CentralAccountProfileLinker>();
-    builder.Services.AddHostedService<CentralAccountBackfillInitializer>();
     builder.Services.AddMcpServer()
         .WithHttpTransport(options => options.SessionMode = HttpServerSessionMode.Stateless)
         .WithTools<CentralAuthProofTools>();

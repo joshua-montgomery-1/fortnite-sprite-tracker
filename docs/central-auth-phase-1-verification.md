@@ -16,8 +16,8 @@ Verified locally on 2026-10-06, Windows, .NET 10, PostgreSQL 17.6.
 
 - Create a reserved `auth` schema containing a platform marker, revoke public schema privileges, and verify central migrations use `sprite_scout_auth` without adding to or modifying the reserved namespace. This simulates the namespace collision locally; it is not a live Supabase project test.
 
-- Populate website users/progress, return the test database to its pre-Phase-1 schema, then start the application to upgrade and backfill automatically.
-- Re-run backfill; preserve website primary IDs, public IDs, display names, sprite foreign keys, ownership/mastery; reuse the same Google mapping.
+- Populate website users/progress, return the test database to its pre-Phase-1 schema, then start the application to upgrade and import accounts through the SQL migration.
+- Execute the SQL import twice in a transaction; preserve website primary IDs, public IDs, display names, sprite foreign keys, ownership/mastery; reuse the same Google mapping.
 - Link new central Google accounts to website profiles without overwriting existing names.
 - Read issuer, PKCE S256, RFC 9207 support, and protected-resource discovery; require bearer auth.
 - Reject missing/plain PKCE, unknown clients/scopes, missing/wrong resources, external callbacks, and incorrect loopback host/path.
@@ -48,3 +48,5 @@ No production hostname, deployment, auth cutover, or collection-edit tools are i
 Artwork follow-up: the host supplies a cached pool from all started season catalogs, with a bundled catalog fallback. Ten distinct images are selected by cycling through shuffled season groups. Selection, placement, size, depth, tilt, and animation timing change per render. All 117 manifest assets are bundled (about 2.9 MB total); browser reloads showed different selections with all ten images loading. The 32-test PostgreSQL suite passed again.
 
 Scatter follow-up: fixed perimeter slots removed; positions now sample the full scene with a small spacing guard. Independent scaling, translation, and depth movement create a slow 3D effect; reduced-motion users retain a static scene. Server Release build passed with zero warnings/errors. This revision was not visually checked: automatic approval review blocked the local preview launch.
+
+Account simplification follow-up: startup row-by-row backfill removed. `RenameAccountReference` renames the column/index in place; `ImportWebsiteAccounts` runs transactional, repeatable SQL through migration history. PostgreSQL integration tests: 32 passed, including repeating the import twice with unchanged account/identity counts and preserved profile/progress relationships. Solution Release build: zero warnings/errors. Existing console suite passed. Imported accounts remain intact on migration rollback.

@@ -4,7 +4,7 @@
 
 The existing ASP.NET host loads `SpriteScout.Auth` as a separate library. It owns its EF context, migrations, `sprite_scout_auth` schema, external identities, OAuth clients, grants, tokens, and central browser cookie. The host owns website profiles and progress; `ICentralAccountObserver` is the integration boundary. Both contexts use the existing PostgreSQL database. There is no new process, container, port, or production hostname in this phase.
 
-Central account IDs are UUIDs. Google identities have a unique `(provider, issuer, subject)` key. Email is not an identity key or an automatic linking rule. A nullable, unique central UUID reference is added to existing website users without replacing their primary/public IDs or collection relationships. Startup backfill persists each identity before attaching the profile, making interruption/repetition safe. Website Google sign-in and its cookie remain operational; new website users are linked on the next enabled startup or central Google sign-in.
+Central account IDs are UUIDs. Google identities have a unique `(provider, issuer, subject)` key. Email is not an identity key or an automatic linking rule. A nullable, unique `AccountId` UUID reference is added to existing website users without replacing their primary/public IDs or collection relationships. The versioned `ImportWebsiteAccounts` SQL migration creates identities and links existing users in one transaction, reusing existing mappings. It runs once through EF migration history; its SQL is also repeatable. `RenameAccountReference` preserves links from earlier Phase 1 databases. Website Google sign-in and its cookie remain operational; new website users are linked when they sign in through central Google authentication. Website-only accounts created after the one-time import remain unlinked until then.
 
 Central auth is disabled by default and fails startup if enabled outside Development. Enabling it requires HTTPS loopback issuer/resource URLs. Production certificate handling, host routing, issuer changes, account/provider management, logout/revocation UI, operational cleanup, abuse limits, and website auth cutover are later work. A hostname change changes the issuer and requires reconnecting clients.
 
@@ -28,7 +28,7 @@ dotnet user-secrets set "CentralAuth:Enabled" "true" --project src/FortniteSprit
 5. Start the server:
    `dotnet run --project src/FortniteSpriteTracker --launch-profile https`.
 
-Startup applies website migrations, then auth migrations, pre-registers the Codex client, and backfills existing Google users. The database role needs permission to create the Sprite Scout schema and tables.
+Startup applies website migrations, then auth migrations (including the one-time SQL account import), and pre-registers the Codex client. The database role needs permission to create the Sprite Scout schema and tables.
 
 ### Supabase and the schema name
 
@@ -85,7 +85,7 @@ dotnet publish src/FortniteSpriteTracker/FortniteSpriteTracker.csproj -c Release
 
 Auth tests normally start disposable PostgreSQL 17 through Testcontainers (Docker required). Alternatively set `SPRITESCOUT_TEST_DATABASE` to a local PostgreSQL admin connection; tests create/drop a uniquely named database, leaving other databases untouched. This role needs CREATEDB.
 
-Tests substitute only the central browser session inside the test host. They exercise real PostgreSQL migrations/backfill, OpenIddict request validation, consent antiforgery, code exchange, refresh tokens, discovery, and HTTP MCP calls. They do not substitute bearer validation or expose a test login route in the application.
+Tests substitute only the central browser session inside the test host. They exercise real PostgreSQL migrations/account import, OpenIddict request validation, consent antiforgery, code exchange, refresh tokens, discovery, and HTTP MCP calls. They do not substitute bearer validation or expose a test login route in the application.
 
 See [recorded verification](central-auth-phase-1-verification.md).
 
@@ -95,3 +95,5 @@ See [recorded verification](central-auth-phase-1-verification.md).
 - [OpenIddict encryption and signing credentials](https://documentation.openiddict.com/configuration/encryption-and-signing-credentials.html)
 - [Codex MCP authentication](https://developers.openai.com/codex/mcp)
 - [Plugin packaging and local marketplaces](https://developers.openai.com/plugins/build/plugins)
+
+The Phase 1 SQL import intentionally reads the host-owned `public."Users"` table. Apply website migrations before auth migrations. It leaves imported accounts intact on rollback because those accounts may already own OAuth grants. When extracting auth into its own application, baseline its database or keep this migration as already applied; the import is a rollout step, not an ongoing dependency on website users.

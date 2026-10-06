@@ -14,9 +14,9 @@ public sealed class CentralAccountProfileLinker(
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, googleSubject));
         if (displayName is not null) identity.AddClaim(new Claim(ClaimTypes.Name, displayName));
         var user = await currentUser.GetOrCreateAsync(new ClaimsPrincipal(identity), cancellationToken);
-        if (user.CentralAccountId is not null && user.CentralAccountId != accountId)
+        if (user.AccountId is not null && user.AccountId != accountId)
             throw new InvalidOperationException("The website account has a different central identity.");
-        user.CentralAccountId = accountId;
+        user.AccountId = accountId;
         await database.SaveChangesAsync(cancellationToken);
     }
 }

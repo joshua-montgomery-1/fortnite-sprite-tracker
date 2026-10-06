@@ -17,7 +17,7 @@ public sealed class CentralAuthProofTools(SpriteTrackerDbContext database)
     {
         var id = Guid.Parse(user.GetClaim(OpenIddictConstants.Claims.Subject)!);
         var profile = await database.Users.AsNoTracking()
-            .Where(account => account.CentralAccountId == id)
+            .Where(account => account.AccountId == id)
             .Select(account => new AccountIdentity(id, account.PublicId, account.DisplayName))
             .SingleOrDefaultAsync(cancellationToken);
         return profile ?? throw new McpException("Sign in to the Sprite Scout website first to create your profile.");

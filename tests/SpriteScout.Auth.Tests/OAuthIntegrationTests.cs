@@ -66,18 +66,29 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         command.CommandText = "SELECT count(*) FROM auth.platform_marker WHERE id = 1";
         Assert.Equal(1L, await command.ExecuteScalarAsync());
         command.CommandText = "SELECT count(*) FROM sprite_scout_auth.\"__EFMigrationsHistory\"";
-        Assert.Equal(1L, await command.ExecuteScalarAsync());
+        Assert.Equal(2L, await command.ExecuteScalarAsync());
     }
 
     [Fact]
-    public async Task Backfill_is_repeatable_and_preserves_profile_and_progress()
+    public async Task Sql_import_is_repeatable_and_preserves_profile_and_progress()
     {
         await using var scope = fixture.Host.Services.CreateAsyncScope();
-        var count = await scope.ServiceProvider.GetRequiredService<CentralAccountBackfill>().RunAsync();
-        Assert.Equal(0, count);
+        var auth = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        var accountCount = await auth.Accounts.CountAsync();
+        var identityCount = await auth.ExternalIdentities.CountAsync();
+        var sql = new SpriteScout.Auth.Migrations.ImportWebsiteAccounts().UpOperations
+            .OfType<Microsoft.EntityFrameworkCore.Migrations.Operations.SqlOperation>().Single().Sql;
+        await using (var transaction = await auth.Database.BeginTransactionAsync())
+        {
+            await auth.Database.ExecuteSqlRawAsync(sql);
+            await auth.Database.ExecuteSqlRawAsync(sql);
+            await transaction.CommitAsync();
+        }
+        Assert.Equal(accountCount, await auth.Accounts.CountAsync());
+        Assert.Equal(identityCount, await auth.ExternalIdentities.CountAsync());
         var website = scope.ServiceProvider.GetRequiredService<SpriteTrackerDbContext>();
         var user = await website.Users.SingleAsync(item => item.Id == fixture.FirstUserId);
-        Assert.Equal(fixture.FirstAccount, user.CentralAccountId);
+        Assert.Equal(fixture.FirstAccount, user.AccountId);
         Assert.Equal(fixture.FirstPublicId, user.PublicId);
         var progress = await website.SpriteProgress.SingleAsync(item => item.UserId == user.Id);
         Assert.Equal(fixture.VariantId, progress.SpriteVariantId);
@@ -98,7 +109,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         await observer.GoogleSignedInAsync(newAccount, "google-new", "New Scout", default);
         var database = scope.ServiceProvider.GetRequiredService<SpriteTrackerDbContext>();
         Assert.Equal("First Scout", (await database.Users.SingleAsync(user => user.Id == fixture.FirstUserId)).DisplayName);
-        Assert.Equal(newAccount, (await database.Users.SingleAsync(user => user.GoogleSubject == "google-new")).CentralAccountId);
+        Assert.Equal(newAccount, (await database.Users.SingleAsync(user => user.GoogleSubject == "google-new")).AccountId);
     }
 
     [Fact]

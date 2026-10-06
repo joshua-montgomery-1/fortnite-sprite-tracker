@@ -142,7 +142,8 @@ public sealed class AuthFixture : IAsyncLifetime
         FirstPublicId = first.PublicId;
         // Arrange real legacy rows, then return to the pre-Phase-1 schema. Startup must upgrade
         // that database and link accounts without changing profile IDs or collection foreign keys.
-        var previous = (await website.Database.GetAppliedMigrationsAsync()).Reverse().Skip(1).First();
+        var previous = (await website.Database.GetAppliedMigrationsAsync())
+            .Last(migration => string.CompareOrdinal(migration, "20261006034616_AddCentralAccountReference") < 0);
         await website.GetService<IMigrator>().MigrateAsync(previous);
         // Simulate a provider-owned auth namespace: central migrations must leave it untouched.
         await website.Database.ExecuteSqlRawAsync("""
@@ -160,8 +161,8 @@ public sealed class AuthFixture : IAsyncLifetime
         Assert.False(scope.ServiceProvider.GetRequiredService<AuthDbContext>().Database.HasPendingModelChanges());
         first = await upgraded.Users.SingleAsync(user => user.Id == first.Id);
         second = await upgraded.Users.SingleAsync(user => user.Id == second.Id);
-        FirstAccount = first.CentralAccountId!.Value;
-        SecondAccount = second.CentralAccountId!.Value;
+        FirstAccount = first.AccountId!.Value;
+        SecondAccount = second.AccountId!.Value;
         VariantId = variant.Id;
     }
 
