@@ -14,15 +14,15 @@ Set these configuration values before deploying. URLs must be publicly reachable
 | --- | --- |
 | `SpriteScoutAuth:Issuer` | Canonical OAuth issuer, for example `https://auth.example.com/identity/` |
 | `SpriteScoutAuth:Resource` | Canonical MCP endpoint, for example `https://example.com/mcp` |
-| `SpriteScoutAuth:Certificates:SigningPath` | Absolute path to a PFX containing the signing certificate and private key |
+| `SpriteScoutAuth:Certificates:SigningBase64` | Base64-encoded signing PFX, containing its private key; supply through secrets |
 | `SpriteScoutAuth:Certificates:SigningPassword` | PFX password, when required |
-| `SpriteScoutAuth:Certificates:EncryptionPath` | Absolute path to a separate PFX containing the encryption certificate and private key |
+| `SpriteScoutAuth:Certificates:EncryptionBase64` | Base64-encoded encryption PFX, containing its private key; supply through secrets |
 | `SpriteScoutAuth:Certificates:EncryptionPassword` | PFX password, when required |
 | `SpriteScoutAuth:Clients` | Public OAuth clients and their exact registered callbacks |
 | `Authentication:Google:ClientId` / `ClientSecret` | Google OAuth provider credentials |
 | `ConnectionStrings:sprite-tracker` | Existing website database connection |
 
-Azure environment variables use double underscores instead of colons, for example `SpriteScoutAuth__Certificates__SigningPath`. Store certificate files outside the repository on a protected persistent mount, and provide passwords through secret configuration such as Azure Key Vault. Provision valid RSA certificates with private keys for signing and encryption. Retain the same files across restarts and replicas; development certificate generation is never used in production. Renew them before expiry and coordinate rotation with existing tokens. These certificates are for OAuth tokens; the web host still needs HTTPS separately.
+Azure environment variables use double underscores instead of colons, for example `SpriteScoutAuth__Certificates__SigningBase64`. Base64 is encoding, not encryption: treat the PFX values and passwords as secrets. The app decodes PFX bytes and loads keys with `EphemeralKeySet`, without writing certificate files or persisting private keys to the operating system key store. File-based hosting remains supported through `SigningPath` / `EncryptionPath`; configure exactly one source per certificate. Retain the same credentials across deployments, restarts, and replicas; development certificate generation is never used in production. Renew before expiry and coordinate rotation with existing tokens. These certificates are for OAuth tokens and are separate from HTTPS certificates.
 
 The local Codex registration is defined only in `appsettings.Development.json`. Register production clients separately through `SpriteScoutAuth:Clients`, with their own IDs and callbacks, `ApplicationType` (`native` or `web`), and a `DisplayName`. Public clients use authorization code with mandatory S256 PKCE, without client secrets. Native loopback callbacks permit variable ports; web callbacks require HTTPS. Client self-registration is not implemented.
 
@@ -34,28 +34,28 @@ The production account migration has been completed. New databases use the norma
 
 ### Azure Container Apps setup
 
-The release Bicep sets `https://spritescout.com/identity/` as the issuer and `https://spritescout.com/mcp` as the resource using the configured apex domain. It mounts an existing Azure Files share at `/auth-certificates` with read-only access and provides the PFX passwords through Container App secrets. These files persist across revisions and replicas. The release does not generate or replace certificates.
+The release Bicep sets `https://spritescout.com/identity/` as the issuer and `https://spritescout.com/mcp` as the resource using the configured apex domain. GitHub production secrets supply the two Base64 PFX values and passwords to Azure Container App secrets. The application reads them through secret environment references. No storage account, file share, or volume mount is required. The release reuses credentials; it does not generate new keys.
 
-On Windows with PowerShell 7, install Azure CLI and GitHub CLI, then sign in with `az login` and `gh auth login`. Run the setup script from the repository root:
+On Windows with PowerShell 7, install GitHub CLI and sign in with `gh auth login`. Run the setup script from the repository root:
 
 ```powershell
-./infra/Initialize-AuthCertificates.ps1 `
-  -SubscriptionId '<production-subscription-id>' `
-  -StorageAccountName '<globally-unique-lowercase-storage-name>'
+./infra/Initialize-AuthCertificates.ps1
 ```
 
-The script creates a Standard LRS storage account and a one-GiB-quota `auth-certificates` share in the existing production resource group. Azure Files incurs storage charges. It generates separate RSA 3072 signing/encryption certificates valid for two years, uploads their encrypted PFX files, and sets the following in the repository's GitHub **production** environment:
+The script generates separate RSA 3072 signing/encryption certificates valid for two years, then saves these in the repository's GitHub **production** environment:
 
 | Kind | Name |
 | --- | --- |
-| Variable | `AUTH_STORAGE_ACCOUNT` |
-| Secret | `AUTH_STORAGE_KEY` |
+| Secret | `AUTH_SIGNING_PFX` |
+| Secret | `AUTH_ENCRYPTION_PFX` |
 | Secret | `AUTH_SIGNING_PASSWORD` |
 | Secret | `AUTH_ENCRYPTION_PASSWORD` |
+| Variable | `AUTH_SIGNING_THUMBPRINT` (public identifier for repeat-run checks) |
+| Variable | `AUTH_ENCRYPTION_THUMBPRINT` (public identifier for repeat-run checks) |
 
-The signed-in Azure user needs permission to create storage accounts and read their keys in that resource group. The GitHub user needs access to update production environment secrets/variables. The release identity continues to use its existing resource-group deployment permissions.
+The GitHub user needs access to update production environment secrets/variables. The release identity continues to use its existing Azure deployment permissions. Certificates never enter the repository, container image, workflow artifacts, or logs. Workflow parameter files containing secrets exist temporarily on the runner and are removed after deployment.
 
-Local encrypted PFX/password backups are restricted to your Windows user and SYSTEM under `%LOCALAPPDATA%/SpriteScout/AuthCertificates/<subscription>/<storage-account>/`. The password backups use Windows DPAPI and are decryptable only by the same Windows user. Preserve a secure, recoverable backup of these credentials. Reruns reuse the local files and compare remote certificate thumbprints; the script refuses missing backups, mismatched remote certificates, or expired credentials instead of silently rotating keys. It does not change the running application or register Google callbacks.
+Local encrypted PFX/password backups are restricted to your Windows user and SYSTEM under `%LOCALAPPDATA%/SpriteScout/AuthCertificates/<owner>/<repository>/`. The password backups use Windows DPAPI and are decryptable only by the same Windows user. Preserve a secure, recoverable backup of these credentials. Reruns reuse local files and check the recorded GitHub thumbprints; the script refuses missing backups for existing secrets, mismatched thumbprints, or expired credentials instead of silently rotating keys. It does not change the running application or register Google callbacks. Each Base64 value must fit GitHub's 48 KB secret limit, which the script checks.
 
 Set the optional GitHub production variable `AUTH_CLIENTS` to a JSON array of explicitly allowed clients before deployment. An empty array permits no new client registrations; removing an entry does not delete an existing database registration. For a production Codex connection:
 
@@ -63,7 +63,7 @@ Set the optional GitHub production variable `AUTH_CLIENTS` to a JSON array of ex
 [{"ClientId":"sprite-scout-codex","DisplayName":"Codex — Sprite Scout","ApplicationType":"native","RedirectUris":["http://127.0.0.1/callback"]}]
 ```
 
-Register `https://spritescout.com/identity/signin-google` in the same Google OAuth client used by the website, retaining `https://spritescout.com/signin-google`. After review and merge, the release workflow supplies the new secrets and mounts the share before starting the application. Check `https://spritescout.com/identity/.well-known/openid-configuration`, then complete a Google sign-in and an authenticated MCP call. Certificate provisioning, Google callback registration, and a production sign-in cannot be verified by a local build.
+Register `https://spritescout.com/identity/signin-google` in the same Google OAuth client used by the website, retaining `https://spritescout.com/signin-google`. After review and merge, the release workflow supplies the secrets before starting the application. Check `https://spritescout.com/identity/.well-known/openid-configuration`, then complete a Google sign-in and an authenticated MCP call. Google callback registration and a production sign-in cannot be verified by a local build.
 
 ## UI structure
 

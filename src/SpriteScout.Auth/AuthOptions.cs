@@ -10,8 +10,10 @@ public sealed class AuthOptions
 
 public sealed class AuthCertificateOptions
 {
+    public string SigningBase64 { get; set; } = "";
     public string SigningPath { get; set; } = "";
     public string? SigningPassword { get; set; }
+    public string EncryptionBase64 { get; set; } = "";
     public string EncryptionPath { get; set; } = "";
     public string? EncryptionPassword { get; set; }
 }

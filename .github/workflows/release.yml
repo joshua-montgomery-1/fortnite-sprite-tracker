@@ -68,8 +68,8 @@ jobs:
           DATABASE_CONNECTION: ${{ secrets.DATABASE_CONNECTION_STRING }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          AUTH_STORAGE_ACCOUNT: ${{ vars.AUTH_STORAGE_ACCOUNT }}
-          AUTH_STORAGE_KEY: ${{ secrets.AUTH_STORAGE_KEY }}
+          AUTH_SIGNING_PFX: ${{ secrets.AUTH_SIGNING_PFX }}
+          AUTH_ENCRYPTION_PFX: ${{ secrets.AUTH_ENCRYPTION_PFX }}
           AUTH_SIGNING_PASSWORD: ${{ secrets.AUTH_SIGNING_PASSWORD }}
           AUTH_ENCRYPTION_PASSWORD: ${{ secrets.AUTH_ENCRYPTION_PASSWORD }}
           AUTH_CLIENTS: ${{ vars.AUTH_CLIENTS || '[]' }}
@@ -80,7 +80,7 @@ jobs:
           from pathlib import Path
 
           required = ["DATABASE_CONNECTION", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
-                      "AUTH_STORAGE_ACCOUNT", "AUTH_STORAGE_KEY",
+                      "AUTH_SIGNING_PFX", "AUTH_ENCRYPTION_PFX",
                       "AUTH_SIGNING_PASSWORD", "AUTH_ENCRYPTION_PASSWORD"]
           missing = [name for name in required if not os.environ[name]]
           if missing:
@@ -95,8 +95,8 @@ jobs:
               "databaseConnectionString": os.environ["DATABASE_CONNECTION"],
               "googleClientId": os.environ["GOOGLE_CLIENT_ID"],
               "googleClientSecret": os.environ["GOOGLE_CLIENT_SECRET"],
-              "authStorageAccountName": os.environ["AUTH_STORAGE_ACCOUNT"],
-              "authStorageAccountKey": os.environ["AUTH_STORAGE_KEY"],
+              "authSigningPfx": os.environ["AUTH_SIGNING_PFX"],
+              "authEncryptionPfx": os.environ["AUTH_ENCRYPTION_PFX"],
               "authSigningPassword": os.environ["AUTH_SIGNING_PASSWORD"],
               "authEncryptionPassword": os.environ["AUTH_ENCRYPTION_PASSWORD"],
               "authClients": clients,

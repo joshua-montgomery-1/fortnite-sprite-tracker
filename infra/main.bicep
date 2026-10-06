@@ -24,13 +24,11 @@ param googleClientId string
 @secure()
 param googleClientSecret string
 
-@description('Existing storage account containing the persistent OAuth PFX files, in this resource group.')
-param authStorageAccountName string
-
-param authCertificateShareName string = 'auth-certificates'
+@secure()
+param authSigningPfx string
 
 @secure()
-param authStorageAccountKey string
+param authEncryptionPfx string
 
 @secure()
 param authSigningPassword string
@@ -75,9 +73,8 @@ module application 'app.bicep' = {
     databaseConnectionString: databaseConnectionString
     googleClientId: googleClientId
     googleClientSecret: googleClientSecret
-    authStorageAccountName: authStorageAccountName
-    authCertificateShareName: authCertificateShareName
-    authStorageAccountKey: authStorageAccountKey
+    authSigningPfx: authSigningPfx
+    authEncryptionPfx: authEncryptionPfx
     authSigningPassword: authSigningPassword
     authEncryptionPassword: authEncryptionPassword
     authClients: authClients

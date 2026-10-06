@@ -23,8 +23,10 @@ public sealed class AuthRegistrationTests
         Assert.Contains("SigningPath", exception.Message);
     }
 
-    [Fact]
-    public void Production_reuses_the_configured_certificates_across_startups()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Production_reuses_the_configured_certificates_across_startups(bool useBase64)
     {
         var signingPath = Path.GetTempFileName();
         var encryptionPath = Path.GetTempFileName();
@@ -34,9 +36,11 @@ public sealed class AuthRegistrationTests
             WriteCertificate(encryptionPath, "encryption");
             var configuration = Configuration(new Dictionary<string, string?>
             {
-                ["SpriteScoutAuth:Certificates:SigningPath"] = signingPath,
+                ["SpriteScoutAuth:Certificates:" + (useBase64 ? "SigningBase64" : "SigningPath")] =
+                    useBase64 ? Convert.ToBase64String(File.ReadAllBytes(signingPath)) : signingPath,
                 ["SpriteScoutAuth:Certificates:SigningPassword"] = "test-only-password",
-                ["SpriteScoutAuth:Certificates:EncryptionPath"] = encryptionPath,
+                ["SpriteScoutAuth:Certificates:" + (useBase64 ? "EncryptionBase64" : "EncryptionPath")] =
+                    useBase64 ? Convert.ToBase64String(File.ReadAllBytes(encryptionPath)) : encryptionPath,
                 ["SpriteScoutAuth:Certificates:EncryptionPassword"] = "test-only-password"
             });
             using var first = Register(configuration).BuildServiceProvider();
@@ -53,6 +57,29 @@ public sealed class AuthRegistrationTests
             File.Delete(signingPath);
             File.Delete(encryptionPath);
         }
+    }
+
+    [Fact]
+    public void Production_rejects_malformed_base64_without_echoing_the_value()
+    {
+        const string secret = "not-a-valid-base64-secret";
+        var exception = Assert.Throws<InvalidOperationException>(() => Register(Configuration(new()
+        {
+            ["SpriteScoutAuth:Certificates:SigningBase64"] = secret
+        })));
+        Assert.Contains("SigningBase64", exception.Message);
+        Assert.DoesNotContain(secret, exception.ToString());
+    }
+
+    [Fact]
+    public void Production_rejects_ambiguous_certificate_sources()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() => Register(Configuration(new()
+        {
+            ["SpriteScoutAuth:Certificates:SigningPath"] = "unused.pfx",
+            ["SpriteScoutAuth:Certificates:SigningBase64"] = "unused"
+        })));
+        Assert.Contains("exactly one", exception.Message);
     }
 
     private static IConfiguration Configuration(Dictionary<string, string?> values)

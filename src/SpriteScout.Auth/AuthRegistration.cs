@@ -137,9 +137,9 @@ public static class AuthRegistration
                 else
                 {
                     options.AddSigningCertificate(LoadCertificate(settings.Certificates.SigningPath,
-                        settings.Certificates.SigningPassword, "signing"));
+                        settings.Certificates.SigningBase64, settings.Certificates.SigningPassword, "Signing"));
                     options.AddEncryptionCertificate(LoadCertificate(settings.Certificates.EncryptionPath,
-                        settings.Certificates.EncryptionPassword, "encryption"));
+                        settings.Certificates.EncryptionBase64, settings.Certificates.EncryptionPassword, "Encryption"));
                 }
                 options.DisableAccessTokenEncryption();
                 options.Configure(server => server.CodeChallengeMethods.Remove(CodeChallengeMethods.Plain));
@@ -180,10 +180,22 @@ public static class AuthRegistration
         }));
     }
 
-    private static X509Certificate2 LoadCertificate(string path, string? password, string purpose)
+    private static X509Certificate2 LoadCertificate(string path, string base64, string? password, string purpose)
     {
-        if (string.IsNullOrWhiteSpace(path))
-            throw new InvalidOperationException($"Production auth requires SpriteScoutAuth:Certificates:{(purpose == "signing" ? "SigningPath" : "EncryptionPath")}.");
-        return X509CertificateLoader.LoadPkcs12FromFile(path, password, X509KeyStorageFlags.EphemeralKeySet);
+        var hasPath = !string.IsNullOrWhiteSpace(path);
+        var hasBase64 = !string.IsNullOrWhiteSpace(base64);
+        if (hasPath == hasBase64)
+            throw new InvalidOperationException($"Production auth requires exactly one of SpriteScoutAuth:Certificates:{purpose}Base64 or {purpose}Path.");
+        if (hasPath)
+            return X509CertificateLoader.LoadPkcs12FromFile(path, password, X509KeyStorageFlags.EphemeralKeySet);
+
+        byte[] bytes;
+        try { bytes = Convert.FromBase64String(base64); }
+        catch (FormatException)
+        {
+            throw new InvalidOperationException($"SpriteScoutAuth:Certificates:{purpose}Base64 must contain a Base64-encoded PFX.");
+        }
+        try { return X509CertificateLoader.LoadPkcs12(bytes, password, X509KeyStorageFlags.EphemeralKeySet); }
+        finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(bytes); }
     }
 }

@@ -12,11 +12,11 @@ param googleClientId string
 @secure()
 param googleClientSecret string
 
-param authStorageAccountName string
-param authCertificateShareName string
+@secure()
+param authSigningPfx string
 
 @secure()
-param authStorageAccountKey string
+param authEncryptionPfx string
 
 @secure()
 param authSigningPassword string
@@ -48,19 +48,6 @@ resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
         workloadProfileType: 'Consumption'
       }
     ]
-  }
-}
-
-resource authCertificateStorage 'Microsoft.App/managedEnvironments/storages@2025-01-01' = {
-  parent: environment
-  name: 'auth-certificates'
-  properties: {
-    azureFile: {
-      accountName: authStorageAccountName
-      accountKey: authStorageAccountKey
-      shareName: authCertificateShareName
-      accessMode: 'ReadOnly'
-    }
   }
 }
 
@@ -142,6 +129,14 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
           value: authSigningPassword
         }
         {
+          name: 'auth-signing-pfx'
+          value: authSigningPfx
+        }
+        {
+          name: 'auth-encryption-pfx'
+          value: authEncryptionPfx
+        }
+        {
           name: 'auth-encryption-password'
           value: authEncryptionPassword
         }
@@ -152,12 +147,6 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
         {
           name: 'server'
           image: containerImage
-          volumeMounts: [
-            {
-              volumeName: 'auth-certificates'
-              mountPath: '/auth-certificates'
-            }
-          ]
           env: concat([
             {
               name: 'ASPNETCORE_ENVIRONMENT'
@@ -192,12 +181,12 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
               value: 'https://${customDomainName}/mcp'
             }
             {
-              name: 'SpriteScoutAuth__Certificates__SigningPath'
-              value: '/auth-certificates/signing.pfx'
+              name: 'SpriteScoutAuth__Certificates__SigningBase64'
+              secretRef: 'auth-signing-pfx'
             }
             {
-              name: 'SpriteScoutAuth__Certificates__EncryptionPath'
-              value: '/auth-certificates/encryption.pfx'
+              name: 'SpriteScoutAuth__Certificates__EncryptionBase64'
+              secretRef: 'auth-encryption-pfx'
             }
             {
               name: 'SpriteScoutAuth__Certificates__SigningPassword'
@@ -225,13 +214,6 @@ resource application 'Microsoft.App/containerApps@2025-01-01' = {
             cpu: json('0.25')
             memory: '0.5Gi'
           }
-        }
-      ]
-      volumes: [
-        {
-          name: 'auth-certificates'
-          storageType: 'AzureFile'
-          storageName: authCertificateStorage.name
         }
       ]
       scale: {
