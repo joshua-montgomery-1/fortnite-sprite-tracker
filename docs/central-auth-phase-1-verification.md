@@ -6,12 +6,14 @@ Verified locally on 2026-10-06, Windows, .NET 10, PostgreSQL 17.6.
 | --- | --- |
 | Solution Release build | Passed, 0 warnings / 0 errors |
 | Existing console test suite | Passed (`Sprite catalog route tests passed.`) |
-| Auth integration suite | 20 passed, 0 failed, 0 skipped |
+| Auth integration suite | 21 passed, 0 failed, 0 skipped |
 | Server Release publish | Passed |
 | Website/auth model snapshots | No pending model changes in PostgreSQL fixture |
 | Plugin, MCP, and marketplace JSON | Parsed successfully |
 
 ## Integration coverage
+
+- Create a reserved `auth` schema containing a platform marker, revoke public schema privileges, and verify central migrations use `sprite_scout_auth` without adding to or modifying the reserved namespace. This simulates the namespace collision locally; it is not a live Supabase project test.
 
 - Populate website users/progress, return the test database to its pre-Phase-1 schema, then start the application to upgrade and backfill automatically.
 - Re-run backfill; preserve website primary IDs, public IDs, display names, sprite foreign keys, ownership/mastery; reuse the same Google mapping.

@@ -144,6 +144,13 @@ public sealed class AuthFixture : IAsyncLifetime
         // that database and link accounts without changing profile IDs or collection foreign keys.
         var previous = (await website.Database.GetAppliedMigrationsAsync()).Reverse().Skip(1).First();
         await website.GetService<IMigrator>().MigrateAsync(previous);
+        // Simulate a provider-owned auth namespace: central migrations must leave it untouched.
+        await website.Database.ExecuteSqlRawAsync("""
+            CREATE SCHEMA auth;
+            CREATE TABLE auth.platform_marker (id integer PRIMARY KEY);
+            INSERT INTO auth.platform_marker VALUES (1);
+            REVOKE ALL ON SCHEMA auth FROM PUBLIC;
+            """);
         website.ChangeTracker.Clear();
         Host = new AuthTestHost(ConnectionString);
         using var browser = Host.Browser();

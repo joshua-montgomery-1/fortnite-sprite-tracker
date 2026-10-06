@@ -10,7 +10,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbC
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.HasDefaultSchema("auth");
+        modelBuilder.HasDefaultSchema("sprite_scout_auth");
         modelBuilder.UseOpenIddict();
         modelBuilder.Entity<AuthAccount>().HasKey(account => account.Id);
         var identities = modelBuilder.Entity<ExternalIdentity>();

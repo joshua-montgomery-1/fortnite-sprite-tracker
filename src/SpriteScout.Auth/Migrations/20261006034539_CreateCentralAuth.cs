@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -12,11 +12,11 @@ namespace SpriteScout.Auth.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "auth");
+                name: "sprite_scout_auth");
 
             migrationBuilder.CreateTable(
                 name: "Accounts",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -29,7 +29,7 @@ namespace SpriteScout.Auth.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpenIddictApplications",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
@@ -56,7 +56,7 @@ namespace SpriteScout.Auth.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpenIddictScopes",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
@@ -76,7 +76,7 @@ namespace SpriteScout.Auth.Migrations
 
             migrationBuilder.CreateTable(
                 name: "ExternalIdentities",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -91,7 +91,7 @@ namespace SpriteScout.Auth.Migrations
                     table.ForeignKey(
                         name: "FK_ExternalIdentities_Accounts_AccountId",
                         column: x => x.AccountId,
-                        principalSchema: "auth",
+                        principalSchema: "sprite_scout_auth",
                         principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -99,7 +99,7 @@ namespace SpriteScout.Auth.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpenIddictAuthorizations",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
@@ -118,14 +118,14 @@ namespace SpriteScout.Auth.Migrations
                     table.ForeignKey(
                         name: "FK_OpenIddictAuthorizations_OpenIddictApplications_Application~",
                         column: x => x.ApplicationId,
-                        principalSchema: "auth",
+                        principalSchema: "sprite_scout_auth",
                         principalTable: "OpenIddictApplications",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
                 name: "OpenIddictTokens",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
@@ -148,65 +148,65 @@ namespace SpriteScout.Auth.Migrations
                     table.ForeignKey(
                         name: "FK_OpenIddictTokens_OpenIddictApplications_ApplicationId",
                         column: x => x.ApplicationId,
-                        principalSchema: "auth",
+                        principalSchema: "sprite_scout_auth",
                         principalTable: "OpenIddictApplications",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_OpenIddictTokens_OpenIddictAuthorizations_AuthorizationId",
                         column: x => x.AuthorizationId,
-                        principalSchema: "auth",
+                        principalSchema: "sprite_scout_auth",
                         principalTable: "OpenIddictAuthorizations",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExternalIdentities_AccountId",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 table: "ExternalIdentities",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExternalIdentities_Provider_Issuer_Subject",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 table: "ExternalIdentities",
                 columns: new[] { "Provider", "Issuer", "Subject" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpenIddictApplications_ClientId",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 table: "OpenIddictApplications",
                 column: "ClientId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpenIddictAuthorizations_ApplicationId_Status_Subject_Type",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 table: "OpenIddictAuthorizations",
                 columns: new[] { "ApplicationId", "Status", "Subject", "Type" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpenIddictScopes_Name",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 table: "OpenIddictScopes",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpenIddictTokens_ApplicationId_Status_Subject_Type",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 table: "OpenIddictTokens",
                 columns: new[] { "ApplicationId", "Status", "Subject", "Type" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpenIddictTokens_AuthorizationId",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 table: "OpenIddictTokens",
                 column: "AuthorizationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpenIddictTokens_ReferenceId",
-                schema: "auth",
+                schema: "sprite_scout_auth",
                 table: "OpenIddictTokens",
                 column: "ReferenceId",
                 unique: true);
@@ -217,27 +217,27 @@ namespace SpriteScout.Auth.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ExternalIdentities",
-                schema: "auth");
+                schema: "sprite_scout_auth");
 
             migrationBuilder.DropTable(
                 name: "OpenIddictScopes",
-                schema: "auth");
+                schema: "sprite_scout_auth");
 
             migrationBuilder.DropTable(
                 name: "OpenIddictTokens",
-                schema: "auth");
+                schema: "sprite_scout_auth");
 
             migrationBuilder.DropTable(
                 name: "Accounts",
-                schema: "auth");
+                schema: "sprite_scout_auth");
 
             migrationBuilder.DropTable(
                 name: "OpenIddictAuthorizations",
-                schema: "auth");
+                schema: "sprite_scout_auth");
 
             migrationBuilder.DropTable(
                 name: "OpenIddictApplications",
-                schema: "auth");
+                schema: "sprite_scout_auth");
         }
     }
 }

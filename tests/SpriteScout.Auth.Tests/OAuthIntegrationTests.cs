@@ -25,6 +25,21 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     private const string Callback = "http://127.0.0.1:48123/callback";
 
     [Fact]
+    public async Task Central_migrations_leave_the_reserved_auth_schema_untouched()
+    {
+        await using var connection = new Npgsql.NpgsqlConnection(fixture.ConnectionString);
+        await connection.OpenAsync();
+        await using var command = new Npgsql.NpgsqlCommand("""
+            SELECT count(*) FROM pg_tables WHERE schemaname = 'auth';
+            """, connection);
+        Assert.Equal(1L, await command.ExecuteScalarAsync());
+        command.CommandText = "SELECT count(*) FROM auth.platform_marker WHERE id = 1";
+        Assert.Equal(1L, await command.ExecuteScalarAsync());
+        command.CommandText = "SELECT count(*) FROM sprite_scout_auth.\"__EFMigrationsHistory\"";
+        Assert.Equal(1L, await command.ExecuteScalarAsync());
+    }
+
+    [Fact]
     public async Task Backfill_is_repeatable_and_preserves_profile_and_progress()
     {
         await using var scope = fixture.Host.Services.CreateAsyncScope();

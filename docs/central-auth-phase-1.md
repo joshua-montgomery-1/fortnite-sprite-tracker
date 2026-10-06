@@ -2,7 +2,7 @@
 
 ## Architecture and boundaries
 
-The existing ASP.NET host loads `SpriteScout.Auth` as a separate library. It owns its EF context, migrations, `auth` schema, external identities, OAuth clients, grants, tokens, and central browser cookie. The host owns website profiles and progress; `ICentralAccountObserver` is the integration boundary. Both contexts use the existing PostgreSQL database. There is no new process, container, port, or production hostname in this phase.
+The existing ASP.NET host loads `SpriteScout.Auth` as a separate library. It owns its EF context, migrations, `sprite_scout_auth` schema, external identities, OAuth clients, grants, tokens, and central browser cookie. The host owns website profiles and progress; `ICentralAccountObserver` is the integration boundary. Both contexts use the existing PostgreSQL database. There is no new process, container, port, or production hostname in this phase.
 
 Central account IDs are UUIDs. Google identities have a unique `(provider, issuer, subject)` key. Email is not an identity key or an automatic linking rule. A nullable, unique central UUID reference is added to existing website users without replacing their primary/public IDs or collection relationships. Startup backfill persists each identity before attaching the profile, making interruption/repetition safe. Website Google sign-in and its cookie remain operational; new website users are linked on the next enabled startup or central Google sign-in.
 
@@ -28,7 +28,13 @@ dotnet user-secrets set "CentralAuth:Enabled" "true" --project src/FortniteSprit
 5. Start the server:
    `dotnet run --project src/FortniteSpriteTracker --launch-profile https`.
 
-Startup applies website migrations, then auth migrations, pre-registers the Codex client, and backfills existing Google users. The database role needs permission to create the auth schema and tables.
+Startup applies website migrations, then auth migrations, pre-registers the Codex client, and backfills existing Google users. The database role needs permission to create the Sprite Scout schema and tables.
+
+### Supabase and the schema name
+
+Central tables and their migration history use **`sprite_scout_auth`**. Supabase owns its existing `auth` schema; do not grant the application additional privileges on it or rename it. Keep `sprite_scout_auth` outside the Supabase Data API's exposed schemas. The server accesses it directly through Npgsql.
+
+If the earlier Phase 1 version failed with `42501: permission denied for schema auth` before creating its central tables, update the code and restart. No managed-schema cleanup is needed.
 
 Defaults:
 

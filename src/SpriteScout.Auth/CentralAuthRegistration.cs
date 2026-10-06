@@ -39,7 +39,7 @@ public static class CentralAuthRegistration
         }
         services.AddSingleton(settings);
         services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(connectionString,
-            postgres => postgres.MigrationsHistoryTable("__EFMigrationsHistory", "auth"))
+            postgres => postgres.MigrationsHistoryTable("__EFMigrationsHistory", "sprite_scout_auth"))
             .UseOpenIddict());
         services.AddScoped<AuthIdentityService>();
         services.AddHostedService<AuthDatabaseInitializer>();

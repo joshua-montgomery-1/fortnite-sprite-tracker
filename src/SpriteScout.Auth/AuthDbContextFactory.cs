@@ -10,7 +10,7 @@ public sealed class AuthDbContextFactory : IDesignTimeDbContextFactory<AuthDbCon
         // Scaffolding migrations needs a provider, not a live database or production credentials.
         var options = new DbContextOptionsBuilder<AuthDbContext>()
             .UseNpgsql("Host=localhost;Database=sprite-scout-design;Username=design",
-                postgres => postgres.MigrationsHistoryTable("__EFMigrationsHistory", "auth"))
+                postgres => postgres.MigrationsHistoryTable("__EFMigrationsHistory", "sprite_scout_auth"))
             .UseOpenIddict()
             .Options;
         return new AuthDbContext(options);
