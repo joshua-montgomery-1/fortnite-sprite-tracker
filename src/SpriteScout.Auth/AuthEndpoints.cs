@@ -25,7 +25,7 @@ public static class AuthEndpoints
         // Clients prioritize challenged scopes over discovery metadata. Include
         // collection access so the default consent covers all advertised tools.
         var connectionScopes = string.Join(' ', AuthDefaults.AccountReadScope,
-            AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope);
+            AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope, Scopes.OfflineAccess);
         app.Use(async (context, next) =>
         {
             var isAuth = context.Request.Path.StartsWithSegments(issuer.AbsolutePath.TrimEnd('/')) ||
@@ -95,6 +95,8 @@ public static class AuthEndpoints
             ?? throw new InvalidOperationException("The OAuth request was not validated.");
         if (request.GetResources().Length != 1 || request.GetResources()[0] != settings.Resource)
             return Reject(Errors.InvalidTarget, "Request the Sprite Scout MCP resource.");
+        if (!request.HasScope(AuthDefaults.AccountReadScope))
+            return Reject(Errors.InvalidScope, "Request account:read to identify your Sprite Scout account.");
         var application = await applications.FindByClientIdAsync(request.ClientId!, cancellationToken)
             ?? throw new InvalidOperationException("The OAuth client was not found.");
         var name = await applications.GetDisplayNameAsync(application, cancellationToken) ?? "This application";
@@ -134,13 +136,20 @@ public static class AuthEndpoints
         if (context.Request.Form["decision"] != "allow")
             return Reject(Errors.AccessDenied, "The user declined the connection.");
 
+        var approvedScopes = context.Request.Form["approved_scope"].Select(scope => scope ?? "")
+            .Append(AuthDefaults.AccountReadScope).Distinct(StringComparer.Ordinal).ToArray();
+        if (approvedScopes.Any(scope => !request.HasScope(scope) ||
+            scope is not (AuthDefaults.AccountReadScope or AuthDefaults.CollectionReadScope or
+                AuthDefaults.CollectionWriteScope or Scopes.OfflineAccess)))
+            return Reject(Errors.InvalidScope, "Approve only permissions requested by this application.");
+
         var identity = new ClaimsIdentity(
             OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, Claims.Name, Claims.Role);
         identity.SetClaim(Claims.Subject, accountId.ToString());
         identity.SetClaim("connection_expires_at",
             DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture));
         var principal = new ClaimsPrincipal(identity);
-        principal.SetScopes(request.GetScopes());
+        principal.SetScopes(approvedScopes);
         principal.SetResources(settings.Resource);
         var grant = await authorizations.CreateAsync(
             identity: identity, subject: accountId.ToString(),
@@ -151,12 +160,17 @@ public static class AuthEndpoints
     }
 
     private static IEnumerable<AuthFormField> AuthorizationFields(HttpContext context) =>
-        context.Request.Query.SelectMany(parameter => parameter.Value.Select(value =>
+        context.Request.Query.Where(parameter =>
+                !string.Equals(parameter.Key, "approved_scope", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(parameter.Key, "decision", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(parameter => parameter.Value.Select(value =>
             new AuthFormField(parameter.Key, value ?? "")));
 
     private static string AuthorizationReturn(AuthOptions settings, OpenIddictRequest request) =>
         QueryHelpers.AddQueryString(new Uri(new Uri(settings.Issuer), "connect/authorize").AbsoluteUri,
-            request.GetParameters().Where(parameter => parameter.Key is not ("decision" or "__RequestVerificationToken"))
+            request.GetParameters().Where(parameter =>
+                    parameter.Key is not ("decision" or "__RequestVerificationToken") &&
+                    !string.Equals(parameter.Key, "approved_scope", StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(parameter => parameter.Key, parameter => (string?)parameter.Value.ToString()));
 
     private static async Task<bool> ValidateFormAsync(HttpContext context, IAntiforgery antiforgery)
