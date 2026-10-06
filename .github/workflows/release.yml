@@ -58,6 +58,56 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Prepare deployment parameters
+        shell: python
+        env:
+          PARAMETER_FILE: ${{ runner.temp }}/sprite-scout-parameters.json
+          LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-sprite-scout-prod' }}
+          CONTAINER_IMAGE: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          DATABASE_CONNECTION: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          AUTH_STORAGE_ACCOUNT: ${{ vars.AUTH_STORAGE_ACCOUNT }}
+          AUTH_STORAGE_KEY: ${{ secrets.AUTH_STORAGE_KEY }}
+          AUTH_SIGNING_PASSWORD: ${{ secrets.AUTH_SIGNING_PASSWORD }}
+          AUTH_ENCRYPTION_PASSWORD: ${{ secrets.AUTH_ENCRYPTION_PASSWORD }}
+          AUTH_CLIENTS: ${{ vars.AUTH_CLIENTS || '[]' }}
+          BUDGET_EMAIL: ${{ vars.BUDGET_CONTACT_EMAIL }}
+        run: |
+          import json
+          import os
+          from pathlib import Path
+
+          required = ["DATABASE_CONNECTION", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+                      "AUTH_STORAGE_ACCOUNT", "AUTH_STORAGE_KEY",
+                      "AUTH_SIGNING_PASSWORD", "AUTH_ENCRYPTION_PASSWORD"]
+          missing = [name for name in required if not os.environ[name]]
+          if missing:
+              raise SystemExit("Missing production configuration: " + ", ".join(missing))
+          clients = json.loads(os.environ["AUTH_CLIENTS"])
+          if not isinstance(clients, list):
+              raise SystemExit("AUTH_CLIENTS must be a JSON array")
+          values = {
+              "location": os.environ["LOCATION"],
+              "resourceGroupName": os.environ["RESOURCE_GROUP"],
+              "containerImage": os.environ["CONTAINER_IMAGE"],
+              "databaseConnectionString": os.environ["DATABASE_CONNECTION"],
+              "googleClientId": os.environ["GOOGLE_CLIENT_ID"],
+              "googleClientSecret": os.environ["GOOGLE_CLIENT_SECRET"],
+              "authStorageAccountName": os.environ["AUTH_STORAGE_ACCOUNT"],
+              "authStorageAccountKey": os.environ["AUTH_STORAGE_KEY"],
+              "authSigningPassword": os.environ["AUTH_SIGNING_PASSWORD"],
+              "authEncryptionPassword": os.environ["AUTH_ENCRYPTION_PASSWORD"],
+              "authClients": clients,
+              "budgetContactEmail": os.environ["BUDGET_EMAIL"],
+          }
+          Path(os.environ["PARAMETER_FILE"]).write_text(json.dumps({
+              "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+              "contentVersion": "1.0.0.0",
+              "parameters": {name: {"value": value} for name, value in values.items()},
+          }))
+
       - name: Deploy Azure Container App
         uses: azure/arm-deploy@v2
         with:
@@ -65,12 +115,12 @@ jobs:
           region: ${{ vars.AZURE_LOCATION || 'eastus2' }}
           deploymentName: sprite-scout-${{ github.run_number }}-${{ github.run_attempt }}
           template: ./infra/main.bicep
-          parameters: >-
-            location=${{ vars.AZURE_LOCATION || 'eastus2' }}
-            resourceGroupName=${{ vars.AZURE_RESOURCE_GROUP || 'rg-sprite-scout-prod' }}
-            containerImage=${{ steps.image.outputs.name }}:${{ github.sha }}
-            databaseConnectionString="${{ secrets.DATABASE_CONNECTION_STRING }}"
-            googleClientId="${{ secrets.GOOGLE_CLIENT_ID }}"
-            googleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
-            budgetContactEmail="${{ vars.BUDGET_CONTACT_EMAIL }}"
+          parameters: ${{ runner.temp }}/sprite-scout-parameters.json
           failOnStdErr: false
+
+      - name: Remove deployment parameters
+        if: always()
+        shell: bash
+        env:
+          PARAMETER_FILE: ${{ runner.temp }}/sprite-scout-parameters.json
+        run: rm -f -- "$PARAMETER_FILE"

@@ -24,6 +24,23 @@ param googleClientId string
 @secure()
 param googleClientSecret string
 
+@description('Existing storage account containing the persistent OAuth PFX files, in this resource group.')
+param authStorageAccountName string
+
+param authCertificateShareName string = 'auth-certificates'
+
+@secure()
+param authStorageAccountKey string
+
+@secure()
+param authSigningPassword string
+
+@secure()
+param authEncryptionPassword string
+
+@description('Public OAuth clients and their registered callbacks. Client self-registration is not enabled.')
+param authClients array = []
+
 @description('Optional address for Azure budget alerts. Leave empty to omit the budget resource.')
 param budgetContactEmail string = ''
 
@@ -58,6 +75,12 @@ module application 'app.bicep' = {
     databaseConnectionString: databaseConnectionString
     googleClientId: googleClientId
     googleClientSecret: googleClientSecret
+    authStorageAccountName: authStorageAccountName
+    authCertificateShareName: authCertificateShareName
+    authStorageAccountKey: authStorageAccountKey
+    authSigningPassword: authSigningPassword
+    authEncryptionPassword: authEncryptionPassword
+    authClients: authClients
     budgetContactEmail: budgetContactEmail
     monthlyBudgetAmount: monthlyBudgetAmount
     deploymentVersion: deploymentVersion

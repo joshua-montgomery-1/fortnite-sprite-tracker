@@ -32,6 +32,39 @@ Ensure the host routes the issuer and MCP hostnames to this application. Behind 
 
 The production account migration has been completed. New databases use the normal EF migrations; website profiles are linked on Google sign-in.
 
+### Azure Container Apps setup
+
+The release Bicep sets `https://spritescout.com/identity/` as the issuer and `https://spritescout.com/mcp` as the resource using the configured apex domain. It mounts an existing Azure Files share at `/auth-certificates` with read-only access and provides the PFX passwords through Container App secrets. These files persist across revisions and replicas. The release does not generate or replace certificates.
+
+On Windows with PowerShell 7, install Azure CLI and GitHub CLI, then sign in with `az login` and `gh auth login`. Run the setup script from the repository root:
+
+```powershell
+./infra/Initialize-AuthCertificates.ps1 `
+  -SubscriptionId '<production-subscription-id>' `
+  -StorageAccountName '<globally-unique-lowercase-storage-name>'
+```
+
+The script creates a Standard LRS storage account and a one-GiB-quota `auth-certificates` share in the existing production resource group. Azure Files incurs storage charges. It generates separate RSA 3072 signing/encryption certificates valid for two years, uploads their encrypted PFX files, and sets the following in the repository's GitHub **production** environment:
+
+| Kind | Name |
+| --- | --- |
+| Variable | `AUTH_STORAGE_ACCOUNT` |
+| Secret | `AUTH_STORAGE_KEY` |
+| Secret | `AUTH_SIGNING_PASSWORD` |
+| Secret | `AUTH_ENCRYPTION_PASSWORD` |
+
+The signed-in Azure user needs permission to create storage accounts and read their keys in that resource group. The GitHub user needs access to update production environment secrets/variables. The release identity continues to use its existing resource-group deployment permissions.
+
+Local encrypted PFX/password backups are restricted to your Windows user and SYSTEM under `%LOCALAPPDATA%/SpriteScout/AuthCertificates/<subscription>/<storage-account>/`. The password backups use Windows DPAPI and are decryptable only by the same Windows user. Preserve a secure, recoverable backup of these credentials. Reruns reuse the local files and compare remote certificate thumbprints; the script refuses missing backups, mismatched remote certificates, or expired credentials instead of silently rotating keys. It does not change the running application or register Google callbacks.
+
+Set the optional GitHub production variable `AUTH_CLIENTS` to a JSON array of explicitly allowed clients before deployment. An empty array permits no new client registrations; removing an entry does not delete an existing database registration. For a production Codex connection:
+
+```json
+[{"ClientId":"sprite-scout-codex","DisplayName":"Codex — Sprite Scout","ApplicationType":"native","RedirectUris":["http://127.0.0.1/callback"]}]
+```
+
+Register `https://spritescout.com/identity/signin-google` in the same Google OAuth client used by the website, retaining `https://spritescout.com/signin-google`. After review and merge, the release workflow supplies the new secrets and mounts the share before starting the application. Check `https://spritescout.com/identity/.well-known/openid-configuration`, then complete a Google sign-in and an authenticated MCP call. Certificate provisioning, Google callback registration, and a production sign-in cannot be verified by a local build.
+
 ## UI structure
 
 Login/error pages use normal Blazor routes with `ExcludeFromInteractiveRouting`, static server rendering, and `AuthLayout`. The application shell owns document markup and theme setup. OAuth consent and failed form posts render through that same shell and layout using `IAuthPageRenderer`. Auth forms submit normal HTTP POSTs with antiforgery tokens. Sprite artwork comes from the database through the host's five-minute cache.
