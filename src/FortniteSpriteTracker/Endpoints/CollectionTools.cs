@@ -36,33 +36,25 @@ public sealed class CollectionTools(SpriteTrackerDbContext database, McpAccountS
         return new(items, total, offset, limit, (long)offset + items.Length < total);
     }
 
-    [McpServerTool(Name = "set_sprite_mastered", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
-    [Description("Mark a Sprite variant mastered and owned in your collection. Requires collection:write. Use the exact variant ID from list_sprites.")]
-    public Task<SpriteProgressDto> SetMastered([Description("Sprite variant ID, not a family ID.")] int spriteVariantId,
-        ClaimsPrincipal user, CancellationToken cancellationToken) => SetAsync(spriteVariantId, null, true, user, cancellationToken);
-
-    [McpServerTool(Name = "set_sprite_unmastered", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
-    [Description("Clear mastery for a Sprite variant, preserving whether it is owned. Requires collection:write.")]
-    public Task<SpriteProgressDto> SetUnmastered([Description("Sprite variant ID from list_sprites.")] int spriteVariantId,
-        ClaimsPrincipal user, CancellationToken cancellationToken) => SetAsync(spriteVariantId, null, false, user, cancellationToken);
-
-    [McpServerTool(Name = "set_sprite_owned", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
-    [Description("Mark a Sprite variant owned, preserving its mastery status. Requires collection:write.")]
-    public Task<SpriteProgressDto> SetOwned([Description("Sprite variant ID from list_sprites.")] int spriteVariantId,
-        ClaimsPrincipal user, CancellationToken cancellationToken) => SetAsync(spriteVariantId, true, null, user, cancellationToken);
-
-    [McpServerTool(Name = "set_sprite_unowned", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
-    [Description("Remove a Sprite variant from your collection, clearing both ownership and mastery. Requires collection:write.")]
-    public Task<SpriteProgressDto> SetUnowned([Description("Sprite variant ID from list_sprites.")] int spriteVariantId,
-        ClaimsPrincipal user, CancellationToken cancellationToken) => SetAsync(spriteVariantId, false, null, user, cancellationToken);
-
-    private async Task<SpriteProgressDto> SetAsync(int variantId, bool? owned, bool? mastered,
+    [McpServerTool(Name = "update_collection", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
+    [Description("Update 1 to 1,000 Sprite variants in your collection atomically. Requires collection:write. Use variant IDs from list_sprites. Omitted flags preserve existing state. Mastered implies owned; unowned clears mastery. Invalid or duplicate IDs, empty updates, and isOwned=false with isMastered=true reject the entire batch. Returns resulting progress in input order. Use a one-item batch for a single Sprite.")]
+    public async Task<CollectionUpdateResult> UpdateCollection(
+        [Description("Updates with unique spriteVariantId values and at least one of isOwned or isMastered per item.")] CollectionUpdate[] updates,
         ClaimsPrincipal user, CancellationToken cancellationToken)
     {
         var userId = await accounts.GetUserIdAsync(user, AuthDefaults.CollectionWriteScope, cancellationToken);
-        try { return await collection.SetAsync(userId, variantId, owned, mastered, cancellationToken); }
+        if (updates is null || updates.Length is < 1 or > 1000)
+            throw new McpException("Provide between 1 and 1,000 collection updates.");
+        if (updates.Any(item => item is null || item.SpriteVariantId <= 0 ||
+            (item.IsOwned is null && item.IsMastered is null) ||
+            (item.IsOwned == false && item.IsMastered == true)))
+            throw new McpException("Each update needs a positive variant ID and at least one state flag. An unowned Sprite cannot be mastered.");
+        if (updates.Select(item => item.SpriteVariantId).Distinct().Count() != updates.Length)
+            throw new McpException("Provide each Sprite variant ID only once per batch.");
+        try { return new(await collection.SetBatchAsync(userId, updates, cancellationToken)); }
         catch (InvalidSpriteVariantException exception) { throw new McpException(exception.Message); }
     }
 
+    public sealed record CollectionUpdateResult(IReadOnlyList<SpriteProgressDto> Items);
     public sealed record CollectionPage(IReadOnlyList<SpriteProgressDto> Items, int TotalCount, int Offset, int Limit, bool HasMore);
 }
