@@ -8,8 +8,6 @@ namespace SpriteScout.Auth;
 
 public static class CentralAuthPages
 {
-    private static readonly string[] Artwork = ["air_basic.webp", "water_basic.webp", "fire_basic.webp", "earth_basic.webp", "zeropoint_basic.webp",
-        "duck_basic.webp", "fishy_basic.webp", "llama_basic.webp", "peely_basic.webp", "ghost_basic.webp"];
     private static string Encode(string value) => HtmlEncoder.Default.Encode(value);
 
     public static IResult WebsiteLogin(HttpContext context, IAntiforgery antiforgery, string returnUrl, bool available)
@@ -29,7 +27,7 @@ public static class CentralAuthPages
     {
         var token = antiforgery.GetAndStoreTokens(context);
         return $"""
-            <form method="post" action="{Encode(context.Request.Path)}">
+            <form method="post" action="{Encode(context.Request.Path)}" data-enhance="false">
             {fields}<input type="hidden" name="{Encode(token.FormFieldName)}" value="{Encode(token.RequestToken!)}">
             {buttons}</form>
             """;
@@ -54,14 +52,14 @@ public static class CentralAuthPages
     internal static IResult SignedIn(HttpContext context) => Page(context, "Signed in to Sprite Scout",
         "You're signed in", "<p class=\"intro\">Return to the application you want to connect to Sprite Scout. You'll review its permissions before granting access.</p>");
 
-    internal static IResult Consent(HttpContext context, string application, bool offline, string form) => Page(context,
+    internal static IResult Consent(HttpContext context, string application, bool offline, string form, string redirectUri) => Page(context,
         "Connect to Sprite Scout", "Approve your connection", $"""
         <p class="intro"><strong>{Encode(application)}</strong> wants to connect to your Sprite Scout account.</p>
         <div class="notice"><h2>Account access</h2><p>Read your display name and public profile identifier.</p>
         <p>This connection cannot change your collection.</p>
         {(offline ? "<p>It can stay connected for up to 30 days.</p>" : "")}</div>
         {form}
-        """);
+        """, formRedirect: redirectUri);
 
     internal static string SafeRetry(CentralAuthOptions settings, string? candidate)
     {
@@ -75,20 +73,20 @@ public static class CentralAuthPages
         return new Uri(issuer, "login").AbsoluteUri;
     }
 
-    private static IResult Page(HttpContext context, string title, string heading, string body, int status = 200) =>
-        new ArtworkPage(title, heading, body, status);
+    private static IResult Page(HttpContext context, string title, string heading, string body, int status = 200, string? formRedirect = null) =>
+        new ArtworkPage(title, heading, body, status, formRedirect);
 
-    private sealed record ArtworkPage(string Title, string Heading, string Body, int Status) : IResult
+    private sealed record ArtworkPage(string Title, string Heading, string Body, int Status, string? FormRedirect) : IResult
     {
         public async Task ExecuteAsync(HttpContext context)
         {
             var source = context.RequestServices.GetService<IAuthArtworkSource>();
             var artwork = source is null ? [] : await source.GetAsync(context.RequestAborted);
-            await Render(context, Title, Heading, Body, Status, artwork).ExecuteAsync(context);
+            await Render(context, Title, Heading, Body, Status, artwork, FormRedirect).ExecuteAsync(context);
         }
     }
 
-    private static IResult Render(HttpContext context, string title, string heading, string body, int status, IReadOnlyList<AuthArtwork> artwork)
+    private static IResult Render(HttpContext context, string title, string heading, string body, int status, IReadOnlyList<AuthArtwork> artwork, string? formRedirect)
     {
         var nonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(24));
         var groups = artwork.GroupBy(item => item.SeasonId).Select(group =>
@@ -105,7 +103,7 @@ public static class CentralAuthPages
         for (var round = 0; selected.Count < 10 && groups.Any(group => round < group.Length); round++)
             foreach (var group in groups)
                 if (round < group.Length && selected.Count < 10) selected.Add(group[round]);
-        var sprites = selected.Count == 0 ? Artwork.Select(file => "/images/sprites/" + file).ToArray() : selected.ToArray();
+        var sprites = selected.ToArray();
         Random.Shared.Shuffle(sprites);
         var scenery = string.Join("", sprites.Select((file, index) =>
             $"<div class=\"sprite-layer layer-{index}\"><img src=\"{Encode(file)}\" alt=\"\" decoding=\"async\"></div>"));
@@ -123,8 +121,11 @@ public static class CentralAuthPages
             return $".layer-{index} {{ left:{point.X}%; top:{point.Y}%; --size:{Random.Shared.Next(15, 25)}vw; --tilt:{Random.Shared.Next(-12, 13)}deg; --depth:{Random.Shared.Next(-200, 51)}px; --travel-z:{Random.Shared.Next(45, 111)}px; --turn:{Random.Shared.Next(-12, 13)}deg; --scale-from:{scale}; --scale-to:{scale + Random.Shared.Next(14, 29)}; --travel-x:{Random.Shared.Next(-25, 26)}px; --travel-y:{Random.Shared.Next(-30, 31)}px; animation-duration:{Random.Shared.Next(18, 31)}s; animation-delay:-{Random.Shared.Next(0, 30)}s; }}";
         }));
         var imageOrigins = string.Join(" ", sprites.Select(path => Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme == "https" ? uri.GetLeftPart(UriPartial.Authority) : "").Distinct());
+        // Consent receives only the callback already validated by OpenIddict.
+        var callbackOrigin = Uri.TryCreate(formRedirect, UriKind.Absolute, out var callback) && callback.Scheme is "http" or "https"
+            ? callback.GetLeftPart(UriPartial.Authority) : "";
         context.Response.Headers.ContentSecurityPolicy =
-            $"default-src 'none'; style-src 'self' 'nonce-{nonce}'; script-src 'nonce-{nonce}'; img-src 'self' {imageOrigins}; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
+            $"default-src 'none'; style-src 'self' 'nonce-{nonce}'; script-src 'nonce-{nonce}'; img-src 'self' {imageOrigins}; font-src 'self'; form-action 'self' https://accounts.google.com {callbackOrigin}; frame-ancestors 'none'; base-uri 'none'";
         context.Response.Headers["Referrer-Policy"] = "no-referrer";
         context.Response.Headers["X-Content-Type-Options"] = "nosniff";
         return Results.Content($$"""

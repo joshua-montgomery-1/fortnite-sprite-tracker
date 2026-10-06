@@ -36,7 +36,9 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Contains("/css/app.css", page);
         Assert.Contains("prefers-reduced-motion:reduce", page);
         Assert.Contains("class=\"scenery\" aria-hidden=\"true\"", page);
-        Assert.Equal(10, Regex.Matches(page, "class=\"sprite-layer layer-").Count);
+        Assert.Equal(1, Regex.Matches(page, "class=\"sprite-layer layer-").Count);
+        Assert.Contains("https://fortnitespritetracker.org/images/sprites/air_basic.webp", page);
+        Assert.Contains("data-enhance=\"false\"", page);
         var response = await browser.PostAsync("/auth/login", Consent(page, "signin"));
         var google = fixture.Host.Services.GetRequiredService<IOptionsMonitor<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>>()
             .Get(Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme);
@@ -176,6 +178,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Contains("Continue with Google", html);
         Assert.Contains("Codex", html);
         Assert.Contains("form-action 'self'", login.Headers.GetValues("Content-Security-Policy").Single());
+        Assert.Contains("form-action 'self' https://accounts.google.com", login.Headers.GetValues("Content-Security-Policy").Single());
         var central = await anonymous.PostAsync(path, Consent(html, "signin"));
         Assert.Equal(HttpStatusCode.Redirect, central.StatusCode);
         Assert.Equal("accounts.google.com", central.Headers.Location!.Host);
@@ -198,8 +201,10 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         {
             var parameters = Parameters();
             parameters["redirect_uri"] = callback;
-            Assert.Equal(HttpStatusCode.OK, (await browser.GetAsync(
-                QueryHelpers.AddQueryString("/identity/connect/authorize", parameters))).StatusCode);
+            var consent = await browser.GetAsync(QueryHelpers.AddQueryString("/identity/connect/authorize", parameters));
+            Assert.Equal(HttpStatusCode.OK, consent.StatusCode);
+            Assert.Contains(new Uri(callback).GetLeftPart(UriPartial.Authority),
+                consent.Headers.GetValues("Content-Security-Policy").Single());
         }
     }
 

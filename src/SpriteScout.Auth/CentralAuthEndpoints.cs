@@ -118,7 +118,7 @@ public static class CentralAuthEndpoints
         {
             var form = CentralAuthPages.Form(context, antiforgery, AuthorizationFields(context),
                 "<button name=\"decision\" value=\"allow\">Allow connection</button><button class=\"secondary\" name=\"decision\" value=\"deny\">Cancel</button>");
-            return CentralAuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess), form);
+            return CentralAuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess), form, request.RedirectUri!);
         }
         if (!await ValidateFormAsync(context, antiforgery))
             return CentralAuthPages.Error(context, AuthorizationReturn(settings, request), expired: true);

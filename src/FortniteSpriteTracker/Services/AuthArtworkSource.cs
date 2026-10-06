@@ -1,5 +1,4 @@
 using FortniteSpriteTracker.DataAccess;
-using FortniteSpriteTracker.DataAccess.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using SpriteScout.Auth;
@@ -12,16 +11,13 @@ public sealed class AuthArtworkSource(SpriteTrackerDbContext database, IMemoryCa
     {
         return (await cache.GetOrCreateAsync("auth-artwork-catalog", async entry =>
         {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
             var now = DateTimeOffset.UtcNow;
             var artwork = await database.SeasonSpriteVariants.AsNoTracking()
                 .Where(item => item.Season.StartAt <= now)
                 .Select(item => new AuthArtwork(item.SeasonId, item.SpriteVariant.ImagePath))
                 .Distinct().ToArrayAsync(cancellationToken);
-            var fallback = CatalogSeedData.Families
-                .SelectMany(family => family.Variants)
-                .Select(variant => new AuthArtwork(CatalogSeedData.SeasonId, variant.ImagePath)).ToArray();
-            return artwork.Select(item => item.ImagePath).Distinct().Count() >= 10 ? artwork : artwork.Concat(fallback).Distinct().ToArray();
+            return artwork;
         }))!;
     }
 }

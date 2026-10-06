@@ -6,7 +6,6 @@ Detailed guides:
 
 - [Catalog maintenance](docs/catalog-maintenance.md)
 - [Deployment](docs/deployment.md)
-- [Central auth and local MCP proof (Phase 1)](docs/central-auth-phase-1.md)
 
 ## What it does
 

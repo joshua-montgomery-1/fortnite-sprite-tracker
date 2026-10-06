@@ -127,12 +127,16 @@ public sealed class AuthFixture : IAsyncLifetime
         var second = new UserAccount { GoogleSubject = "google-existing-2", DisplayName = "Second Scout" };
         var variant = new SpriteVariant
         {
-            ImagePath = "test.webp",
+            ImagePath = "https://fortnitespritetracker.org/images/sprites/air_basic.webp",
             SpriteFamily = new SpriteFamily { Name = "Test", Slug = "test" },
             VariantStyle = new VariantStyle { Name = "Normal", Slug = "normal", Color = "#fff", Bonus = "Test" }
         };
         website.AddRange(first, second, variant);
         await website.SaveChangesAsync();
+        var artworkSeason = new Season { Name = "Artwork test season", Chapter = 7, Number = 3, StartAt = DateTimeOffset.UtcNow.AddDays(-1) };
+        website.Seasons.Add(artworkSeason);
+        await website.SaveChangesAsync();
+        await website.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO \"SeasonSpriteVariants\" (\"SeasonId\", \"SpriteVariantId\") VALUES ({artworkSeason.Id}, {variant.Id})");
         website.SpriteProgress.Add(new SpriteProgress
         {
             UserId = first.Id, SpriteVariantId = variant.Id, IsOwned = true, IsMastered = true
