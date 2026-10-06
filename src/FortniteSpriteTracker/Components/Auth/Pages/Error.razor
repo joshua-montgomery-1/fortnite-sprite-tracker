@@ -1,0 +1,9 @@
+@page "/auth/error"
+
+<AuthCard Model="model" />
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    private readonly AuthPageModel model = new(AuthPageKind.Error) { Retry = "/auth/login" };
+    protected override void OnInitialized() => HttpContext.Response.StatusCode = 400;
+}

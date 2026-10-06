@@ -1,0 +1,8 @@
+@inject AuthPagePresentation Presentation
+
+<div class="scenery" aria-hidden="true">
+    @for (var index = 0; index < Presentation.Sprites.Count; index++)
+    {
+        <div class="sprite-layer layer-@index"><img src="@Presentation.Sprites[index]" alt="" decoding="async" /></div>
+    }
+</div>

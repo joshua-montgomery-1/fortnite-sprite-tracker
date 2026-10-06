@@ -14,7 +14,7 @@ public static class AuthPages
 
     public static IResult WebsiteError(HttpContext context) => Error(context, "/auth/login");
 
-    internal static AuthFormModel Form(
+    public static AuthFormModel Form(
         HttpContext context, IAntiforgery antiforgery, IEnumerable<AuthFormField> fields, bool consent = false)
     {
         var token = antiforgery.GetAndStoreTokens(context);
@@ -34,7 +34,7 @@ public static class AuthPages
         new AuthPageResult(new(AuthPageKind.Consent) { Application = application, Offline = offline, Form = form },
             formRedirect: redirectUri);
 
-    internal static string SafeRetry(AuthOptions settings, string? candidate)
+    public static string SafeRetry(AuthOptions settings, string? candidate)
     {
         var issuer = new Uri(settings.Issuer);
         if (Uri.TryCreate(candidate, UriKind.Absolute, out var uri) &&

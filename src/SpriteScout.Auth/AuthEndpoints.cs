@@ -19,13 +19,13 @@ public static class AuthEndpoints
 {
     public static void UseAuthBoundary(this WebApplication app, AuthOptions settings)
     {
-        if (!settings.Enabled) return;
         var issuer = new Uri(settings.Issuer);
         var resource = new Uri(settings.Resource);
         var metadataPath = "/.well-known/oauth-authorization-server" + issuer.AbsolutePath.TrimEnd('/');
         app.Use(async (context, next) =>
         {
             var isAuth = context.Request.Path.StartsWithSegments(issuer.AbsolutePath.TrimEnd('/')) ||
+                context.Request.Path.StartsWithSegments("/identity") ||
                 context.Request.Path == metadataPath;
             var isMcp = context.Request.Path.StartsWithSegments(resource.AbsolutePath) ||
                 context.Request.Path == "/.well-known/oauth-protected-resource/mcp";
@@ -58,15 +58,20 @@ public static class AuthEndpoints
 
     public static void MapAuthEndpoints(this WebApplication app, AuthOptions settings)
     {
-        if (!settings.Enabled) return;
         var issuer = new Uri(settings.Issuer);
         app.MapMethods(new Uri(issuer, "connect/authorize").AbsolutePath, ["GET", "POST"], AuthorizeAsync)
             .AllowAnonymous();
         app.MapPost(new Uri(issuer, "connect/token").AbsolutePath, ExchangeAsync)
             .AllowAnonymous();
-        app.MapMethods(new Uri(issuer, "login").AbsolutePath, ["GET", "POST"], LoginAsync).AllowAnonymous();
-        app.MapGet(new Uri(issuer, "error").AbsolutePath, (HttpContext context) => AuthPages.Error(
-            context, AuthPages.SafeRetry(settings, context.Request.Query["returnUrl"]))).AllowAnonymous();
+        app.MapPost(new Uri(issuer, "login").AbsolutePath, LoginAsync).AllowAnonymous();
+        // The host's routed Blazor pages use stable UI paths even with a custom issuer path.
+        if (issuer.AbsolutePath != "/identity/")
+        {
+            app.MapGet(new Uri(issuer, "login").AbsolutePath, () => Results.Redirect("/identity/login")).AllowAnonymous();
+            app.MapGet(new Uri(issuer, "error").AbsolutePath, (HttpContext context) => Results.Redirect(
+                QueryHelpers.AddQueryString("/identity/error", "returnUrl",
+                    AuthPages.SafeRetry(settings, context.Request.Query["returnUrl"])))).AllowAnonymous();
+        }
         app.MapGet("/.well-known/oauth-protected-resource/mcp", () => Results.Json(new
         {
             resource = settings.Resource,

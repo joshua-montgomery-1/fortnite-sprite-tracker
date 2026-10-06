@@ -24,11 +24,9 @@ namespace SpriteScout.Auth.Tests;
 public sealed class AuthTestHost : WebApplicationFactory<Program>
 {
     private readonly string connectionString;
-    private readonly bool enabled;
-    public AuthTestHost(string connectionString, bool enabled = true)
+    public AuthTestHost(string connectionString)
     {
         this.connectionString = connectionString;
-        this.enabled = enabled;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -37,7 +35,6 @@ public sealed class AuthTestHost : WebApplicationFactory<Program>
         var settings = new Dictionary<string, string>
             {
                 ["ConnectionStrings:sprite-tracker"] = connectionString,
-                ["SpriteScoutAuth:Enabled"] = enabled.ToString(),
                 ["SpriteScoutAuth:Issuer"] = "https://localhost:7082/identity/",
                 ["SpriteScoutAuth:Resource"] = "https://localhost:7082/mcp",
                 ["SpriteScoutAuth:Clients:0:ClientId"] = "integration-desktop",
@@ -57,7 +54,6 @@ public sealed class AuthTestHost : WebApplicationFactory<Program>
         foreach (var setting in settings) builder.UseSetting(setting.Key, setting.Value);
         builder.ConfigureTestServices(services =>
         {
-            if (!enabled) return;
             // Substitute only the auth browser session in this test host. No test login endpoint
             // or header-based authentication is registered by the application.
             services.AddTransient<TestAuthSession>();

@@ -12,14 +12,8 @@ public static class AuthenticationEndpoints
         this IEndpointRouteBuilder endpoints,
         bool googleAuthenticationConfigured)
     {
-        endpoints.MapMethods("/auth/login", ["GET", "POST"], async (HttpContext context, IAntiforgery antiforgery) =>
+        endpoints.MapPost("/auth/login", async (HttpContext context, IAntiforgery antiforgery) =>
         {
-            if (HttpMethods.IsGet(context.Request.Method))
-            {
-                var destination = context.Request.Query["returnUrl"].ToString();
-                return AuthPages.WebsiteLogin(context, antiforgery,
-                    IsLocalReturnUrl(destination) ? destination : "/", googleAuthenticationConfigured);
-            }
             try { await antiforgery.ValidateRequestAsync(context); }
             catch (AntiforgeryValidationException) { return AuthPages.WebsiteError(context); }
             if (!googleAuthenticationConfigured) return AuthPages.WebsiteLogin(context, antiforgery, "/", false);
@@ -51,7 +45,7 @@ public static class AuthenticationEndpoints
         return endpoints;
     }
 
-    private static bool IsLocalReturnUrl(string? returnUrl) =>
+    internal static bool IsLocalReturnUrl(string? returnUrl) =>
         !string.IsNullOrWhiteSpace(returnUrl)
         && returnUrl.StartsWith('/')
         && !returnUrl.StartsWith("//")

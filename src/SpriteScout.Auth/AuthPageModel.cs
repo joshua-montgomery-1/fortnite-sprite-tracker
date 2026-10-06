@@ -10,9 +10,6 @@ public sealed record AuthPageModel(AuthPageKind Kind)
     public bool Offline { get; init; }
     public bool Expired { get; init; }
     public string? Retry { get; init; }
-    public string Nonce { get; init; } = "";
-    public IReadOnlyList<string> Sprites { get; init; } = [];
-    public string SpriteStyles { get; init; } = "";
 
     public string Title => Kind switch
     {

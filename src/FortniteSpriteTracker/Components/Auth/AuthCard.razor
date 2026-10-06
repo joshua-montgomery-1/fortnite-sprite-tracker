@@ -1,27 +1,7 @@
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
 
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@Model.Title</title>
-    <script nonce="@Model.Nonce" src="/_content/SpriteScout.Auth/js/auth-theme.js"></script>
-    <link rel="stylesheet" href="/css/app.css" />
-    <link rel="stylesheet" href="/_content/SpriteScout.Auth/css/auth.css" />
-    <style nonce="@Model.Nonce">@Model.SpriteStyles</style>
-</head>
-<body class="auth-page">
-    <header class="auth-nav">
-        <a class="brand" href="/" aria-label="Sprite Scout home"><span class="brandmark" aria-hidden="true">S</span><span>SPRITE<em>SCOUT</em></span></a>
-        <a class="back" href="/">← BACK TO FIELD GUIDE</a>
-    </header>
-    <div class="scenery" aria-hidden="true">
-        @for (var index = 0; index < Model.Sprites.Count; index++)
-        {
-            <div class="sprite-layer layer-@index"><img src="@Model.Sprites[index]" alt="" decoding="async" /></div>
-        }
-    </div>
+<PageTitle>@Model.Title</PageTitle>
     <main class="auth-card" aria-labelledby="page-heading">
         <div class="kicker">YOUR SPRITE SCOUT ACCOUNT</div>
         <h1 id="page-heading">@Model.Heading</h1>
@@ -84,9 +64,6 @@
             }
         }
     </main>
-    <footer class="auth-footer">SCOUT. COLLECT. COMPLETE.</footer>
-</body>
-</html>
 
 @code {
     [Parameter, EditorRequired] public AuthPageModel Model { get; set; } = default!;

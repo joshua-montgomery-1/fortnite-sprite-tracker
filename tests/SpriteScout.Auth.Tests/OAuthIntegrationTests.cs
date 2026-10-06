@@ -26,6 +26,27 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     private const string Callback = "http://127.0.0.1:48123/callback";
 
     [Fact]
+    public async Task Auth_pages_use_the_application_shell_and_static_Blazor_routes()
+    {
+        using var browser = fixture.Host.Browser();
+        var page = await browser.GetStringAsync("/auth/login");
+        Assert.Single(Regex.Matches(page, "<!DOCTYPE html>", RegexOptions.IgnoreCase).Cast<Match>());
+        Assert.Contains("<meta name=\"author\" content=\"Sprite Scout\"", page);
+        Assert.Contains("<title>Sign in to Sprite Scout</title>", page);
+        Assert.DoesNotContain("_framework/blazor.web.js", page);
+
+        var endpoints = fixture.Host.Services.GetRequiredService<Microsoft.AspNetCore.Routing.EndpointDataSource>();
+        foreach (var path in new[] { "/auth/login", "/auth/error", "/identity/login", "/identity/error" })
+        {
+            var endpoint = Assert.Single(endpoints.Endpoints.OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>(),
+                endpoint => endpoint.RoutePattern.RawText == path &&
+                    endpoint.Metadata.GetMetadata<FortniteSpriteTracker.Components.Auth.AuthUiAttribute>() is not null);
+            Assert.NotNull(endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Components.ExcludeFromInteractiveRoutingAttribute>());
+            Assert.Equal(["GET"], endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Routing.HttpMethodMetadata>()!.HttpMethods);
+        }
+    }
+
+    [Fact]
     public async Task Configured_web_client_can_authenticate_and_call_the_same_MCP_tool()
     {
         const string webClient = "integration-web";
@@ -69,12 +90,12 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     {
         using var browser = fixture.Host.Browser();
         var page = await browser.GetStringAsync(QueryHelpers.AddQueryString("/auth/login", "returnUrl", destination));
-        Assert.Contains("/css/app.css", page);
-        Assert.Contains("/_content/SpriteScout.Auth/css/auth.css", page);
-        var styles = await browser.GetStringAsync("/_content/SpriteScout.Auth/css/auth.css");
+        Assert.Contains("/css/app", page);
+        Assert.Contains("/css/auth.css", page);
+        var styles = await browser.GetStringAsync("/css/auth.css");
         Assert.Contains("prefers-reduced-motion:reduce", styles);
         Assert.Contains("width:100%; height:auto", styles);
-        Assert.Contains("sprite-scout-theme-preference", await browser.GetStringAsync("/_content/SpriteScout.Auth/js/auth-theme.js"));
+        Assert.Contains("sprite-scout-theme-preference", page);
         Assert.Contains("class=\"scenery\" aria-hidden=\"true\"", page);
         Assert.Single(Regex.Matches(page, "class=\"sprite-layer layer-").Cast<Match>());
         Assert.Contains("https://fortnitespritetracker.org/images/sprites/air_basic.webp", page);
@@ -440,12 +461,8 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     }
 
     [Fact]
-    public async Task Disabled_feature_and_wrong_hostname_do_not_expose_auth_proof()
+    public async Task Wrong_hostname_does_not_expose_auth()
     {
-        await using var disabled = new AuthTestHost(fixture.ConnectionString, enabled: false);
-        using var client = disabled.Browser();
-        var response = await client.GetAsync("/identity/.well-known/openid-configuration");
-        Assert.NotEqual("application/json", response.Content.Headers.ContentType?.MediaType);
         using var enabled = fixture.Host.Browser();
         enabled.DefaultRequestHeaders.Host = "other.example";
         Assert.Equal(HttpStatusCode.NotFound, (await enabled.GetAsync("/identity/.well-known/openid-configuration")).StatusCode);

@@ -3,10 +3,12 @@ using FortniteSpriteTracker.Server.Endpoints;
 using FortniteSpriteTracker.Server.Services;
 using FortniteSpriteTracker.Services;
 using FortniteSpriteTracker.Components;
+using FortniteSpriteTracker.Components.Auth;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.HttpOverrides;
 using FortniteSpriteTracker.DataAccess.Seeding;
 using Microsoft.EntityFrameworkCore;
 using SpriteScout.Auth;
@@ -14,10 +16,19 @@ using ModelContextProtocol.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
+    foreach (var proxy in builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [])
+        options.KnownProxies.Add(System.Net.IPAddress.Parse(proxy));
+});
+
 builder.AddServiceDefaults();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IAuthArtworkSource, AuthArtworkSource>();
+builder.Services.AddScoped<AuthPagePresentation>();
+builder.Services.AddScoped<IAuthPageRenderer, AuthPageRenderer>();
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddAuthenticationStateSerialization();
@@ -122,13 +133,10 @@ builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
 var auth = builder.Services.AddAuth(
     builder.Configuration, builder.Environment, databaseConnectionString);
-if (auth.Enabled)
-{
-    builder.Services.AddScoped<IAccountProfileProvisioner, AccountProfileLinker>();
-    builder.Services.AddMcpServer()
-        .WithHttpTransport(options => options.SessionMode = HttpServerSessionMode.Stateless)
-        .WithTools<AccountTools>();
-}
+builder.Services.AddScoped<IAccountProfileProvisioner, AccountProfileLinker>();
+builder.Services.AddMcpServer()
+    .WithHttpTransport(options => options.SessionMode = HttpServerSessionMode.Stateless)
+    .WithTools<AccountTools>();
 
 var app = builder.Build();
 
@@ -142,6 +150,7 @@ else
     app.UseHsts();
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseAuthBoundary(auth);
 app.MapStaticAssets();
@@ -150,10 +159,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapAuthEndpoints(auth);
-if (auth.Enabled)
-{
-    app.MapMcp(new Uri(auth.Resource).AbsolutePath).RequireAuthorization("McpAccount");
-}
+app.MapMcp(new Uri(auth.Resource).AbsolutePath).RequireAuthorization("McpAccount");
 
 app.MapGet("/error", (HttpContext context) =>
 {
@@ -172,8 +178,6 @@ app.MapGet("/error", (HttpContext context) =>
         statusCode: StatusCodes.Status500InternalServerError);
 }).AllowAnonymous();
 
-app.MapGet("/auth/error", (HttpContext context) => AuthPages.WebsiteError(context)).AllowAnonymous();
-
 app.MapAuthenticationEndpoints(googleAuthenticationConfigured);
 app.MapProfileEndpoints();
 app.MapCatalogEndpoints();
@@ -182,9 +186,15 @@ app.MapCheatCodeEndpoints();
 app.MapPlayerEndpoints();
 app.MapSitemapEndpoints();
 app.MapDefaultEndpoints();
-app.MapRazorComponents<App>()
+var razorEndpoints = app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(AccountClient).Assembly);
+razorEndpoints.Add(endpoint =>
+{
+    // Auth forms post to explicit HTTP handlers; Blazor owns the GET pages.
+    if (endpoint.Metadata.OfType<AuthUiAttribute>().Any())
+        endpoint.Metadata.Add(new Microsoft.AspNetCore.Routing.HttpMethodMetadata(["GET"]));
+});
 
 if (args.Contains("--seed-catalog", StringComparer.Ordinal))
 {

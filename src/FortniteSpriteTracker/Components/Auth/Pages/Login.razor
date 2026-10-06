@@ -1,0 +1,25 @@
+@page "/auth/login"
+@using FortniteSpriteTracker.Server.Endpoints
+@inject IConfiguration Configuration
+@inject IAntiforgery Antiforgery
+
+<AuthCard Model="model" />
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    private AuthPageModel model = new(AuthPageKind.WebsiteLogin);
+
+    protected override void OnInitialized()
+    {
+        var available = !string.IsNullOrWhiteSpace(Configuration["Authentication:Google:ClientId"])
+            && !string.IsNullOrWhiteSpace(Configuration["Authentication:Google:ClientSecret"]);
+        var destination = HttpContext.Request.Query["returnUrl"].ToString();
+        var returnUrl = AuthenticationEndpoints.IsLocalReturnUrl(destination) ? destination : "/";
+        model = new(AuthPageKind.WebsiteLogin)
+        {
+            Available = available,
+            Form = available ? AuthPages.Form(HttpContext, Antiforgery, [new("returnUrl", returnUrl)]) : null
+        };
+        HttpContext.Response.StatusCode = available ? 200 : 503;
+    }
+}

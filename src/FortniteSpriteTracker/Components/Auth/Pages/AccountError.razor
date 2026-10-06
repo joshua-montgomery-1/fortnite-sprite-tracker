@@ -1,0 +1,16 @@
+@page "/identity/error"
+@inject IConfiguration Configuration
+
+<AuthCard Model="model" />
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    private AuthPageModel model = new(AuthPageKind.Error);
+
+    protected override void OnInitialized()
+    {
+        var settings = Configuration.GetSection("SpriteScoutAuth").Get<AuthOptions>() ?? new();
+        model = model with { Retry = AuthPages.SafeRetry(settings, HttpContext.Request.Query["returnUrl"]) };
+        HttpContext.Response.StatusCode = 400;
+    }
+}

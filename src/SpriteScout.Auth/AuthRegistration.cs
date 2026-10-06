@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -18,31 +19,27 @@ public static class AuthRegistration
         string connectionString)
     {
         var settings = configuration.GetSection("SpriteScoutAuth").Get<AuthOptions>() ?? new();
-        if (!settings.Enabled) return settings;
-
         var issuer = ValidateConfiguration(settings, environment);
         ValidateClients(settings.Clients);
         AddAccountServices(services, settings, connectionString);
         AddBrowserAuthentication(services, configuration, issuer);
-        AddOAuth(services, settings, issuer);
+        AddOAuth(services, settings, issuer, environment);
         AddMcpAuthorization(services);
         return settings;
     }
 
     private static Uri ValidateConfiguration(AuthOptions settings, IHostEnvironment environment)
     {
-        if (!environment.IsDevelopment())
-        {
-            throw new InvalidOperationException("Phase 1 auth is available only in Development.");
-        }
         var issuer = new Uri(settings.Issuer, UriKind.Absolute);
         var resource = new Uri(settings.Resource, UriKind.Absolute);
         if (issuer.Scheme != "https" || resource.Scheme != "https" ||
-            !issuer.IsLoopback || !resource.IsLoopback || !settings.Issuer.EndsWith('/') ||
+            !settings.Issuer.EndsWith('/') ||
             issuer.AbsolutePath == "/" || issuer.Query.Length != 0 || issuer.Fragment.Length != 0 ||
-            resource.Query.Length != 0 || resource.Fragment.Length != 0)
+            resource.Query.Length != 0 || resource.Fragment.Length != 0 ||
+            issuer.UserInfo.Length != 0 || resource.UserInfo.Length != 0 ||
+            (!environment.IsDevelopment() && (issuer.IsLoopback || resource.IsLoopback)))
         {
-            throw new InvalidOperationException("Phase 1 requires HTTPS loopback URLs and an issuer path ending in '/'.");
+            throw new InvalidOperationException("Auth requires HTTPS URLs and an issuer path ending in '/'. Production URLs must not be loopback URLs.");
         }
         return issuer;
     }
@@ -113,7 +110,7 @@ public static class AuthRegistration
         });
     }
 
-    private static void AddOAuth(IServiceCollection services, AuthOptions settings, Uri issuer)
+    private static void AddOAuth(IServiceCollection services, AuthOptions settings, Uri issuer, IHostEnvironment environment)
     {
         services.AddOpenIddict()
             .AddCore(options => options.UseEntityFrameworkCore().UseDbContext<AuthDbContext>())
@@ -133,7 +130,17 @@ public static class AuthRegistration
                 options.SetAccessTokenLifetime(TimeSpan.FromMinutes(10));
                 options.SetRefreshTokenLifetime(TimeSpan.FromDays(30));
                 options.SetRefreshTokenReuseLeeway(TimeSpan.Zero);
-                options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+                if (environment.IsDevelopment())
+                {
+                    options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+                }
+                else
+                {
+                    options.AddSigningCertificate(LoadCertificate(settings.Certificates.SigningPath,
+                        settings.Certificates.SigningPassword, "signing"));
+                    options.AddEncryptionCertificate(LoadCertificate(settings.Certificates.EncryptionPath,
+                        settings.Certificates.EncryptionPassword, "encryption"));
+                }
                 options.DisableAccessTokenEncryption();
                 options.Configure(server => server.CodeChallengeMethods.Remove(CodeChallengeMethods.Plain));
                 options.UseAspNetCore().EnableAuthorizationEndpointPassthrough().EnableTokenEndpointPassthrough();
@@ -171,5 +178,12 @@ public static class AuthRegistration
             policy.RequireAssertion(context => context.User.HasScope(AuthDefaults.AccountReadScope));
             policy.AddRequirements(new AccountRequirement());
         }));
+    }
+
+    private static X509Certificate2 LoadCertificate(string path, string? password, string purpose)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new InvalidOperationException($"Production auth requires SpriteScoutAuth:Certificates:{(purpose == "signing" ? "SigningPath" : "EncryptionPath")}.");
+        return X509CertificateLoader.LoadPkcs12FromFile(path, password, X509KeyStorageFlags.EphemeralKeySet);
     }
 }

@@ -1,3 +1,7 @@
+@using Microsoft.AspNetCore.Components.Routing
+@using SpriteScout.Auth
+@using FortniteSpriteTracker.Components.Auth
+@inject AuthPagePresentation AuthPagePresentation
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,13 +16,16 @@
     <meta name="google-adsense-account" content="ca-pub-2749846781014788">
 
     <!-- Icons & Manifest -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="apple-touch-icon" href="favicon.png" />
-    <link rel="manifest" href="site.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
-    <ResourcePreloader />
-    <script>
+    @if (!IsAuthPage)
+    {
+        <ResourcePreloader />
+    }
+    <script nonce="@AuthPagePresentation.Nonce">
         (() => {
             const key = "sprite-scout-theme-preference";
             let preference = "system";
@@ -37,21 +44,59 @@
                 : preference;
         })();
     </script>
-    <link rel="stylesheet" href="@Assets["css/app.css"]" />
-    <link rel="stylesheet" href="@Assets["FortniteSpriteTracker.styles.css"]" />
-    <ImportMap />
-    <HeadOutlet @rendermode="InteractiveWebAssembly" />
+    <link rel="stylesheet" href="@($"/{Assets["css/app.css"].TrimStart('/')}")" />
+    <link rel="stylesheet" href="@($"/{Assets["FortniteSpriteTracker.styles.css"].TrimStart('/')}")" />
+    @if (!IsAuthPage)
+    {
+        <ImportMap />
+    }
+    else
+    {
+        <link rel="stylesheet" href="/css/auth.css" />
+        <style nonce="@AuthPagePresentation.Nonce">@AuthPagePresentation.SpriteStyles</style>
+    }
+    <HeadOutlet @rendermode="PageRenderMode" />
 </head>
 
-<body>
-    <Routes @rendermode="InteractiveWebAssembly" />
+<body class="@(IsAuthPage ? "auth-page" : null)">
+    @if (AuthPage is not null)
+    {
+        <LayoutView Layout="typeof(AuthLayout)"><AuthCard Model="AuthPage" /></LayoutView>
+    }
+    else if (IsAuthPage)
+    {
+        <AuthRoutes />
+    }
+    else
+    {
+        <Routes @rendermode="PageRenderMode" />
+    }
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">×</span>
-    </div>
-    <script src="@Assets["_framework/blazor.web.js"]"></script>
+    @if (!IsAuthPage)
+    {
+        <div id="blazor-error-ui">
+            An unhandled error has occurred.
+            <a href="." class="reload">Reload</a>
+            <span class="dismiss">×</span>
+        </div>
+        <script src="@Assets["_framework/blazor.web.js"]"></script>
+    }
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    [Parameter] public AuthPageModel? AuthPage { get; set; }
+    [Parameter] public string? AuthRedirect { get; set; }
+
+    private bool IsAuthPage => AuthPage is not null ||
+        HttpContext.GetEndpoint()?.Metadata.GetMetadata<AuthUiAttribute>() is not null;
+    private IComponentRenderMode? PageRenderMode => IsAuthPage || !HttpContext.AcceptsInteractiveRouting()
+        ? null : InteractiveWebAssembly;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsAuthPage) await AuthPagePresentation.InitializeAsync(HttpContext, AuthRedirect);
+    }
+}
