@@ -41,49 +41,20 @@ public static class CollectionEndpoints
             HttpContext context,
             IAntiforgery antiforgery,
             CurrentUserService currentUser,
-            SpriteTrackerDbContext database,
+            CollectionService collection,
             CancellationToken cancellationToken) =>
         {
             await antiforgery.ValidateRequestAsync(context);
-            if (!await IsAvailableAsync(database, request.SpriteVariantId, cancellationToken))
+            var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
+            try
+            {
+                return Results.Ok(await collection.SetAsync(user.Id, request.SpriteVariantId,
+                    request.IsOwned, request.IsMastered, cancellationToken));
+            }
+            catch (InvalidSpriteVariantException)
             {
                 return InvalidVariant(nameof(request.SpriteVariantId));
             }
-
-            var user = await currentUser.GetOrCreateAsync(context.User, cancellationToken);
-            var progress = await database.SpriteProgress.FindAsync(
-                [user.Id, request.SpriteVariantId],
-                cancellationToken);
-            var updatedAtUtc = DateTimeOffset.UtcNow;
-            var isMastered = request.IsMastered;
-            var isOwned = request.IsOwned || isMastered;
-
-            if (!isOwned)
-            {
-                if (progress is not null)
-                {
-                    database.SpriteProgress.Remove(progress);
-                    await database.SaveChangesAsync(cancellationToken);
-                }
-
-                return Results.Ok(ToDto(request.SpriteVariantId, false, false, updatedAtUtc));
-            }
-
-            if (progress is null)
-            {
-                progress = new SpriteProgress
-                {
-                    UserId = user.Id,
-                    SpriteVariantId = request.SpriteVariantId
-                };
-                database.SpriteProgress.Add(progress);
-            }
-
-            progress.IsOwned = true;
-            progress.IsMastered = isMastered;
-            progress.UpdatedAtUtc = updatedAtUtc;
-            await database.SaveChangesAsync(cancellationToken);
-            return Results.Ok(ToDto(progress.SpriteVariantId, true, isMastered, updatedAtUtc));
         });
 
         group.MapPut("/batch", async (
@@ -163,16 +134,6 @@ public static class CollectionEndpoints
 
         return endpoints;
     }
-
-    private static Task<bool> IsAvailableAsync(
-        SpriteTrackerDbContext database,
-        int variantId,
-        CancellationToken cancellationToken) =>
-        database.SeasonSpriteVariants.AnyAsync(
-            item => item.SpriteVariantId == variantId &&
-                item.Season.StartAt <= DateTimeOffset.UtcNow &&
-                (item.ReleasedAt == null || item.ReleasedAt <= DateTimeOffset.UtcNow),
-            cancellationToken);
 
     private static IResult InvalidVariant(string field) =>
         Results.ValidationProblem(new Dictionary<string, string[]>

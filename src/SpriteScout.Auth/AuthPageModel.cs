@@ -8,6 +8,8 @@ public sealed record AuthPageModel(AuthPageKind Kind)
     public AuthFormModel? Form { get; init; }
     public bool Available { get; init; } = true;
     public bool Offline { get; init; }
+    public bool CollectionRead { get; init; }
+    public bool CollectionWrite { get; init; }
     public bool Expired { get; init; }
     public string? Retry { get; init; }
 

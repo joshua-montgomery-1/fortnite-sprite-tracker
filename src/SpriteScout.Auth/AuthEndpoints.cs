@@ -22,6 +22,10 @@ public static class AuthEndpoints
         var issuer = new Uri(settings.Issuer);
         var resource = new Uri(settings.Resource);
         var metadataPath = "/.well-known/oauth-authorization-server" + issuer.AbsolutePath.TrimEnd('/');
+        // Clients prioritize challenged scopes over discovery metadata. Include
+        // collection access so the default consent covers all advertised tools.
+        var connectionScopes = string.Join(' ', AuthDefaults.AccountReadScope,
+            AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope);
         app.Use(async (context, next) =>
         {
             var isAuth = context.Request.Path.StartsWithSegments(issuer.AbsolutePath.TrimEnd('/')) ||
@@ -47,7 +51,7 @@ public static class AuthEndpoints
                     {
                         var error = context.Response.StatusCode == 403 ? ", error=\"insufficient_scope\"" : "";
                         context.Response.Headers.WWWAuthenticate =
-                            $"Bearer resource_metadata=\"{resource.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-protected-resource/mcp\", scope=\"{AuthDefaults.AccountReadScope}\"{error}";
+                            $"Bearer resource_metadata=\"{resource.GetLeftPart(UriPartial.Authority)}/.well-known/oauth-protected-resource/mcp\", scope=\"{connectionScopes}\"{error}";
                     }
                     return Task.CompletedTask;
                 });
@@ -76,7 +80,8 @@ public static class AuthEndpoints
         {
             resource = settings.Resource,
             authorization_servers = new[] { settings.Issuer },
-            scopes_supported = new[] { AuthDefaults.AccountReadScope, Scopes.OfflineAccess },
+            scopes_supported = new[] { AuthDefaults.AccountReadScope, AuthDefaults.CollectionReadScope,
+                AuthDefaults.CollectionWriteScope, Scopes.OfflineAccess },
             bearer_methods_supported = new[] { "header" }
         })).AllowAnonymous();
     }
@@ -120,7 +125,9 @@ public static class AuthEndpoints
         if (HttpMethods.IsGet(context.Request.Method))
         {
             var form = AuthPages.Form(context, antiforgery, AuthorizationFields(context), consent: true);
-            return AuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess), form, request.RedirectUri!);
+            return AuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess),
+                request.HasScope(AuthDefaults.CollectionReadScope), request.HasScope(AuthDefaults.CollectionWriteScope),
+                form, request.RedirectUri!);
         }
         if (!await ValidateFormAsync(context, antiforgery))
             return AuthPages.Error(context, AuthorizationReturn(settings, request), expired: true);
