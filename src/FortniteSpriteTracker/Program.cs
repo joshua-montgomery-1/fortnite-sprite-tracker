@@ -134,9 +134,13 @@ builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 var auth = builder.Services.AddAuth(
     builder.Configuration, builder.Environment, databaseConnectionString);
 builder.Services.AddScoped<IAccountProfileProvisioner, AccountProfileLinker>();
+builder.Services.AddScoped<McpAccountService>();
+builder.Services.AddScoped<CollectionService>();
 builder.Services.AddMcpServer()
     .WithHttpTransport(options => options.SessionMode = HttpServerSessionMode.Stateless)
-    .WithTools<AccountTools>();
+    .WithTools<AccountTools>()
+    .WithTools<CatalogTools>()
+    .WithTools<CollectionTools>();
 
 var app = builder.Build();
 

@@ -65,6 +65,24 @@ Set the optional GitHub production variable `AUTH_CLIENTS` to a JSON array of ex
 
 Register `https://spritescout.com/identity/signin-google` in the same Google OAuth client used by the website, retaining `https://spritescout.com/signin-google`. After review and merge, the release workflow supplies the secrets before starting the application. Check `https://spritescout.com/identity/.well-known/openid-configuration`, then complete a Google sign-in and an authenticated MCP call. Google callback registration and a production sign-in cannot be verified by a local build.
 
+## MCP tools and permissions
+
+Every MCP connection requires a free account and `account:read`. Clients may request `collection:read`, `collection:write`, and optionally `offline_access`; the consent page describes the requested access. Configured public clients are permitted these scopes when auth startup registers them. Previously issued tokens retain their original scopes: reconnect to approve collection access.
+
+| Tool | Additional permission | Behavior |
+| --- | --- | --- |
+| `who_am_i` | None | Connected account and website profile identity |
+| `list_seasons` | None | Season IDs, dates and catalog availability |
+| `list_sprites` | None | Searchable, paginated variants across seasons |
+| `list_sprites_by_season` | None | Searchable, paginated variants for one season |
+| `list_collection` | `collection:read` | Paginated personal progress, optionally filtered by season |
+| `set_sprite_mastered` | `collection:write` | Set mastery and ownership |
+| `set_sprite_unmastered` | `collection:write` | Clear mastery, preserving ownership |
+| `set_sprite_owned` | `collection:write` | Set ownership, preserving mastery |
+| `set_sprite_unowned` | `collection:write` | Remove saved progress and clear mastery |
+
+Mutation tools require an exact `spriteVariantId` from catalog tools, never a family ID or target user ID. The OAuth subject resolves the website user through `AccountId`. Unknown/unreleased variants are rejected using the website's availability rules. A variant's collection state is shared across seasons. Listings default to 50 entries and permit up to 100 per page; use `offset` / `limit` and `hasMore` for pagination. Mutations are idempotent state setters, marked as write/destructive tools for client confirmation handling. The normal single-variant website endpoint shares the same update service; PostgreSQL upserts preserve existing mastery when only ownership is requested.
+
 ## UI structure
 
 Login/error pages use normal Blazor routes with `ExcludeFromInteractiveRouting`, static server rendering, and `AuthLayout`. The application shell owns document markup and theme setup. OAuth consent and failed form posts render through that same shell and layout using `IAuthPageRenderer`. Auth forms submit normal HTTP POSTs with antiforgery tokens. Sprite artwork comes from the database through the host's five-minute cache.

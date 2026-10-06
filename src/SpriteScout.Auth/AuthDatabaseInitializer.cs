@@ -34,6 +34,8 @@ public sealed class AuthDatabaseInitializer(IServiceScopeFactory scopeFactory, A
                 Permissions.Endpoints.Authorization, Permissions.Endpoints.Token,
                 Permissions.GrantTypes.AuthorizationCode, Permissions.GrantTypes.RefreshToken,
                 Permissions.ResponseTypes.Code, Permissions.Prefixes.Scope + AuthDefaults.AccountReadScope,
+                Permissions.Prefixes.Scope + AuthDefaults.CollectionReadScope,
+                Permissions.Prefixes.Scope + AuthDefaults.CollectionWriteScope,
                 Permissions.Prefixes.Resource + settings.Resource
             },
             Requirements = { Requirements.Features.ProofKeyForCodeExchange }

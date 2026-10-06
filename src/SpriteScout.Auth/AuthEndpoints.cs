@@ -76,7 +76,8 @@ public static class AuthEndpoints
         {
             resource = settings.Resource,
             authorization_servers = new[] { settings.Issuer },
-            scopes_supported = new[] { AuthDefaults.AccountReadScope, Scopes.OfflineAccess },
+            scopes_supported = new[] { AuthDefaults.AccountReadScope, AuthDefaults.CollectionReadScope,
+                AuthDefaults.CollectionWriteScope, Scopes.OfflineAccess },
             bearer_methods_supported = new[] { "header" }
         })).AllowAnonymous();
     }
@@ -120,7 +121,9 @@ public static class AuthEndpoints
         if (HttpMethods.IsGet(context.Request.Method))
         {
             var form = AuthPages.Form(context, antiforgery, AuthorizationFields(context), consent: true);
-            return AuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess), form, request.RedirectUri!);
+            return AuthPages.Consent(context, name, request.HasScope(Scopes.OfflineAccess),
+                request.HasScope(AuthDefaults.CollectionReadScope), request.HasScope(AuthDefaults.CollectionWriteScope),
+                form, request.RedirectUri!);
         }
         if (!await ValidateFormAsync(context, antiforgery))
             return AuthPages.Error(context, AuthorizationReturn(settings, request), expired: true);

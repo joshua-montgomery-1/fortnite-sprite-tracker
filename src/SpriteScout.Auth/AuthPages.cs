@@ -30,8 +30,13 @@ public static class AuthPages
 
     internal static IResult SignedIn(HttpContext context) => new AuthPageResult(new(AuthPageKind.SignedIn));
 
-    internal static IResult Consent(HttpContext context, string application, bool offline, AuthFormModel form, string redirectUri) =>
-        new AuthPageResult(new(AuthPageKind.Consent) { Application = application, Offline = offline, Form = form },
+    internal static IResult Consent(HttpContext context, string application, bool offline, bool collectionRead,
+        bool collectionWrite, AuthFormModel form, string redirectUri) =>
+        new AuthPageResult(new(AuthPageKind.Consent)
+        {
+            Application = application, Offline = offline, CollectionRead = collectionRead,
+            CollectionWrite = collectionWrite, Form = form
+        },
             formRedirect: redirectUri);
 
     public static string SafeRetry(AuthOptions settings, string? candidate)
