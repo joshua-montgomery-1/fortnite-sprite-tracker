@@ -127,7 +127,7 @@ if (auth.Enabled)
     builder.Services.AddScoped<IAccountProfileProvisioner, AccountProfileLinker>();
     builder.Services.AddMcpServer()
         .WithHttpTransport(options => options.SessionMode = HttpServerSessionMode.Stateless)
-        .WithTools<AccountProofTools>();
+        .WithTools<AccountTools>();
 }
 
 var app = builder.Build();
