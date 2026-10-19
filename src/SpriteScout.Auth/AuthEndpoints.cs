@@ -106,11 +106,11 @@ public static class AuthEndpoints
         });
         if (!context.Request.HasJsonContentType())
         {
-            return RegistrationError("invalid_client_metadata", "A JSON request body is required.");
+            return RegistrationError(logger, "invalid_client_metadata", "A JSON request body is required.");
         }
         if (context.Request.ContentLength is > 16384)
         {
-            return RegistrationError("invalid_client_metadata", "The registration request is too large.");
+            return RegistrationError(logger, "invalid_client_metadata", "The registration request is too large.");
         }
 
         DcrRegistrationRequest request;
@@ -123,30 +123,34 @@ public static class AuthEndpoints
                 AllowTrailingCommas = false
             }, cancellationToken);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
-                return RegistrationError("invalid_client_metadata", "The registration metadata must be a JSON object.");
+                return RegistrationError(logger, "invalid_client_metadata", "The registration metadata must be a JSON object.");
             if (document.RootElement.EnumerateObject()
                 .GroupBy(property => property.Name, StringComparer.Ordinal).Any(group => group.Count() > 1))
-                return RegistrationError("invalid_client_metadata", "Metadata properties must not be repeated.");
+                return RegistrationError(logger, "invalid_client_metadata", "Metadata properties must not be repeated.");
             if (document.RootElement.EnumerateObject().Any(property => property.Value.ValueKind == JsonValueKind.Null))
-                return RegistrationError("invalid_client_metadata", "Metadata properties must not be null.");
+                return RegistrationError(logger, "invalid_client_metadata", "Metadata properties must not be null.");
             request = document.RootElement.Deserialize<DcrRegistrationRequest>()
                 ?? throw new JsonException("The registration metadata must be an object.");
         }
         catch (JsonException)
         {
-            return RegistrationError("invalid_client_metadata", "The registration metadata is not valid JSON.");
+            return RegistrationError(logger, "invalid_client_metadata", "The registration metadata is not valid JSON.");
         }
         var outcome = await registrations.RegisterAsync(request, cancellationToken);
         if (!outcome.Succeeded)
-            return RegistrationError(outcome.Error!, outcome.ErrorDescription!);
+            return RegistrationError(logger, outcome.Error!, outcome.ErrorDescription!);
 
         context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers.Pragma = "no-cache";
         return Results.Json(outcome.Metadata, statusCode: StatusCodes.Status201Created);
     }
 
-    private static IResult RegistrationError(string error, string description) =>
-        Results.Json(new { error, error_description = description }, statusCode: StatusCodes.Status400BadRequest);
+    private static IResult RegistrationError(ILogger logger, string error, string description)
+    {
+        // Descriptions are server-generated validation messages; never log submitted metadata.
+        logger.LogWarning("OAuth client registration rejected with {ErrorCode}: {ErrorDescription}", error, description);
+        return Results.Json(new { error, error_description = description }, statusCode: StatusCodes.Status400BadRequest);
+    }
 
     private static async Task<IResult> AuthorizeAsync(
         HttpContext context, AuthDbContext database, AuthOptions settings,

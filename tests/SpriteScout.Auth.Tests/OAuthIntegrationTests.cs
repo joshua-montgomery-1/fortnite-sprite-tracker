@@ -291,6 +291,29 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Equal("invalid_client_metadata", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("error").GetString());
     }
 
+    [Fact]
+    public async Task Registration_rejection_logs_validation_reason_without_submitted_metadata()
+    {
+        fixture.Host.LogProvider.Clear();
+        using var browser = fixture.Host.Browser();
+        var response = await browser.PostAsJsonAsync("/identity/connect/register", new
+        {
+            client_name = "private-client-name-marker",
+            redirect_uris = new[] { "https://private-redirect-marker.example/callback" },
+            scope = "account:read",
+            unsupported_field = "private-metadata-marker"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var diagnostic = Assert.Single(fixture.Host.LogProvider.Entries,
+            entry => entry.Contains("OAuth client registration rejected", StringComparison.Ordinal));
+        Assert.Contains("invalid_client_metadata", diagnostic, StringComparison.Ordinal);
+        Assert.Contains("unsupported client metadata", diagnostic, StringComparison.Ordinal);
+        Assert.DoesNotContain("private-client-name-marker", diagnostic, StringComparison.Ordinal);
+        Assert.DoesNotContain("private-redirect-marker", diagnostic, StringComparison.Ordinal);
+        Assert.DoesNotContain("private-metadata-marker", diagnostic, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("missing-pkce")]
     [InlineData("plain-pkce")]
