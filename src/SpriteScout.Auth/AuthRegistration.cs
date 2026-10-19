@@ -53,6 +53,7 @@ public static class AuthRegistration
             postgres => postgres.MigrationsHistoryTable("__EFMigrationsHistory", "sprite_scout_auth"))
             .UseOpenIddict());
         services.AddScoped<AuthIdentityService>();
+        services.AddScoped<DcrClientRegistrationService>();
         services.AddHostedService<AuthDatabaseInitializer>();
     }
 
@@ -153,6 +154,7 @@ public static class AuthRegistration
                         context.Response["authorization_response_iss_parameter_supported"] = true;
                         context.Response["token_endpoint_auth_methods_supported"] = JsonSerializer.SerializeToElement(
                             new[] { "none" });
+                        context.Response["registration_endpoint"] = new Uri(issuer, "connect/register").AbsoluteUri;
                         return default;
                     }));
                 options.AddEventHandler<OpenIddictServerEvents.ApplyAuthorizationResponseContext>(handler =>

@@ -180,6 +180,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         var discovery = await client.GetFromJsonAsync<JsonElement>("/identity/.well-known/openid-configuration");
         Assert.Equal(Issuer, discovery.GetProperty("issuer").GetString());
         Assert.True(discovery.GetProperty("authorization_response_iss_parameter_supported").GetBoolean());
+        Assert.Equal("https://localhost:7082/identity/connect/register", discovery.GetProperty("registration_endpoint").GetString());
         Assert.Contains("S256", discovery.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(item => item.GetString()));
         Assert.DoesNotContain("plain", discovery.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(item => item.GetString()));
         Assert.Contains("none", discovery.GetProperty("token_endpoint_auth_methods_supported").EnumerateArray().Select(item => item.GetString()));
@@ -191,6 +192,103 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Equal("no-store", response.Headers.CacheControl!.ToString());
         // MCP tokens do not replace the existing website's cookie scheme.
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/me/")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Public_client_can_register_and_use_the_OAuth_and_MCP_flow()
+    {
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var registration = await browser.PostAsJsonAsync("/identity/connect/register", new
+        {
+            client_name = "Claude Desktop",
+            redirect_uris = new[] { "http://127.0.0.1/callback" },
+            application_type = "native",
+            grant_types = new[] { "authorization_code" },
+            response_types = new[] { "code" },
+            token_endpoint_auth_method = "none",
+            scope = "account:read collection:read"
+        });
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        Assert.Equal("no-store", registration.Headers.CacheControl!.ToString());
+        var metadata = await registration.Content.ReadFromJsonAsync<JsonElement>();
+        var clientId = metadata.GetProperty("client_id").GetString()!;
+        Assert.Matches("^claude-desktop-[0-9a-f]{16}$", clientId);
+        Assert.Equal("Claude Desktop", metadata.GetProperty("client_name").GetString());
+        Assert.False(metadata.TryGetProperty("client_secret", out _));
+
+        var (code, verifier) = await AuthorizeAsync(browser, "account:read collection:read", clientId,
+            "http://127.0.0.1:48123/callback");
+        var tokenResponse = await RedeemAsync(browser, code, verifier, clientId, "http://127.0.0.1:48123/callback");
+        Assert.Equal(HttpStatusCode.OK, tokenResponse.StatusCode);
+        var token = await tokenResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(fixture.FirstAccount.ToString(),
+            await CallAsync(fixture.Host, token.GetProperty("access_token").GetString()!));
+    }
+
+    [Fact]
+    public async Task Registration_client_ids_sanitize_names_and_remain_unique()
+    {
+        using var browser = fixture.Host.Browser();
+        var names = new string?[] { null, "../../ChatGPT", "東京", new string('A', 100), "../../ChatGPT" };
+        var ids = new List<string>();
+        foreach (var name in names)
+        {
+            var response = await browser.PostAsJsonAsync("/identity/connect/register", new
+            {
+                client_name = name,
+                redirect_uris = new[] { "https://client.example/oauth/callback" },
+                application_type = "web",
+                scope = "account:read"
+            });
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            ids.Add((await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("client_id").GetString()!);
+        }
+        Assert.Equal(ids.Count, ids.Distinct(StringComparer.Ordinal).Count());
+        Assert.StartsWith("mcp-client-", ids[0]);
+        Assert.StartsWith("chatgpt-", ids[1]);
+        Assert.StartsWith("mcp-client-", ids[2]);
+        Assert.StartsWith("a-", ids[3]);
+        Assert.StartsWith("chatgpt-", ids[4]);
+        Assert.All(ids, id => Assert.True(id.Length <= 57));
+    }
+
+    [Theory]
+    [InlineData("http://attacker.example/callback", "native", "authorization_code", "code", "none", "account:read", "invalid_redirect_uri")]
+    [InlineData("https://client.example/callback#fragment", "web", "authorization_code", "code", "none", "account:read", "invalid_redirect_uri")]
+    [InlineData("https://client.example/callback", "web", "implicit", "token", "none", "account:read", "invalid_client_metadata")]
+    [InlineData("https://client.example/callback", "web", "authorization_code", "code", "client_secret_basic", "account:read", "invalid_client_metadata")]
+    [InlineData("https://client.example/callback", "web", "authorization_code", "code", "none", "admin:all", "invalid_scope")]
+    public async Task Registration_rejects_unsupported_or_unsafe_client_metadata(
+        string redirectUri, string applicationType, string grantType, string responseType,
+        string authMethod, string scope, string expectedError)
+    {
+        using var browser = fixture.Host.Browser();
+        var response = await browser.PostAsJsonAsync("/identity/connect/register", new
+        {
+            client_name = "Untrusted client",
+            redirect_uris = new[] { redirectUri },
+            application_type = applicationType,
+            grant_types = new[] { grantType },
+            response_types = new[] { responseType },
+            token_endpoint_auth_method = authMethod,
+            scope
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(expectedError, (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("error").GetString());
+    }
+
+    [Fact]
+    public async Task Registration_rejects_oversized_client_names()
+    {
+        using var browser = fixture.Host.Browser();
+        var response = await browser.PostAsJsonAsync("/identity/connect/register", new
+        {
+            client_name = new string('x', 101),
+            redirect_uris = new[] { "https://client.example/oauth/callback" },
+            scope = "account:read"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("invalid_client_metadata", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("error").GetString());
     }
 
     [Theory]

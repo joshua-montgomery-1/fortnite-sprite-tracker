@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
@@ -66,6 +68,9 @@ public static class AuthEndpoints
             .AllowAnonymous();
         app.MapPost(new Uri(issuer, "connect/token").AbsolutePath, ExchangeAsync)
             .AllowAnonymous();
+        app.MapPost(new Uri(issuer, "connect/register").AbsolutePath, RegisterClientAsync)
+            .AllowAnonymous()
+            .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(16 * 1024));
         app.MapPost(new Uri(issuer, "login").AbsolutePath, LoginAsync).AllowAnonymous();
         // The host's routed Blazor pages use stable UI paths even with a custom issuer path.
         if (issuer.AbsolutePath != "/identity/")
@@ -85,6 +90,63 @@ public static class AuthEndpoints
             bearer_methods_supported = new[] { "header" }
         })).AllowAnonymous();
     }
+
+    private static async Task<IResult> RegisterClientAsync(
+        HttpContext context, DcrClientRegistrationService registrations,
+        ILoggerFactory loggerFactory, CancellationToken cancellationToken)
+    {
+        var logger = loggerFactory.CreateLogger("OAuthClientRegistration");
+        context.Response.OnCompleted(() =>
+        {
+            if (context.Response.StatusCode >= 400)
+                logger.LogWarning("OAuth client registration completed with HTTP status {StatusCode}", context.Response.StatusCode);
+            else
+                logger.LogInformation("OAuth client registration completed successfully");
+            return Task.CompletedTask;
+        });
+        if (!context.Request.HasJsonContentType())
+        {
+            return RegistrationError("invalid_client_metadata", "A JSON request body is required.");
+        }
+        if (context.Request.ContentLength is > 16384)
+        {
+            return RegistrationError("invalid_client_metadata", "The registration request is too large.");
+        }
+
+        DcrRegistrationRequest request;
+        try
+        {
+            using var document = await JsonDocument.ParseAsync(context.Request.Body, new JsonDocumentOptions
+            {
+                MaxDepth = 8,
+                CommentHandling = JsonCommentHandling.Disallow,
+                AllowTrailingCommas = false
+            }, cancellationToken);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                return RegistrationError("invalid_client_metadata", "The registration metadata must be a JSON object.");
+            if (document.RootElement.EnumerateObject()
+                .GroupBy(property => property.Name, StringComparer.Ordinal).Any(group => group.Count() > 1))
+                return RegistrationError("invalid_client_metadata", "Metadata properties must not be repeated.");
+            if (document.RootElement.EnumerateObject().Any(property => property.Value.ValueKind == JsonValueKind.Null))
+                return RegistrationError("invalid_client_metadata", "Metadata properties must not be null.");
+            request = document.RootElement.Deserialize<DcrRegistrationRequest>()
+                ?? throw new JsonException("The registration metadata must be an object.");
+        }
+        catch (JsonException)
+        {
+            return RegistrationError("invalid_client_metadata", "The registration metadata is not valid JSON.");
+        }
+        var outcome = await registrations.RegisterAsync(request, cancellationToken);
+        if (!outcome.Succeeded)
+            return RegistrationError(outcome.Error!, outcome.ErrorDescription!);
+
+        context.Response.Headers.CacheControl = "no-store";
+        context.Response.Headers.Pragma = "no-cache";
+        return Results.Json(outcome.Metadata, statusCode: StatusCodes.Status201Created);
+    }
+
+    private static IResult RegistrationError(string error, string description) =>
+        Results.Json(new { error, error_description = description }, statusCode: StatusCodes.Status400BadRequest);
 
     private static async Task<IResult> AuthorizeAsync(
         HttpContext context, AuthDbContext database, AuthOptions settings,
