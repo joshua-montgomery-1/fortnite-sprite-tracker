@@ -54,12 +54,15 @@ public sealed class DcrClientRegistrationService(
 
         if (request.Scope?.Length > 500)
             return Failure("invalid_scope", "The requested scope value is too long.");
-        var scopes = request.Scope?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        var requestedScopes = request.Scope?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             ?? [AuthDefaults.AccountReadScope];
-        var allowedScopes = new HashSet<string>([AuthDefaults.AccountReadScope, AuthDefaults.AccountWriteScope,
-            AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope, Scopes.OfflineAccess], StringComparer.Ordinal);
-        if (scopes.Length == 0 || scopes.Length > allowedScopes.Count || scopes.Distinct(StringComparer.Ordinal).Count() != scopes.Length ||
-            scopes.Any(scope => !allowedScopes.Contains(scope)) || !scopes.Contains(AuthDefaults.AccountReadScope, StringComparer.Ordinal))
+        var supportedScopes = new[] { AuthDefaults.AccountReadScope, AuthDefaults.AccountWriteScope,
+            AuthDefaults.CollectionReadScope, AuthDefaults.CollectionWriteScope, Scopes.OfflineAccess };
+        var allowedScopes = new HashSet<string>(supportedScopes, StringComparer.Ordinal);
+        if (requestedScopes.Length == 0 || requestedScopes.Length > allowedScopes.Count ||
+            requestedScopes.Distinct(StringComparer.Ordinal).Count() != requestedScopes.Length ||
+            requestedScopes.Any(scope => !allowedScopes.Contains(scope)) ||
+            !requestedScopes.Contains(AuthDefaults.AccountReadScope, StringComparer.Ordinal))
             return Failure("invalid_scope", "Request only supported scopes and include account:read.");
 
         var grants = request.GrantTypes is not { Length: > 0 }
@@ -111,7 +114,9 @@ public sealed class DcrClientRegistrationService(
         if (grants.Contains("refresh_token", StringComparer.Ordinal))
             descriptor.Permissions.Add(Permissions.GrantTypes.RefreshToken);
         foreach (var redirectUri in redirectUris) descriptor.RedirectUris.Add(new Uri(redirectUri, UriKind.Absolute));
-        foreach (var scope in scopes) descriptor.Permissions.Add(Permissions.Prefixes.Scope + scope);
+        // MCP hosts may request individual tools' scopes after inspecting the resource
+        // challenge. The consent page, not this registration step, grants user access.
+        foreach (var scope in supportedScopes) descriptor.Permissions.Add(Permissions.Prefixes.Scope + scope);
         await applications.CreateAsync(descriptor, cancellationToken);
 
         var metadata = new Dictionary<string, object?>
@@ -124,7 +129,7 @@ public sealed class DcrClientRegistrationService(
             ["grant_types"] = grants,
             ["response_types"] = new[] { "code" },
             ["token_endpoint_auth_method"] = "none",
-            ["scope"] = string.Join(' ', scopes)
+            ["scope"] = string.Join(' ', supportedScopes)
         };
         AddIfPresent(metadata, "client_uri", request.ClientUri);
         AddIfPresent(metadata, "logo_uri", request.LogoUri);

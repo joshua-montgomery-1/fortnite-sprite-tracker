@@ -242,6 +242,8 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
 
         Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
         var metadata = await registration.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("account:read account:write collection:read collection:write offline_access",
+            metadata.GetProperty("scope").GetString());
         var clientId = metadata.GetProperty("client_id").GetString()!;
         var (code, verifier) = await AuthorizeAsync(browser, "account:read", clientId,
             "https://chatgpt.com/connector_platform_oauth_redirect");
@@ -251,6 +253,37 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.Equal(HttpStatusCode.OK, tokenResponse.StatusCode);
         var token = await tokenResponse.Content.ReadFromJsonAsync<JsonElement>();
         Assert.False(token.TryGetProperty("refresh_token", out _));
+    }
+
+    [Fact]
+    public async Task Dynamic_client_can_request_all_supported_MCP_scopes_on_the_consent_page()
+    {
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var registration = await browser.PostAsJsonAsync("/identity/connect/register", new
+        {
+            client_name = "ChatGPT scope test",
+            redirect_uris = new[] { "https://chatgpt.com/connector_platform_oauth_redirect" },
+            application_type = "web",
+            grant_types = new[] { "authorization_code", "refresh_token" },
+            response_types = new[] { "code" },
+            token_endpoint_auth_method = "none",
+            scope = "account:read"
+        });
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var metadata = await registration.Content.ReadFromJsonAsync<JsonElement>();
+        var clientId = metadata.GetProperty("client_id").GetString()!;
+        var scopes = "account:read account:write collection:read collection:write offline_access";
+        var authorization = await browser.GetAsync(QueryHelpers.AddQueryString(
+            "/identity/connect/authorize", Parameters(scopes: scopes, clientId: clientId,
+                callback: "https://chatgpt.com/connector_platform_oauth_redirect")));
+
+        Assert.Equal(HttpStatusCode.OK, authorization.StatusCode);
+        var html = await authorization.Content.ReadAsStringAsync();
+        Assert.Contains("Collection", html);
+        Assert.Contains("value=\"collection:read\"", html);
+        Assert.Contains("value=\"collection:write\"", html);
+        Assert.Contains("value=\"account:write\"", html);
+        Assert.Contains("value=\"offline_access\"", html);
     }
 
     [Fact]
