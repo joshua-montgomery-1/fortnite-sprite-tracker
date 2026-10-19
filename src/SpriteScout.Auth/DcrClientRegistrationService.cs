@@ -65,11 +65,9 @@ public sealed class DcrClientRegistrationService(
         var grants = request.GrantTypes is not { Length: > 0 }
             ? ["authorization_code"]
             : request.GrantTypes;
-        var refreshRequested = scopes.Contains(Scopes.OfflineAccess, StringComparer.Ordinal);
         if (grants.Any(grant => grant is not ("authorization_code" or "refresh_token")) ||
-            !grants.Contains("authorization_code", StringComparer.Ordinal) ||
-            grants.Contains("refresh_token", StringComparer.Ordinal) != refreshRequested)
-            return Failure("invalid_client_metadata", "Use authorization_code; refresh_token is supported only with offline_access.");
+            !grants.Contains("authorization_code", StringComparer.Ordinal))
+            return Failure("invalid_client_metadata", "Use authorization_code and optionally refresh_token.");
 
         if (!IsSafeOptionalUri(request.ClientUri) || !IsSafeOptionalUri(request.LogoUri) ||
             !IsSafeOptionalUri(request.TermsOfServiceUri) || !IsSafeOptionalUri(request.PolicyUri))
@@ -110,7 +108,8 @@ public sealed class DcrClientRegistrationService(
             },
             Requirements = { Requirements.Features.ProofKeyForCodeExchange }
         };
-        if (refreshRequested) descriptor.Permissions.Add(Permissions.GrantTypes.RefreshToken);
+        if (grants.Contains("refresh_token", StringComparer.Ordinal))
+            descriptor.Permissions.Add(Permissions.GrantTypes.RefreshToken);
         foreach (var redirectUri in redirectUris) descriptor.RedirectUris.Add(new Uri(redirectUri, UriKind.Absolute));
         foreach (var scope in scopes) descriptor.Permissions.Add(Permissions.Prefixes.Scope + scope);
         await applications.CreateAsync(descriptor, cancellationToken);

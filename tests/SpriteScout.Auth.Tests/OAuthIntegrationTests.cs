@@ -226,6 +226,34 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
     }
 
     [Fact]
+    public async Task Registration_allows_refresh_grant_without_offline_access_and_still_requires_user_authorization()
+    {
+        using var browser = fixture.Host.Browser(fixture.FirstAccount);
+        var registration = await browser.PostAsJsonAsync("/identity/connect/register", new
+        {
+            client_name = "ChatGPT",
+            redirect_uris = new[] { "https://chatgpt.com/connector_platform_oauth_redirect" },
+            application_type = "web",
+            grant_types = new[] { "authorization_code", "refresh_token" },
+            response_types = new[] { "code" },
+            token_endpoint_auth_method = "none",
+            scope = "account:read"
+        });
+
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var metadata = await registration.Content.ReadFromJsonAsync<JsonElement>();
+        var clientId = metadata.GetProperty("client_id").GetString()!;
+        var (code, verifier) = await AuthorizeAsync(browser, "account:read", clientId,
+            "https://chatgpt.com/connector_platform_oauth_redirect");
+        var tokenResponse = await RedeemAsync(browser, code, verifier, clientId,
+            "https://chatgpt.com/connector_platform_oauth_redirect");
+
+        Assert.Equal(HttpStatusCode.OK, tokenResponse.StatusCode);
+        var token = await tokenResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(token.TryGetProperty("refresh_token", out _));
+    }
+
+    [Fact]
     public async Task Registration_client_ids_sanitize_names_and_remain_unique()
     {
         using var browser = fixture.Host.Browser();
@@ -233,13 +261,14 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         var ids = new List<string>();
         foreach (var name in names)
         {
-            var response = await browser.PostAsJsonAsync("/identity/connect/register", new
+            var metadata = new Dictionary<string, object?>
             {
-                client_name = name,
-                redirect_uris = new[] { "https://client.example/oauth/callback" },
-                application_type = "web",
-                scope = "account:read"
-            });
+                ["redirect_uris"] = new[] { "https://client.example/oauth/callback" },
+                ["application_type"] = "web",
+                ["scope"] = "account:read"
+            };
+            if (name is not null) metadata["client_name"] = name;
+            var response = await browser.PostAsJsonAsync("/identity/connect/register", metadata);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             ids.Add((await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("client_id").GetString()!);
         }
@@ -247,7 +276,7 @@ public sealed class OAuthIntegrationTests(AuthFixture fixture) : IClassFixture<A
         Assert.StartsWith("mcp-client-", ids[0]);
         Assert.StartsWith("chatgpt-", ids[1]);
         Assert.StartsWith("mcp-client-", ids[2]);
-        Assert.StartsWith("a-", ids[3]);
+        Assert.StartsWith(new string('a', 40) + "-", ids[3]);
         Assert.StartsWith("chatgpt-", ids[4]);
         Assert.All(ids, id => Assert.True(id.Length <= 57));
     }
