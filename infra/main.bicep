@@ -36,7 +36,7 @@ param authSigningPassword string
 @secure()
 param authEncryptionPassword string
 
-@description('Public OAuth clients and their registered callbacks. Client self-registration is not enabled.')
+@description('Preconfigured public OAuth clients and their registered callbacks. Other compatible clients can register through OAuth Dynamic Client Registration.')
 param authClients array = []
 
 @description('Optional address for Azure budget alerts. Leave empty to omit the budget resource.')

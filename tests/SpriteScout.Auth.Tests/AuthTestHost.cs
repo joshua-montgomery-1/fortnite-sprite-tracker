@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Collections.Concurrent;
 using System.Text.Encodings.Web;
 using FortniteSpriteTracker.DataAccess;
 using FortniteSpriteTracker.DataAccess.Entities;
@@ -22,6 +23,8 @@ namespace SpriteScout.Auth.Tests;
 public sealed class AuthTestHost : WebApplicationFactory<Program>
 {
     private readonly string connectionString;
+    public TestLogProvider LogProvider { get; } = new();
+
     public AuthTestHost(string connectionString)
     {
         this.connectionString = connectionString;
@@ -58,6 +61,7 @@ public sealed class AuthTestHost : WebApplicationFactory<Program>
             services.Configure<AuthenticationOptions>(options =>
                 options.SchemeMap[AuthDefaults.SessionScheme].HandlerType = typeof(TestAuthSession));
         });
+        builder.ConfigureLogging(logging => logging.AddProvider(LogProvider));
     }
 
     public HttpClient Browser(Guid? accountId = null)
@@ -73,6 +77,35 @@ public sealed class AuthTestHost : WebApplicationFactory<Program>
         client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
         client.DefaultRequestHeaders.Accept.ParseAdd("text/event-stream");
         return client;
+    }
+}
+
+public sealed class TestLogProvider : ILoggerProvider
+{
+    private readonly ConcurrentQueue<string> entries = new();
+
+    public IReadOnlyCollection<string> Entries => entries.ToArray();
+
+    public void Clear()
+    {
+        while (entries.TryDequeue(out _)) { }
+    }
+
+    public ILogger CreateLogger(string categoryName) => new TestLogger(categoryName, entries);
+
+    public void Dispose() { }
+
+    private sealed class TestLogger(string categoryName, ConcurrentQueue<string> entries) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Warning;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            if (IsEnabled(logLevel)) entries.Enqueue($"{categoryName}: {formatter(state, exception)}");
+        }
     }
 }
 
