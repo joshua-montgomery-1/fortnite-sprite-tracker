@@ -11,6 +11,9 @@ public sealed class CatalogSeedResult
 
 public sealed class CatalogSeeder(SpriteTrackerDbContext database)
 {
+    // Use the stored Season 5 start as the season boundary across maintenance downtime.
+    private static readonly DateTimeOffset SeasonFourEndAt = new(2026, 11, 1, 10, 0, 0, TimeSpan.Zero);
+
     public async Task<CatalogSeedResult> SeedAsync(CancellationToken cancellationToken = default)
     {
         ValidateDefinitions();
@@ -58,7 +61,7 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
                 Number = 4,
                 Name = "Chapter 7 · Season 4",
                 StartAt = new DateTimeOffset(2026, 8, 20, 1, 0, 0, TimeSpan.FromHours(-4)).ToUniversalTime(),
-                EndAt = null
+                EndAt = SeasonFourEndAt
             };
             database.Seasons.Add(nextSeason);
             inserted++;
@@ -292,12 +295,12 @@ public sealed class CatalogSeeder(SpriteTrackerDbContext database)
     {
         var startAt = new DateTimeOffset(2026, 8, 20, 1, 0, 0, TimeSpan.FromHours(-4)).ToUniversalTime();
         var changed = season.Chapter != 7 || season.Number != 4 || season.Name != "Chapter 7 · Season 4" ||
-            season.StartAt != startAt || season.EndAt is not null;
+            season.StartAt != startAt || season.EndAt != SeasonFourEndAt;
         season.Chapter = 7;
         season.Number = 4;
         season.Name = "Chapter 7 · Season 4";
         season.StartAt = startAt;
-        season.EndAt = null;
+        season.EndAt = SeasonFourEndAt;
         return changed;
     }
 
