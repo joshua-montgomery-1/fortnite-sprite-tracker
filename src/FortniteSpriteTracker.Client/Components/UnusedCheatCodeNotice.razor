@@ -1,6 +1,6 @@
 @using FortniteSpriteTracker.Shared.CheatCodes
 
-@if (remainingCount > 0 && seasons.Any(season => season is { Chapter: 7, Number: 4, IsActive: true }))
+@if (remainingCount > 0 && catalog?.Season is { Chapter: 7, Number: 4, IsActive: true })
 {
     <aside class="unusedCheatNotice" role="status">
         <div>
@@ -14,10 +14,7 @@
 @code {
     private const string BrowserProgressKey = "sprite-scout-cheat-code-progress";
     private int remainingCount;
-    private IReadOnlyList<FortniteSpriteTracker.Shared.Catalog.SeasonDto> seasons = [];
     private CheatCodeCatalogDto? catalog;
-
-    [Inject] private CatalogClient CatalogApi { get; set; } = null!;
 
     [Inject] private CheatCodeClient CheatCodesApi { get; set; } = null!;
     [Inject] private BrowserStorage Storage { get; set; } = null!;
@@ -32,14 +29,8 @@
 
         try
         {
-            seasons = await CatalogApi.GetSeasonsAsync();
-            if (!seasons.Any(season => season is { Chapter: 7, Number: 4, IsActive: true }))
-            {
-                return;
-            }
-
             catalog = await CheatCodesApi.GetCatalogAsync();
-            if (catalog?.Season is not { Chapter: 7, Number: 4 })
+            if (catalog?.Season is not { Chapter: 7, Number: 4, IsActive: true })
             {
                 return;
             }
