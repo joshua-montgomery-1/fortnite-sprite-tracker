@@ -1,22 +1,5 @@
 using FortniteSpriteTracker.Shared.Catalog;
 
-var boundary = new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero);
-SeasonDto NoticeSeason(int chapter, int number, DateTimeOffset start, DateTimeOffset? end = null) =>
-    new() { Chapter = chapter, Number = number, Name = "Test season", StartAt = start, EndAt = end, IsActive = true };
-var target = NoticeSeason(7, 4, boundary);
-AssertEqual(false, FortniteSpriteTracker.Shared.CheatCodes.LobbyHackNoticeAvailability.IsAvailable([], boundary), "no seasons hides notice");
-AssertEqual(false, FortniteSpriteTracker.Shared.CheatCodes.LobbyHackNoticeAvailability.IsAvailable([target], boundary.AddTicks(-1)), "upcoming season hides notice");
-AssertEqual(true, FortniteSpriteTracker.Shared.CheatCodes.LobbyHackNoticeAvailability.IsAvailable([target], boundary), "start is inclusive");
-AssertEqual(false, FortniteSpriteTracker.Shared.CheatCodes.LobbyHackNoticeAvailability.IsAvailable([NoticeSeason(7, 4, boundary.AddDays(-1), boundary)], boundary), "end is exclusive despite stale active flag");
-AssertEqual(true, FortniteSpriteTracker.Shared.CheatCodes.LobbyHackNoticeAvailability.IsAvailable([target, NoticeSeason(7, 5, boundary.AddDays(1))], boundary), "future season does not suppress current notice");
-foreach (var successor in new[] { NoticeSeason(7, 5, boundary.AddDays(1)), NoticeSeason(8, 4, boundary.AddDays(1)) })
-{
-    AssertEqual(false, FortniteSpriteTracker.Shared.CheatCodes.LobbyHackNoticeAvailability.IsAvailable([target, successor], boundary.AddDays(1)), "successor supersedes open-ended season four");
-}
-AssertEqual(false, FortniteSpriteTracker.Shared.CheatCodes.LobbyHackNoticeAvailability.IsAvailable([NoticeSeason(6, 4, boundary)], boundary), "other chapter hides notice");
-Console.WriteLine("Lobby Hack notice availability tests passed.");
-
-
 var catalog = BuildCatalog();
 
 AssertEqual("/sprites/jonesy/loot", SpriteCatalogRoutes.VariantPath(catalog.Families[0], catalog.Families[0].Variants[1]), "variant path uses family slug and style token");

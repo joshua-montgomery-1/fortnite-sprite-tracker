@@ -1,6 +1,6 @@
 @using FortniteSpriteTracker.Shared.CheatCodes
 
-@if (remainingCount > 0 && LobbyHackNoticeAvailability.IsAvailable(seasons, DateTimeOffset.UtcNow))
+@if (remainingCount > 0 && seasons.Any(season => season is { Chapter: 7, Number: 4, IsActive: true }))
 {
     <aside class="unusedCheatNotice" role="status">
         <div>
@@ -33,7 +33,7 @@
         try
         {
             seasons = await CatalogApi.GetSeasonsAsync();
-            if (!LobbyHackNoticeAvailability.IsAvailable(seasons, DateTimeOffset.UtcNow))
+            if (!seasons.Any(season => season is { Chapter: 7, Number: 4, IsActive: true }))
             {
                 return;
             }

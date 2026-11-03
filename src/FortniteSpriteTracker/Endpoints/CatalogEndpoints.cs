@@ -25,11 +25,15 @@ public static class CatalogEndpoints
                     Name = item.Name,
                     StartAt = item.StartAt,
                     EndAt = item.EndAt,
-                    IsActive = item.StartAt <= now && (item.EndAt == null || now < item.EndAt),
                     HasCatalog = item.SpriteFamilies.Any() && item.SpriteVariants.Any(),
                     HasCheatCodes = item.CheatCodes.Any()
                 })
                 .ToArrayAsync(cancellationToken);
+            if (SeasonActivity.GetActiveSeason(seasons, now) is { } activeSeason)
+            {
+                activeSeason.IsActive = true;
+            }
+
             return Results.Ok(seasons);
         })
         .AllowAnonymous()
