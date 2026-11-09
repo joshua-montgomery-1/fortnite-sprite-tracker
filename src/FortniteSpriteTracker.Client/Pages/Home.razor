@@ -11,7 +11,7 @@
     </PageMetadata>
 </HeadContent>
 
-<main class="@(printBlank ? "printBlank" : "")">
+<main>
     <SiteHeader Profile="@profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
     <HeroSection Hero="@HeroSprite"
                  TotalEntries="@ReleasedEntryCount"
@@ -115,10 +115,6 @@
                 <p>@(viewMode == "Checklist" ? "Fast scan - every status at a glance" : "Detailed abilities and variant cards")</p>
             </div>
             <div class="viewActions">
-                <div class="exportActions">
-                    <button @onclick="() => PrintChecklist(false)"><b>⇩</b> My PDF</button>
-                    <button @onclick="() => PrintChecklist(true)"><b>□</b> Blank PDF</button>
-                </div>
                 <div class="viewToggle">
                     <button class="@(viewMode == "Checklist" ? "selected" : "")" @onclick="ShowChecklist"><b>▦</b> Checklist</button>
                     <button class="@(viewMode == "Field Guide" ? "selected" : "")" @onclick="ShowFieldGuide"><b>▤</b> Field Guide</button>
