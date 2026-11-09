@@ -16,7 +16,7 @@ Detailed guides:
 - Lets users mark one-time codes as used while identifying repeatable codes and their rewards, which can include Sprites, Sprite Dust, cosmetics, XP, supplies, and temporary lobby effects.
 - Keeps unauthenticated progress in browser storage and syncs signed-in Sprite and cheat-code progress to PostgreSQL.
 - Provides public player profiles, collection comparisons, permanent profile links, private tracked-player lists, and season-filtered player totals.
-- Supports profile privacy, Epic display names, light/dark/system theme preferences, responsive layouts, and populated or blank landscape PDF checklist exports.
+- Supports profile privacy, Epic display names, light/dark/system theme preferences, and responsive layouts.
 
 ## Run locally
 

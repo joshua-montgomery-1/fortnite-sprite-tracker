@@ -44,7 +44,6 @@ public partial class Home : IAsyncDisposable
     private CancellationTokenSource? saveDelay;
 
     [Inject] private BrowserStorage Storage { get; set; } = null!;
-    [Inject] private BrowserPrintService Printer { get; set; } = null!;
     [Inject] private AccountClient Account { get; set; } = null!;
     [Inject] private AccountState AccountState { get; set; } = null!;
     [Inject] private CollectionClient Collection { get; set; } = null!;
@@ -68,7 +67,6 @@ public partial class Home : IAsyncDisposable
     private string query = "";
     private string viewMode = "Checklist";
     private bool showUnreleased;
-    private bool printBlank;
     private bool showAnonymousWarning;
     private bool showImportPrompt;
     private bool importingAnonymousProgress;
@@ -614,22 +612,6 @@ public partial class Home : IAsyncDisposable
     private void ToggleVariant(VariantStyleDto item) => variant = variant == item.Name ? "All" : item.Name;
     private void ShowChecklist() => viewMode = "Checklist";
     private void ShowFieldGuide() => viewMode = "Field Guide";
-
-    private async Task PrintChecklist(bool blank)
-    {
-        var previousState = (viewMode, filter, rarity, variant, query);
-        printBlank = blank;
-        viewMode = "Checklist";
-        filter = "All";
-        rarity = "All";
-        variant = "All";
-        query = "";
-        StateHasChanged();
-        await Task.Delay(350);
-        await Printer.PrintAsync();
-        printBlank = false;
-        (viewMode, filter, rarity, variant, query) = previousState;
-    }
 
     private sealed record LocalProgress(
         bool IsOwned,

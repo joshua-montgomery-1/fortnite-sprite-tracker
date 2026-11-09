@@ -40,7 +40,6 @@ builder.Services.AddScoped(sp =>
 });
 builder.Services.AddScoped<BrowserStorage>();
 builder.Services.AddThemeServices();
-builder.Services.AddScoped<BrowserPrintService>();
 builder.Services.AddScoped<AccountClient>();
 builder.Services.AddScoped<AccountState>();
 builder.Services.AddScoped<AuthenticationNavigation>();
