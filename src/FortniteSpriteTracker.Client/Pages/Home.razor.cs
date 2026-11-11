@@ -258,6 +258,20 @@ public partial class Home : IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (catalog is not null && VariantQuery is not null && variant == "All")
+        {
+            // Wait for the interactive render before replacing the URL of a prerendered link.
+            var currentUri = CurrentBrowserUri();
+            var uri = Navigation.GetUriWithQueryParameters(currentUri, new Dictionary<string, object?>
+            {
+                ["variant"] = null
+            });
+            if (uri != currentUri)
+            {
+                Navigation.NavigateTo(uri, replace: true);
+            }
+        }
+
         if (!firstRender)
         {
             return;
@@ -318,15 +332,16 @@ public partial class Home : IAsyncDisposable
 
     private void UpdateFilterUrl(bool replace = false) =>
         NavigateWithFilters(selectedSeason?.Id, filter, rarity,
-            catalogLoading ? VariantQuery : variant, query, showUnreleased, replace);
+            catalog is null ? VariantQuery : variant, query, showUnreleased, replace);
+
+    private string CurrentBrowserUri() =>
+        // Blazor handles fragment-only anchor clicks without updating Navigation.Uri.
+        JS is IJSInProcessRuntime browser ? browser.Invoke<string>("location.toString") : Navigation.Uri;
 
     private void NavigateWithFilters(int? seasonId, string status, string rarityValue, string? variantValue,
         string search, bool unreleased, bool replace = false)
     {
-        // Blazor handles fragment-only anchor clicks without updating Navigation.Uri.
-        var currentUri = JS is IJSInProcessRuntime browser
-            ? browser.Invoke<string>("location.toString")
-            : Navigation.Uri;
+        var currentUri = CurrentBrowserUri();
         var uri = Navigation.GetUriWithQueryParameters(currentUri, new Dictionary<string, object?>
         {
             ["season"] = seasonId == DefaultSeason?.Id ? null : seasonId,
