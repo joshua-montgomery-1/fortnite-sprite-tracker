@@ -1,6 +1,6 @@
 # Sprite Scout
 
-A Fortnite Sprite collection tracker built as a .NET 10 Blazor Web App with server prerendering and WebAssembly interactivity.
+A Fortnite Sprite collection tracker built as a .NET 11 Blazor Web App with server prerendering and WebAssembly interactivity.
 
 Detailed guides:
 
@@ -120,7 +120,7 @@ docker build --file Dockerfile.local `
   --tag ghcr.io/YOUR_GITHUB_USER/fortnite-sprite-tracker:latest .
 ```
 
-This produces the same ASP.NET Core runtime image without restoring packages inside Docker. The `container-publish` directory is excluded from Git. To repair Docker itself, verify Docker Desktop's proxy/VPN/firewall settings and confirm that `docker run --rm mcr.microsoft.com/dotnet/sdk:10.0 curl -I https://api.nuget.org/v3/index.json` succeeds.
+This produces the same ASP.NET Core runtime image without restoring packages inside Docker. The `container-publish` directory is excluded from Git. To repair Docker itself, verify Docker Desktop's proxy/VPN/firewall settings and confirm that `docker run --rm mcr.microsoft.com/dotnet/sdk:11.0 curl -I https://api.nuget.org/v3/index.json` succeeds.
 
 After installing and signing in with the Azure CLI, deploy at subscription scope:
 
