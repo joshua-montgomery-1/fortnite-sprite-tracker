@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
       - run: dotnet restore FortniteSpriteTracker.slnx
       - run: dotnet build FortniteSpriteTracker.slnx -c Release --no-restore
       - run: dotnet run --project tests/FortniteSpriteTracker.Tests -c Release --no-build
@@ -21,4 +21,4 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: sprite-scout-server
-          path: src/FortniteSpriteTracker/bin/Release/net10.0/publish
+          path: src/FortniteSpriteTracker/bin/Release/net11.0/publish
