@@ -1,9 +1,11 @@
+using System.Globalization;
 using FortniteSpriteTracker.Services;
 using FortniteSpriteTracker.Components;
 using FortniteSpriteTracker.Shared.Catalog;
 using FortniteSpriteTracker.Shared.Collections;
 using FortniteSpriteTracker.Shared.Profiles;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace FortniteSpriteTracker.Pages;
 
@@ -11,6 +13,7 @@ public partial class Home : IAsyncDisposable
 {
     private const string BrowserProgressKey = "sprite-scout-progress";
     private static readonly string[] CollectionFilters = ["All", "Owned", "Missing", "Mastered", "Unmastered"];
+    private static readonly string[] Rarities = ["All", "Rare", "Epic", "Legendary", "Mythic"];
     private static readonly SchemaGraph HomeStructuredData = new()
     {
         Nodes =
@@ -48,6 +51,15 @@ public partial class Home : IAsyncDisposable
     [Inject] private AccountState AccountState { get; set; } = null!;
     [Inject] private CollectionClient Collection { get; set; } = null!;
     [Inject] private CatalogClient Catalog { get; set; } = null!;
+    [Inject] private NavigationManager Navigation { get; set; } = null!;
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+
+    [SupplyParameterFromQuery(Name = "season")] private string? SeasonQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "status")] private string? StatusQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "rarity")] private string? RarityQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "variant")] private string? VariantQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "q")] private string? SearchQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "unreleased")] private string? UnreleasedQuery { get; set; }
 
     [PersistentState]
     public HomeCatalogState? InitialCatalogState { get; set; }
@@ -55,7 +67,11 @@ public partial class Home : IAsyncDisposable
     private SpriteCatalogDto? catalog;
     private IReadOnlyList<SeasonDto> seasons = [];
     private SeasonDto? selectedSeason;
-    private bool browserProgressLoaded;
+    private SeasonDto? DefaultSeason => seasons.FirstOrDefault(item => item.IsActive) ?? seasons.FirstOrDefault();
+    private bool seasonsLoaded;
+    private bool progressReady;
+    private bool seasonResolved;
+    private int seasonVersion;
     private bool catalogLoading = true;
     private bool catalogEmpty;
     private string? catalogError;
@@ -73,6 +89,7 @@ public partial class Home : IAsyncDisposable
     private string? syncError;
     private string? saveStatus;
     private UserProfileDto? profile => AccountState.Profile;
+    private string CollectionHref => new Uri(Navigation.Uri).PathAndQuery + "#collection";
 
     private HeroSpriteViewModel? HeroSprite => HeroSpriteSelector.Select(catalog);
     private bool SelectedSeasonIsActive
@@ -127,24 +144,14 @@ public partial class Home : IAsyncDisposable
         if (InitialCatalogState is not null)
         {
             seasons = InitialCatalogState.Seasons;
-            selectedSeason = seasons.FirstOrDefault(item => item.Id == InitialCatalogState.SelectedSeasonId);
-            catalog = InitialCatalogState.Catalog;
-            RestoreCatalogDisplayState();
+            seasonsLoaded = true;
             return;
         }
 
         try
         {
             seasons = await Catalog.GetSeasonsAsync();
-            selectedSeason = seasons.FirstOrDefault(item => item.IsActive)
-                ?? seasons.FirstOrDefault();
-            await LoadSelectedCatalogAsync();
-            InitialCatalogState = new HomeCatalogState
-            {
-                Seasons = seasons.ToArray(),
-                SelectedSeasonId = selectedSeason?.Id,
-                Catalog = catalog
-            };
+            seasonsLoaded = true;
         }
         catch (HttpRequestException)
         {
@@ -153,6 +160,97 @@ public partial class Home : IAsyncDisposable
         }
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        filter = ValidateOption(StatusQuery, CollectionFilters);
+        rarity = ValidateOption(RarityQuery, Rarities);
+        query = SearchQuery ?? "";
+        showUnreleased = bool.TryParse(UnreleasedQuery, out var unreleased) && unreleased;
+
+        if (!seasonsLoaded)
+        {
+            return;
+        }
+
+        var requestedSeason = int.TryParse(SeasonQuery, NumberStyles.None, CultureInfo.InvariantCulture, out var seasonId)
+            ? seasons.FirstOrDefault(item => item.Id == seasonId)
+            : null;
+        var season = requestedSeason ?? DefaultSeason;
+        if (seasonResolved && selectedSeason?.Id == season?.Id)
+        {
+            ApplyVariantFromUrl();
+            return;
+        }
+
+        var version = ++seasonVersion;
+        var previousSeasonResolved = seasonResolved;
+        seasonResolved = true;
+        selectedSeason = season;
+        catalog = null;
+        catalogError = null;
+        catalogEmpty = false;
+        catalogLoading = true;
+        variant = "All";
+        owned.Clear();
+        mastered.Clear();
+        serverKeys.Clear();
+        showImportPrompt = false;
+
+        try
+        {
+            if (!previousSeasonResolved && InitialCatalogState is { } initial && initial.SelectedSeasonId == season?.Id)
+            {
+                catalog = initial.Catalog;
+            }
+            else if (season is { HasCatalog: true })
+            {
+                var loadedCatalog = await Catalog.GetAsync(season.Id);
+                if (version != seasonVersion)
+                {
+                    return;
+                }
+
+                catalog = loadedCatalog;
+            }
+
+            catalogEmpty = catalog is null;
+            if (catalogEmpty)
+            {
+                SetCatalogEmptyMessage();
+            }
+
+            catalogLoading = false;
+            ApplyVariantFromUrl();
+            InitialCatalogState ??= new HomeCatalogState
+            {
+                Seasons = seasons.ToArray(),
+                SelectedSeasonId = season?.Id,
+                Catalog = catalog
+            };
+
+            if (progressReady)
+            {
+                await RefreshProgressAsync();
+            }
+        }
+        catch (HttpRequestException)
+        {
+            if (version == seasonVersion)
+            {
+                catalogError = previousSeasonResolved
+                    ? "This Sprite guide is temporarily unavailable. Please try again later."
+                    : "The current Sprite guide is temporarily unavailable. Please try again later.";
+                catalogLoading = false;
+            }
+        }
+    }
+
+    private static string ValidateOption(string? value, IEnumerable<string> options) =>
+        options.FirstOrDefault(item => string.Equals(item, value, StringComparison.OrdinalIgnoreCase)) ?? "All";
+
+    private void ApplyVariantFromUrl() =>
+        variant = ValidateOption(VariantQuery, catalog?.VariantStyles.Select(item => item.Name) ?? []);
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
@@ -160,21 +258,21 @@ public partial class Home : IAsyncDisposable
             return;
         }
 
-        if (!browserProgressLoaded)
-        {
-            await LoadBrowserProgressAsync();
-            browserProgressLoaded = true;
-        }
-
+        await LoadBrowserProgressAsync();
         var accountLoaded = await LoadAccountAsync();
-        if (!accountLoaded)
+        progressReady = true;
+        await RefreshProgressAsync(accountLoaded);
+        StateHasChanged();
+    }
+
+    private async Task RefreshProgressAsync(bool accountLoaded = true)
+    {
+        if (catalog is null)
         {
-            ApplyLocalProgress();
-            StateHasChanged();
             return;
         }
 
-        if (profile is not null)
+        if (accountLoaded && profile is not null)
         {
             await LoadAuthenticatedCollectionAsync();
         }
@@ -183,45 +281,6 @@ public partial class Home : IAsyncDisposable
             ApplyLocalProgress();
         }
 
-        StateHasChanged();
-    }
-
-    private void RestoreCatalogDisplayState()
-    {
-        catalogLoading = false;
-        catalogEmpty = catalog is null;
-        catalogError = null;
-        if (catalogEmpty)
-        {
-            SetCatalogEmptyMessage();
-        }
-    }
-
-    private async Task LoadSelectedCatalogAsync()
-    {
-        catalogLoading = true;
-        catalog = null;
-        catalogEmpty = false;
-        catalogError = null;
-
-        if (selectedSeason is null)
-        {
-            catalogEmpty = true;
-            SetCatalogEmptyMessage();
-            catalogLoading = false;
-            return;
-        }
-
-        if (!selectedSeason.HasCatalog)
-        {
-            catalogEmpty = true;
-            SetCatalogEmptyMessage();
-            catalogLoading = false;
-            return;
-        }
-
-        catalog = await Catalog.GetAsync(selectedSeason.Id);
-        catalogLoading = false;
     }
 
     private void SetCatalogEmptyMessage()
@@ -241,34 +300,40 @@ public partial class Home : IAsyncDisposable
             : "Choose another season to explore its Sprite collection.";
     }
 
-    private async Task SeasonChangedAsync(ChangeEventArgs args)
+    private void SeasonChanged(ChangeEventArgs args)
     {
-        if (!int.TryParse(args.Value?.ToString(), out var seasonId))
+        if (!int.TryParse(args.Value?.ToString(), out var seasonId) ||
+            seasonId == selectedSeason?.Id || !seasons.Any(item => item.Id == seasonId))
         {
             return;
         }
 
-        selectedSeason = seasons.FirstOrDefault(item => item.Id == seasonId);
-        filter = "All";
-        rarity = "All";
-        variant = "All";
-        query = "";
-        try
+        NavigateWithFilters(seasonId, "All", "All", "All", "", showUnreleased);
+    }
+
+    private void UpdateFilterUrl(bool replace = false) =>
+        NavigateWithFilters(selectedSeason?.Id, filter, rarity,
+            catalogLoading ? VariantQuery : variant, query, showUnreleased, replace);
+
+    private void NavigateWithFilters(int? seasonId, string status, string rarityValue, string? variantValue,
+        string search, bool unreleased, bool replace = false)
+    {
+        // Blazor handles fragment-only anchor clicks without updating Navigation.Uri.
+        var currentUri = JS is IJSInProcessRuntime browser
+            ? browser.Invoke<string>("location.toString")
+            : Navigation.Uri;
+        var uri = Navigation.GetUriWithQueryParameters(currentUri, new Dictionary<string, object?>
         {
-            await LoadSelectedCatalogAsync();
-            if (catalog is not null && profile is not null)
-            {
-                await LoadAuthenticatedCollectionAsync();
-            }
-            else
-            {
-                ApplyLocalProgress();
-            }
-        }
-        catch (HttpRequestException)
+            ["season"] = seasonId == DefaultSeason?.Id ? null : seasonId,
+            ["status"] = status == "All" ? null : status,
+            ["rarity"] = rarityValue == "All" ? null : rarityValue,
+            ["variant"] = variantValue == "All" ? null : variantValue,
+            ["q"] = string.IsNullOrEmpty(search) ? null : search,
+            ["unreleased"] = unreleased ? "true" : null
+        });
+        if (uri != currentUri)
         {
-            catalogError = "This Sprite guide is temporarily unavailable. Please try again later.";
-            catalogLoading = false;
+            Navigation.NavigateTo(uri, replace: replace);
         }
     }
 
@@ -280,10 +345,7 @@ public partial class Home : IAsyncDisposable
 
         foreach (var item in savedProgress)
         {
-            if (FindVariant(item.Key) is not null)
-            {
-                localProgress[item.Key] = item.Value;
-            }
+            localProgress[item.Key] = item.Value;
         }
     }
 
@@ -351,9 +413,15 @@ public partial class Home : IAsyncDisposable
 
     private async Task LoadAuthenticatedCollectionAsync()
     {
+        var version = seasonVersion;
         try
         {
             var serverProgress = await Collection.GetAsync();
+            if (version != seasonVersion)
+            {
+                return;
+            }
+
             var serverByKey = serverProgress
                 .Where(item => FindVariant(item.SpriteVariantId) is not null)
                 .ToDictionary(
@@ -363,6 +431,7 @@ public partial class Home : IAsyncDisposable
                         item.IsMastered));
             serverKeys.Clear();
             serverKeys.UnionWith(serverByKey.Keys);
+            var localProgressChanged = false;
             foreach (var localItem in localProgress.ToArray())
             {
                 if (serverByKey.TryGetValue(localItem.Key, out var serverItem) &&
@@ -370,21 +439,29 @@ public partial class Home : IAsyncDisposable
                     (!localItem.Value.IsMastered || serverItem.IsMastered))
                 {
                     localProgress.Remove(localItem.Key);
+                    localProgressChanged = true;
                 }
             }
 
-            await SaveAsync();
-            showImportPrompt = localProgress.Values.Any(item => item.IsOwned || item.IsMastered);
+            showImportPrompt = localProgress.Any(item =>
+                FindVariant(item.Key) is not null && (item.Value.IsOwned || item.Value.IsMastered));
             owned.Clear();
             mastered.Clear();
             ApplyProgress(serverByKey);
             syncError = null;
+            if (localProgressChanged)
+            {
+                await SaveAsync();
+            }
         }
         catch (HttpRequestException)
         {
-            owned.Clear();
-            mastered.Clear();
-            syncError = "We couldn't load your saved collection. Your database progress was not changed.";
+            if (version == seasonVersion)
+            {
+                owned.Clear();
+                mastered.Clear();
+                syncError = "We couldn't load your saved collection. Your database progress was not changed.";
+            }
         }
     }
 
@@ -429,9 +506,10 @@ public partial class Home : IAsyncDisposable
 
         importingAnonymousProgress = true;
         syncError = null;
+        var seasonEntries = localProgress.Where(item => FindVariant(item.Key) is not null).ToArray();
         try
         {
-            foreach (var item in localProgress.Where(item => !serverKeys.Contains(item.Key) && (item.Value.IsOwned || item.Value.IsMastered)).ToArray())
+            foreach (var item in seasonEntries.Where(item => !serverKeys.Contains(item.Key) && (item.Value.IsOwned || item.Value.IsMastered)))
             {
                 if (!await SaveToAccountAsync(item.Key, item.Value))
                 {
@@ -439,9 +517,11 @@ public partial class Home : IAsyncDisposable
                 }
             }
 
-            localProgress.Clear();
+            foreach (var item in seasonEntries)
+            {
+                localProgress.Remove(item.Key);
+            }
             await SaveAsync();
-            showImportPrompt = false;
             await LoadAuthenticatedCollectionAsync();
         }
         catch (HttpRequestException)
@@ -456,7 +536,10 @@ public partial class Home : IAsyncDisposable
 
     private async Task DiscardAnonymousProgressAsync()
     {
-        localProgress.Clear();
+        foreach (var id in localProgress.Keys.Where(id => FindVariant(id) is not null).ToArray())
+        {
+            localProgress.Remove(id);
+        }
         showImportPrompt = false;
         await SaveAsync();
     }
@@ -608,8 +691,23 @@ public partial class Home : IAsyncDisposable
         }
     }
 
-    private void ShowMissing() => filter = "Missing";
-    private void ToggleVariant(VariantStyleDto item) => variant = variant == item.Name ? "All" : item.Name;
+    private void SetStatus(string status)
+    {
+        filter = status;
+        UpdateFilterUrl();
+    }
+
+    private void ShowMissing() => SetStatus("Missing");
+
+    private void ToggleVariant(VariantStyleDto item)
+    {
+        variant = variant == item.Name ? "All" : item.Name;
+        UpdateFilterUrl();
+    }
+
+    private void UpdateSearchUrl() => UpdateFilterUrl(replace: true);
+
+    private void UpdateFilterUrlAfterBinding() => UpdateFilterUrl();
     private void ShowChecklist() => viewMode = "Checklist";
     private void ShowFieldGuide() => viewMode = "Field Guide";
 
@@ -626,6 +724,7 @@ public partial class Home : IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
+        seasonVersion++;
         saveDelay?.Cancel();
         saveDelay?.Dispose();
         saveLock.Dispose();

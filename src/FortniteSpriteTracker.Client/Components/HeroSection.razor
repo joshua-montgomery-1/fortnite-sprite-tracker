@@ -26,13 +26,13 @@
         @if (TotalEntries > 0)
         {
             <div class="heroActions">
-                <a class="primary" href="#collection">View Sprite collection <span>↓</span></a>
+                <a class="primary" href="@CollectionHref">View Sprite collection <span>↓</span></a>
                 <button class="textButton" @onclick="OnShowMissing">Show what’s missing <span>→</span></button>
             </div>
         }
         else
         {
-            <div class="heroActions"><a class="primary" href="#collection">View season status <span>↓</span></a></div>
+            <div class="heroActions"><a class="primary" href="@CollectionHref">View season status <span>↓</span></a></div>
         }
         <AuthorizeView>
             <NotAuthorized>
@@ -82,4 +82,5 @@
     [Parameter] public bool IsSeasonActive { get; set; }
     [Parameter, EditorRequired] public string SeasonStatus { get; set; } = "PREVIOUS";
     [Parameter] public EventCallback OnShowMissing { get; set; }
+    [Parameter] public string CollectionHref { get; set; } = "/#collection";
 }
