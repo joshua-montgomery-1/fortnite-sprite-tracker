@@ -561,6 +561,12 @@ select {
   align-items: center;
   gap: 8px;
 }
+.filterRight select {
+  box-sizing: border-box;
+  height: 36px;
+  padding: 0 20px 0 10px;
+  font-size: 12px;
+}
 .showUnreleased {
   display: inline-flex;
   align-items: center;
@@ -588,6 +594,7 @@ select {
   width: 145px;
   padding: 9px 6px;
   font-size: 12px;
+  line-height: 16px;
 }
 .notes {
   background: var(--intel-surface);
