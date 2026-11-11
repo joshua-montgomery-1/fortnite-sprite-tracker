@@ -160,7 +160,7 @@ public partial class Home : IAsyncDisposable
         }
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
         filter = ValidateOption(StatusQuery, CollectionFilters);
         rarity = ValidateOption(RarityQuery, Rarities);
@@ -169,7 +169,7 @@ public partial class Home : IAsyncDisposable
 
         if (!seasonsLoaded)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var requestedSeason = int.TryParse(SeasonQuery, NumberStyles.None, CultureInfo.InvariantCulture, out var seasonId)
@@ -179,11 +179,16 @@ public partial class Home : IAsyncDisposable
         if (seasonResolved && selectedSeason?.Id == season?.Id)
         {
             ApplyVariantFromUrl();
-            return;
+            return Task.CompletedTask;
         }
 
+        return LoadSeasonAsync(season);
+    }
+
+    private async Task LoadSeasonAsync(SeasonDto? season)
+    {
         var version = ++seasonVersion;
-        var previousSeasonResolved = seasonResolved;
+        var isFirstSelection = !seasonResolved;
         seasonResolved = true;
         selectedSeason = season;
         catalog = null;
@@ -198,7 +203,7 @@ public partial class Home : IAsyncDisposable
 
         try
         {
-            if (!previousSeasonResolved && InitialCatalogState is { } initial && initial.SelectedSeasonId == season?.Id)
+            if (isFirstSelection && InitialCatalogState is { } initial && initial.SelectedSeasonId == season?.Id)
             {
                 catalog = initial.Catalog;
             }
@@ -237,9 +242,9 @@ public partial class Home : IAsyncDisposable
         {
             if (version == seasonVersion)
             {
-                catalogError = previousSeasonResolved
-                    ? "This Sprite guide is temporarily unavailable. Please try again later."
-                    : "The current Sprite guide is temporarily unavailable. Please try again later.";
+                catalogError = isFirstSelection
+                    ? "The current Sprite guide is temporarily unavailable. Please try again later."
+                    : "This Sprite guide is temporarily unavailable. Please try again later.";
                 catalogLoading = false;
             }
         }
