@@ -4,7 +4,7 @@
         <span>SPRITE<em>SCOUT</em></span>
     </a>
     <div class="navlinks">
-        <a href="/#collection">Collection</a>
+        <a href="@CollectionHref">Collection</a>
         <a href="/players">Find a player</a>
         @if (ShowCheatCodeLink)
         {
@@ -49,7 +49,7 @@
                         }
                     </Authorized>
                 </AuthorizeView>
-                <a href="/#collection">Collection <span>→</span></a>
+                <a href="@CollectionHref">Collection <span>→</span></a>
                 <a href="/players">Find a player <span>→</span></a>
                 @if (ShowCheatCodeLink)
                 {
@@ -81,6 +81,7 @@
     [Inject] private CatalogClient CatalogApi { get; set; } = null!;
     [Parameter] public UserProfileDto? Profile { get; set; }
     [Parameter] public bool IsAccountLoading { get; set; }
+    [Parameter] public string CollectionHref { get; set; } = "/#collection";
     private bool ShowCheatCodeLink;
 
     protected override async Task OnInitializedAsync()

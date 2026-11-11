@@ -12,7 +12,7 @@
 </HeadContent>
 
 <main>
-    <SiteHeader Profile="@profile" IsAccountLoading="@(!AccountState.IsLoaded)" />
+    <SiteHeader Profile="@profile" IsAccountLoading="@(!AccountState.IsLoaded)" CollectionHref="@CollectionHref" />
     <HeroSection Hero="@HeroSprite"
                  TotalEntries="@ReleasedEntryCount"
                  FamilyCount="@(catalog?.Families.Count ?? 0)"
@@ -20,7 +20,8 @@
                  SeasonNumber="@(selectedSeason?.Number ?? 0)"
                  IsSeasonActive="@SelectedSeasonIsActive"
                  SeasonStatus="@SelectedSeasonStatus"
-                 OnShowMissing="ShowMissing" />
+                 OnShowMissing="ShowMissing"
+                 CollectionHref="@CollectionHref" />
 
     <div class="lowerPage">
     <section class="collection" id="collection">
@@ -76,7 +77,7 @@
             </div>
             <label class="seasonSelect">
                 SEASONS
-                <select value="@selectedSeason?.Id" @onchange="SeasonChangedAsync">
+                <select value="@selectedSeason?.Id" @onchange="SeasonChanged">
                     @foreach (var season in seasons)
                     {
                         <option value="@season.Id">@season.Name</option>
@@ -126,30 +127,29 @@
             <div class="segmented">
                 @foreach (var item in CollectionFilters)
                 {
-                    <button class="@(filter == item ? "selected" : "")" @onclick="() => filter = item">@item</button>
+                    <button class="@(filter == item ? "selected" : "")" @onclick="() => SetStatus(item)">@item</button>
                 }
             </div>
             <div class="filterRight">
                 <label class="showUnreleased">
-                    <input type="checkbox" @bind="showUnreleased" />
+                    <input type="checkbox" @bind="showUnreleased" @bind:after="UpdateFilterUrlAfterBinding" />
                     Show unreleased
                 </label>
                 <label class="search">
                     <span>⌕</span>
-                    <input @bind="query" @bind:event="oninput" placeholder="Search sprites" />
+                    <input @bind="query" @bind:event="oninput" @bind:after="UpdateSearchUrl" placeholder="Search sprites" />
                 </label>
-                <select @bind="rarity">
-                    <option>All</option>
-                    <option>Rare</option>
-                    <option>Epic</option>
-                    <option>Legendary</option>
-                    <option>Mythic</option>
+                <select @bind="rarity" @bind:after="UpdateFilterUrlAfterBinding">
+                    @foreach (var item in Rarities)
+                    {
+                        <option value="@item">@item</option>
+                    }
                 </select>
-                <select @bind="variant">
-                    <option>All</option>
+                <select @bind="variant" @bind:after="UpdateFilterUrlAfterBinding">
+                    <option value="All">All</option>
                     @foreach (var item in catalog?.VariantStyles ?? [])
                     {
-                        <option>@item.Name</option>
+                        <option value="@item.Name">@item.Name</option>
                     }
                 </select>
             </div>
@@ -193,6 +193,6 @@
     </section>
 
         <FieldNotes />
-        <SiteFooter />
+        <SiteFooter CollectionHref="@CollectionHref" />
     </div>
 </main>

@@ -5,7 +5,7 @@
             <span>SPRITE<em>SCOUT</em></span>
         </a>
         <nav class="footerNav" aria-label="Footer navigation">
-            <a href="/#collection">Collection</a>
+            <a href="@CollectionHref">Collection</a>
             <a href="/cheat-codes">Lobby Hack Codes</a>
             <a href="/players">Find a player</a>
             <a href="/connect">Connect an AI client</a>
@@ -23,3 +23,7 @@
         </p>
     </div>
 </footer>
+
+@code {
+    [Parameter] public string CollectionHref { get; set; } = "/#collection";
+}
